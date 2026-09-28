@@ -31,6 +31,7 @@ A complete, implementation-ready design spec for a single-level Crimsonland-clon
 - [13 - Perk content authoring](issues/13-perk-content-authoring.md): all 20 MVP perks authored into [perks.csv](perks.csv), all original text; one (Lucky Break) uses the special_handler_id escape hatch.
 - [14 - Player vitals & leveling](issues/14-player-vitals-and-leveling.md): 100 base HP, per-enemy Attack Cooldown with no player-wide invulnerability (matches the original's real mechanic), paused level-up with 0.5s post-choice invulnerability, kills-only XP, `100 × level^1.5` curve.
 - [15 - Enemy combat stats](issues/15-enemy-combat-stats.md): base HP/damage/cooldown/XP per species, Boss Variant multipliers, and a global Toughness Multiplier scaling HP/damage over session time (matches the original) — movement speed stays fixed.
+- [16 - Multiplayer-readiness architecture](issues/16-multiplayer-readiness-architecture.md): instanced player scene, input captured separately from simulation, effect systems take a player instance as a parameter, Autoloads only for genuinely global systems. See [ADR-0001](../adr/0001-multiplayer-ready-single-player-architecture.md).
 
 ## Not yet specified
 
