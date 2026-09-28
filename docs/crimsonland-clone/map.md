@@ -29,6 +29,7 @@ A complete, implementation-ready design spec for a single-level Crimsonland-clon
 - [11 - Weapon stat table](issues/11-weapon-stat-table.md): 6-weapon roster (Pistol, Gauss Gun, Electric Gun, Shotgun, SMG, Heavy Cannon) with full stats in a new `weapons.csv`.
 - [12 - Perk effect architecture](issues/12-perk-effect-architecture.md): `perks.csv` schema (effect_type/target/value/trigger + special_handler_id escape hatch), no prerequisite chains for MVP, validated with 3 worked example perks.
 - [13 - Perk content authoring](issues/13-perk-content-authoring.md): all 20 MVP perks authored into [perks.csv](perks.csv), all original text; one (Lucky Break) uses the special_handler_id escape hatch.
+- [14 - Player vitals & leveling](issues/14-player-vitals-and-leveling.md): 100 base HP, per-enemy Attack Cooldown with no player-wide invulnerability (matches the original's real mechanic), paused level-up with 0.5s post-choice invulnerability, kills-only XP, `100 × level^1.5` curve.
 
 ## Not yet specified
 

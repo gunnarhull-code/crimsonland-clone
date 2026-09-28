@@ -79,3 +79,7 @@ _Avoid_: Event type, hook
 **Special Handler**:
 A hardcoded Godot function referenced by a Perk's `special_handler_id`, used only when a Perk's effect can't be expressed mathematically via Effect Type + target + value (e.g. spawning a bonus pickup on kill). The exception, not the default.
 _Avoid_: Custom logic, override
+
+**Attack Cooldown**:
+The interval an enemy must wait between successive contact-damage hits on the player. Tracked per-enemy, not per-player — there is no player-wide invulnerability window, so multiple enemies overlapping the player each hit on their own independent cooldown.
+_Avoid_: I-frame, hit cooldown, damage tick (this isn't continuous ticking — it's a gated repeat-hit interval)
