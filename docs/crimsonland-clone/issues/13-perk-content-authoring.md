@@ -1,5 +1,6 @@
 Type: grilling
 Blocked by: 12
+Status: claimed
 
 ## Question
 

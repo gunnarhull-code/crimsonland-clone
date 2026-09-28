@@ -67,3 +67,15 @@ _Avoid_: Pierce count, penetration limit
 **Chain Range**:
 The distance within which the Electric Gun's shot arcs from its primary target to one additional nearby enemy.
 _Avoid_: Chain radius, arc distance
+
+**Effect Type**:
+How a Perk's `value` is applied to its `target` stat — `additive` (add value) or `multiplicative` (scale by value). Covers any Perk expressible as pure math.
+_Avoid_: Modifier type, operation
+
+**Trigger**:
+When a Perk's effect fires. Starts as a small, extensible set (`passive`, `on_kill`, `on_hit`, `on_levelup`) — new trigger values can be added later without restructuring `perks.csv`.
+_Avoid_: Event type, hook
+
+**Special Handler**:
+A hardcoded Godot function referenced by a Perk's `special_handler_id`, used only when a Perk's effect can't be expressed mathematically via Effect Type + target + value (e.g. spawning a bonus pickup on kill). The exception, not the default.
+_Avoid_: Custom logic, override
