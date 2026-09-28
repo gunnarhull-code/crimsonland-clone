@@ -83,3 +83,7 @@ _Avoid_: Custom logic, override
 **Attack Cooldown**:
 The interval an enemy must wait between successive contact-damage hits on the player. Tracked per-enemy, not per-player — there is no player-wide invulnerability window, so multiple enemies overlapping the player each hit on their own independent cooldown.
 _Avoid_: I-frame, hit cooldown, damage tick (this isn't continuous ticking — it's a gated repeat-hit interval)
+
+**Toughness Multiplier**:
+A single global multiplier, growing linearly with session elapsed time (`1 + elapsed_minutes × 0.15`), applied uniformly to every enemy's HP and contact damage (base and Boss Variant alike). The only way per-enemy stats scale over a session — movement speed stays fixed at the values [10](docs/crimsonland-clone/issues/10-enemy-ai-parameters.md) already set.
+_Avoid_: Difficulty multiplier (too broad — this is specifically the HP/damage knob, not spawn rate, which is Enemy Spawn Pacing's own concern)
