@@ -235,7 +235,9 @@ func _process_chase(delta: float) -> void:
 func _process_contact_damage(delta: float) -> void:
 	var my_radius: float = stats.get("hitbox_radius_px", 14.0)
 	var player_radius: float = _player.hitbox_radius if "hitbox_radius" in _player else 14.0
-	var touching: bool = global_position.distance_to(_player.global_position) <= (my_radius + player_radius)
+	# +4px buffer: now that collision keeps bodies from truly overlapping,
+	# physics resolution settles them just outside exact contact distance.
+	var touching: bool = global_position.distance_to(_player.global_position) <= (my_radius + player_radius + 4.0)
 	if not touching:
 		return
 	_attack_cooldown_timer -= delta

@@ -50,7 +50,7 @@ All prior fog graduated into tickets [18](issues/18-godot-scene-structure.md), [
 
 - Brainstorming what differentiates this game from Crimsonland beyond the MVP's stated simplifications (single-player, simple graphics/sound) — a future effort once there's something to differentiate from.
 - Multiplayer/co-op — the original supports local co-op; this MVP is single-player only.
-- Splash/AoE damage weapons — deferred post-MVP; needs its own radius/falloff design and isn't core to the "leading your shots" feel driving this MVP.
+- ~~Splash/AoE damage weapons — deferred post-MVP~~ — **reversed during implementation**: the Heavy Cannon now explodes in a 60px radius on impact (flat damage, no falloff), added on direct playtest request ("think bazooka"). See [11 - Weapon stat table](issues/11-weapon-stat-table.md).
 - Ammo scarcity/ammo pickups — the MVP uses infinite ammo with reload time/magazine size as the differentiator instead.
 - Multiple levels or additional game modes (Quest, Rush, etc. from the original) — MVP is a single endless-survival arena only.
 - Live Google Sheets sync for perks — local CSV only for the MVP; live sync could be revisited later if re-exporting becomes a real annoyance.

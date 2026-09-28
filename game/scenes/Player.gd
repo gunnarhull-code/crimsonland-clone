@@ -210,6 +210,10 @@ func take_damage(amount: float) -> void:
 		return
 	set_hp(hp - amount)
 	AudioManager.play_player_hit()
+	var burst := PARTICLE_BURST.instantiate()
+	get_tree().current_scene.get_node("Effects").add_child(burst)
+	burst.global_position = global_position
+	burst.fire(4, Color(0.89, 0.29, 0.29))
 	if hp <= 0.0:
 		_die()
 
