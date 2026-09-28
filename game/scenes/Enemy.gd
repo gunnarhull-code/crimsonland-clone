@@ -35,6 +35,21 @@ const SPIDER_FREEZE_MAX := 0.5
 const SPIDER_DART_SPEED_MIN := 0.6
 const SPIDER_DART_SPEED_MAX := 1.5
 
+# Chase variety - per direct playtest request: enemies were all beelining to
+# the player's exact position with instant direction snaps, which reads as
+# one tight, perfectly-tracking clump rather than a spread-out crowd. Each
+# enemy instead aims at a personal offset point near the player (so they
+# fan out instead of converging on one spot) and turns toward it at a
+# capped rate (so sharp corners get overshot into a wide arc instead of a
+# snap-turn) - both rerolled periodically so it's not a fixed formation and
+# not every enemy is equally sluggish ("some of them can, sometimes").
+const CHASE_AIM_OFFSET_MIN := 30.0
+const CHASE_AIM_OFFSET_MAX := 110.0
+const CHASE_VARIETY_REROLL_MIN := 2.0
+const CHASE_VARIETY_REROLL_MAX := 4.0
+const CHASE_TURN_RATE_MIN_DEG := 70.0
+const CHASE_TURN_RATE_MAX_DEG := 1000.0
+
 # Orbit radius per loop-style variant, in px. Large enough to read as a
 # proper loop rather than a tight spin at typical wander speeds (~40-150px/s
 # - a small radius at that speed produces a very high angular rate, which is
@@ -69,6 +84,11 @@ var _spider_bursting: bool = true
 var _spider_phase_timer: float = 0.4
 var _spider_dart_speed_mult: float = 1.0
 var _wander_dart_speed_mult: float = 1.0
+
+var _chase_dir: Vector2 = Vector2.ZERO
+var _chase_aim_offset: Vector2 = Vector2.ZERO
+var _chase_turn_rate_deg: float = 400.0
+var _chase_variety_timer: float = 0.0
 
 var _off_arena_timer: float = 0.0
 var _attack_cooldown_timer: float = 0.0
@@ -234,8 +254,16 @@ func _process_soft_boundary(delta: float) -> void:
 
 func _process_chase(delta: float) -> void:
 	var chase_speed: float = stats.get("chase_speed_px_s", 100.0) * (BOSS_SPEED_MULT if variant == "boss" else 1.0)
-	var to_player: Vector2 = (_player.global_position - global_position)
-	var dir: Vector2 = to_player.normalized() if to_player.length() > 1.0 else Vector2.ZERO
+
+	_chase_variety_timer -= delta
+	if _chase_variety_timer <= 0.0:
+		_chase_variety_timer = randf_range(CHASE_VARIETY_REROLL_MIN, CHASE_VARIETY_REROLL_MAX)
+		_chase_aim_offset = Vector2.RIGHT.rotated(randf() * TAU) * randf_range(CHASE_AIM_OFFSET_MIN, CHASE_AIM_OFFSET_MAX)
+		_chase_turn_rate_deg = randf_range(CHASE_TURN_RATE_MIN_DEG, CHASE_TURN_RATE_MAX_DEG)
+
+	var to_target: Vector2 = (_player.global_position + _chase_aim_offset) - global_position
+	var desired_dir: Vector2 = to_target.normalized() if to_target.length() > 1.0 else Vector2.ZERO
+	_chase_dir = _turn_toward(_chase_dir, desired_dir, _chase_turn_rate_deg, delta)
 
 	if species == "spider":
 		_spider_phase_timer -= delta
@@ -246,9 +274,22 @@ func _process_chase(delta: float) -> void:
 				_spider_dart_speed_mult = randf_range(SPIDER_DART_SPEED_MIN, SPIDER_DART_SPEED_MAX)
 			else:
 				_spider_phase_timer = randf_range(SPIDER_FREEZE_MIN, SPIDER_FREEZE_MAX)
-		velocity = dir * chase_speed * _spider_dart_speed_mult if _spider_bursting else Vector2.ZERO
+		velocity = _chase_dir * chase_speed * _spider_dart_speed_mult if _spider_bursting else Vector2.ZERO
 	else:
-		velocity = dir * chase_speed
+		velocity = _chase_dir * chase_speed
+
+
+## Rotates `current` toward `desired` by at most `max_deg_per_sec`, rather
+## than snapping instantly - the cap on how sharp a turn can be.
+func _turn_toward(current: Vector2, desired: Vector2, max_deg_per_sec: float, delta: float) -> Vector2:
+	if desired == Vector2.ZERO:
+		return current
+	if current == Vector2.ZERO:
+		return desired
+	var diff := wrapf(desired.angle() - current.angle(), -PI, PI)
+	var max_step := deg_to_rad(max_deg_per_sec) * delta
+	var step: float = clamp(diff, -max_step, max_step)
+	return current.rotated(step)
 
 
 # --------------------------------------------------------- contact damage --
