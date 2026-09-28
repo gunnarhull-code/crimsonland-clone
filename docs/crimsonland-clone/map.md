@@ -36,6 +36,11 @@ A complete, implementation-ready design spec for a single-level Crimsonland-clon
 - [20 - Score display](issues/20-score-display.md): score is its own tracked number (weighted kills + survival time, not XP relabeled), shown live via HUD.
 - [18 - Godot scene structure](issues/18-godot-scene-structure.md): Godot 4.x, Arena/Player/Enemies/Projectiles/CanvasLayer-UI composition, 4 self-contained Autoloads, CSV data loading (doc-verified), single Enemy.tscn reading [enemies.csv](enemies.csv).
 - [21 - Spawner nests](issues/21-spawner-nests.md): Nests included as a third ramp-up rung (8min mark) on top of [17](issues/17-enemy-spawn-pacing.md)'s timeline — 150 HP, spawns a Rat/Spider every 3s, up to 2 concurrent, 120 XP on destruction.
+- [19 - Placeholder presentation](issues/19-placeholder-presentation.md): circle-equals-hitbox silhouettes with bold per-species inner shapes (A+C combined, see the [visual prototype](https://claude.ai/artifact/AJ7m7pL9aeiByNsL5EBxir)), confirmed hitbox radii now in [enemies.csv](enemies.csv), minimal SFX/VFX cues plus one reusable particle-burst system.
+
+## Frontier status
+
+All 21 tickets resolved. The map's destination — a complete, implementation-ready MVP spec — is reached; nothing is left in Not yet specified. Reopen with a new ticket if something surfaces during implementation.
 
 ## Not yet specified
 
