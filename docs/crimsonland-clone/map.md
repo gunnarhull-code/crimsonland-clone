@@ -35,6 +35,7 @@ A complete, implementation-ready design spec for a single-level Crimsonland-clon
 - [17 - Enemy spawn pacing](issues/17-enemy-spawn-pacing.md): spawn interval ramps 2.0s→0.3s over ~12 minutes, ~250 concurrent enemy cap (screen-filling, provisional pending real sprite sizes and perf profiling), species mix widens over time, XP pacing sanity-checked.
 - [20 - Score display](issues/20-score-display.md): score is its own tracked number (weighted kills + survival time, not XP relabeled), shown live via HUD.
 - [18 - Godot scene structure](issues/18-godot-scene-structure.md): Godot 4.x, Arena/Player/Enemies/Projectiles/CanvasLayer-UI composition, 4 self-contained Autoloads, CSV data loading (doc-verified), single Enemy.tscn reading [enemies.csv](enemies.csv).
+- [21 - Spawner nests](issues/21-spawner-nests.md): Nests included as a third ramp-up rung (8min mark) on top of [17](issues/17-enemy-spawn-pacing.md)'s timeline — 150 HP, spawns a Rat/Spider every 3s, up to 2 concurrent, 120 XP on destruction.
 
 ## Not yet specified
 
