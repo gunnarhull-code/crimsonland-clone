@@ -36,11 +36,7 @@ A complete, implementation-ready design spec for a single-level Crimsonland-clon
 
 ## Not yet specified
 
-- Godot project/scene structure (node hierarchy, autoloads) — will sharpen once the weapon, perk, and enemy-AI tickets below are resolved.
-- Placeholder visual conventions per entity (exact shapes/colors per weapon, enemy, projectile, perk pickup).
-- Simple SFX/VFX cues per weapon/perk event — confirmed minimal, but which cues exist isn't decided.
-- Score/high-score display and persistence.
-- Whether enemy spawning uses simple off-screen edge points only, or also stationary "nest" spawner structures like the original.
+All prior fog graduated into tickets [18](issues/18-godot-scene-structure.md), [19](issues/19-placeholder-presentation.md), [20](issues/20-score-display.md), and [21](issues/21-spawner-nests.md) now that every gameplay system has a resolved design to build them against. Empty until something new surfaces.
 
 ## Out of scope
 
