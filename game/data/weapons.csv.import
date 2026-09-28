@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://b3fw0f703ik5g"
+
+[deps]
+
+files=["res://data/weapons.name.translation", "res://data/weapons.fire.translation", "res://data/weapons.magazine.translation", "res://data/weapons.reload.translation", "res://data/weapons.projectile.translation", "res://data/weapons.spread.translation", "res://data/weapons.damage.translation", "res://data/weapons.special.translation"]
+
+source_file="res://data/weapons.csv"
+dest_files=["res://data/weapons.name.translation", "res://data/weapons.fire.translation", "res://data/weapons.magazine.translation", "res://data/weapons.reload.translation", "res://data/weapons.projectile.translation", "res://data/weapons.spread.translation", "res://data/weapons.damage.translation", "res://data/weapons.special.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://ow7gwubt7xqf"
+
+[deps]
+
+files=["res://data/perks.name.translation", "res://data/perks.description.translation", "res://data/perks.category.translation", "res://data/perks.effect.translation", "res://data/perks.target.translation", "res://data/perks.value.translation", "res://data/perks.effect.translation", "res://data/perks.target.translation", "res://data/perks.value.translation", "res://data/perks.trigger.translation", "res://data/perks.special.translation"]
+
+source_file="res://data/perks.csv"
+dest_files=["res://data/perks.name.translation", "res://data/perks.description.translation", "res://data/perks.category.translation", "res://data/perks.effect.translation", "res://data/perks.target.translation", "res://data/perks.value.translation", "res://data/perks.effect.translation", "res://data/perks.target.translation", "res://data/perks.value.translation", "res://data/perks.trigger.translation", "res://data/perks.special.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

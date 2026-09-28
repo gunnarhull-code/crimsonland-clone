@@ -53,6 +53,7 @@ var invulnerable: bool = false
 var alive: bool = true
 
 var weapon_id: String = "pistol"
+var has_had_first_weapon_drop: bool = false
 var ammo_in_magazine: int = 0
 var is_reloading: bool = false
 var _reload_timer: float = 0.0

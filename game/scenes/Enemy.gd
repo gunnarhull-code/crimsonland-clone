@@ -110,13 +110,33 @@ func _process_wander(delta: float) -> void:
 		_pick_new_wander_variant()
 
 	var speed: float = stats.get("wander_speed_px_s", 40.0) * (BOSS_SPEED_MULT if variant == "boss" else 1.0)
+	var local_vel := _compute_local_wander_velocity(speed, delta)
 
+	# BUGFIX: the local pattern alone orbits/darts around a fixed spawn point
+	# forever - an enemy spawned on the side edges (>450px from a centered
+	# player) could never geometrically drift into aggro range, so it just
+	# circled at the border indefinitely. A small constant pull toward the
+	# player, blended under whichever local pattern is active, guarantees
+	# every wandering enemy eventually reaches aggro range while keeping the
+	# local pattern as the dominant, visible motion (matches the original's
+	# "gradually enter and make their way toward the player" framing).
+	var drift := Vector2.ZERO
+	if _player and is_instance_valid(_player):
+		var to_player: Vector2 = _player.global_position - global_position
+		if to_player.length() > 1.0:
+			drift = to_player.normalized() * speed * 0.3
+
+	velocity = local_vel + drift
+	_process_soft_boundary(delta)
+
+
+func _compute_local_wander_velocity(speed: float, delta: float) -> Vector2:
 	match _wander_kind:
 		"tight_loop", "loop", "wide_loop":
 			var offset := global_position - _wander_anchor
 			if offset.length() < 1.0:
 				offset = Vector2.RIGHT
-			velocity = offset.normalized().rotated(_wander_orbit_dir * PI / 2.0) * speed
+			return offset.normalized().rotated(_wander_orbit_dir * PI / 2.0) * speed
 		"figure_eight":
 			_wander_sub_timer -= delta
 			if _wander_sub_timer <= 0.0:
@@ -125,7 +145,7 @@ func _process_wander(delta: float) -> void:
 			var offset := global_position - _wander_anchor
 			if offset.length() < 1.0:
 				offset = Vector2.RIGHT
-			velocity = offset.normalized().rotated(_wander_orbit_dir * PI / 2.0) * speed
+			return offset.normalized().rotated(_wander_orbit_dir * PI / 2.0) * speed
 		"skitter_pause", "zigzag_dart", "freeze_scurry":
 			_wander_sub_timer -= delta
 			if _wander_sub_timer <= 0.0:
@@ -136,20 +156,18 @@ func _process_wander(delta: float) -> void:
 				else:
 					var freeze_len := 0.5 if _wander_kind == "skitter_pause" else 0.25
 					_wander_sub_timer = freeze_len
-			velocity = _wander_dart_dir * speed if _wander_darting else Vector2.ZERO
+			return _wander_dart_dir * speed if _wander_darting else Vector2.ZERO
 		"long_drift":
 			_wander_sub_timer -= delta
 			if _wander_sub_timer <= 0.0:
 				_wander_dart_dir = Vector2.RIGHT.rotated(randf() * TAU)
 				_wander_sub_timer = randf_range(3.0, 5.0)
-			velocity = _wander_dart_dir * speed
+			return _wander_dart_dir * speed
 		"idle_sway":
 			_wander_sub_timer += delta
-			velocity = Vector2.RIGHT.rotated(_wander_orbit_dir) * sin(_wander_sub_timer * 1.5) * speed * 0.5
+			return Vector2.RIGHT.rotated(_wander_orbit_dir) * sin(_wander_sub_timer * 1.5) * speed * 0.5
 		_:
-			velocity = Vector2.ZERO
-
-	_process_soft_boundary(delta)
+			return Vector2.ZERO
 
 
 func _pick_new_wander_variant() -> void:
@@ -233,7 +251,20 @@ func _maybe_drop_weapon() -> void:
 	# "Pickup luck" (Lucky Find perk) boosts the base non-Pistol drop chance -
 	# the only "item" this MVP has to be lucky about, per issues/13.
 	var luck: float = _player.get_effective_stat("player.pickup_luck", 0.0)
-	var drop_chance: float = 1.0 if _player.weapon_id == "pistol" else clamp(0.08 + luck, 0.0, 1.0)
+	var drop_chance: float
+	if not _player.has_had_first_weapon_drop:
+		# BUGFIX: this used to be 1.0 for every kill while still on the
+		# Pistol, so an early kill could silently swap the player into
+		# whatever weapon rolled (a 1-in-5 chance of the Heavy Cannon's
+		# giant, slow, ~0.5/s projectile) with no confirmation. Per issues/04
+		# only the player's very *first* kill is guaranteed to drop - after
+		# that, still-on-Pistol kills get an elevated but not guaranteed rate.
+		drop_chance = 1.0
+		_player.has_had_first_weapon_drop = true
+	elif _player.weapon_id == "pistol":
+		drop_chance = clamp(0.35 + luck, 0.0, 1.0)
+	else:
+		drop_chance = clamp(0.08 + luck, 0.0, 1.0)
 	if randf() < drop_chance:
 		var weapon_ids: Array = DataTables.get_all_weapons().map(func(w): return w["id"])
 		weapon_ids.erase("pistol")

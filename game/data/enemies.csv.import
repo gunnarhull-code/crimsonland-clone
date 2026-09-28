@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://dcmshypd80dm7"
+
+[deps]
+
+files=["res://data/enemies.variant.translation", "res://data/enemies.name.translation", "res://data/enemies.hp.translation", "res://data/enemies.damage.translation", "res://data/enemies.attack.translation", "res://data/enemies.xp.translation", "res://data/enemies.chase.translation", "res://data/enemies.wander.translation", "res://data/enemies.aggro.translation", "res://data/enemies.hitbox.translation"]
+
+source_file="res://data/enemies.csv"
+dest_files=["res://data/enemies.variant.translation", "res://data/enemies.name.translation", "res://data/enemies.hp.translation", "res://data/enemies.damage.translation", "res://data/enemies.attack.translation", "res://data/enemies.xp.translation", "res://data/enemies.chase.translation", "res://data/enemies.wander.translation", "res://data/enemies.aggro.translation", "res://data/enemies.hitbox.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true
