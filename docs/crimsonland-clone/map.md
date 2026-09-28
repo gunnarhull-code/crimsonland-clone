@@ -12,6 +12,7 @@ A complete, implementation-ready design spec for a single-level Crimsonland-clon
 - **This map's tickets ARE the spec** — resolve each with a precise, implementation-ready answer, not vague direction. This overrides wayfinder's usual "decisions only, no content" framing for ticket bodies: the answer itself should read like a spec section.
 - Present ticket status to the user as a **Kanban board** (visualize widget), refreshed after each resolution — the user does not want to browse individual ticket files to track progress.
 - Perks' in-game descriptions are deliberately vague/qualitative to the player even though the underlying CSV values are precise — don't "fix" this by making descriptions numeric.
+- **Multiplayer is a real future direction.** The MVP itself stays single-player, but any structural choice in the Godot implementation that would be expensive to unwind later (e.g. assuming a singleton player, coupling simulation logic to local input/rendering) should be made the multiplayer-friendly way now. See [16 - Multiplayer-readiness architecture](issues/16-multiplayer-readiness-architecture.md).
 
 ## Decisions so far
 
