@@ -27,6 +27,7 @@ A complete, implementation-ready design spec for a single-level Crimsonland-clon
 - [10 - Enemy AI parameters](issues/10-enemy-ai-parameters.md): 450px aggro radius, 1-2s randomized wander re-roll, concrete wander/chase definitions per species, 60% boss speed multiplier, 1.5s soft-boundary steer-back threshold.
 - [11 - Weapon stat table](issues/11-weapon-stat-table.md): 6-weapon roster (Pistol, Gauss Gun, Electric Gun, Shotgun, SMG, Heavy Cannon) with full stats in a new `weapons.csv`.
 - [12 - Perk effect architecture](issues/12-perk-effect-architecture.md): `perks.csv` schema (effect_type/target/value/trigger + special_handler_id escape hatch), no prerequisite chains for MVP, validated with 3 worked example perks.
+- [13 - Perk content authoring](issues/13-perk-content-authoring.md): all 20 MVP perks authored into [perks.csv](perks.csv), all original text; one (Lucky Break) uses the special_handler_id escape hatch.
 
 ## Not yet specified
 
