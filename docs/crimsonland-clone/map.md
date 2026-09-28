@@ -12,6 +12,7 @@ A complete, implementation-ready design spec for a single-level Crimsonland-clon
 - **This map's tickets ARE the spec** — resolve each with a precise, implementation-ready answer, not vague direction. This overrides wayfinder's usual "decisions only, no content" framing for ticket bodies: the answer itself should read like a spec section.
 - Present ticket status to the user as a **Kanban board** (visualize widget), refreshed after each resolution — the user does not want to browse individual ticket files to track progress.
 - Perks' in-game descriptions are deliberately vague/qualitative to the player even though the underlying CSV values are precise — don't "fix" this by making descriptions numeric.
+- **Multiplayer is a real future direction.** The MVP itself stays single-player, but any structural choice in the Godot implementation that would be expensive to unwind later (e.g. assuming a singleton player, coupling simulation logic to local input/rendering) should be made the multiplayer-friendly way now. See [16 - Multiplayer-readiness architecture](issues/16-multiplayer-readiness-architecture.md).
 
 ## Decisions so far
 
@@ -26,6 +27,12 @@ A complete, implementation-ready design spec for a single-level Crimsonland-clon
 - [09 - Controls (assumed)](issues/09-controls-assumption.md): WASD movement, mouse aim, left-click fire, movement/aim fully independent — assumed from the original, flagged as override-able.
 - [10 - Enemy AI parameters](issues/10-enemy-ai-parameters.md): 450px aggro radius, 1-2s randomized wander re-roll, concrete wander/chase definitions per species, 60% boss speed multiplier, 1.5s soft-boundary steer-back threshold.
 - [11 - Weapon stat table](issues/11-weapon-stat-table.md): 6-weapon roster (Pistol, Gauss Gun, Electric Gun, Shotgun, SMG, Heavy Cannon) with full stats in a new `weapons.csv`.
+- [12 - Perk effect architecture](issues/12-perk-effect-architecture.md): `perks.csv` schema (effect_type/target/value/trigger + special_handler_id escape hatch), no prerequisite chains for MVP, validated with 3 worked example perks.
+- [13 - Perk content authoring](issues/13-perk-content-authoring.md): all 20 MVP perks authored into [perks.csv](perks.csv), all original text; one (Lucky Break) uses the special_handler_id escape hatch.
+- [14 - Player vitals & leveling](issues/14-player-vitals-and-leveling.md): 100 base HP, per-enemy Attack Cooldown with no player-wide invulnerability (matches the original's real mechanic), paused level-up with 0.5s post-choice invulnerability, kills-only XP, `100 × level^1.5` curve.
+- [15 - Enemy combat stats](issues/15-enemy-combat-stats.md): base HP/damage/cooldown/XP per species, Boss Variant multipliers, and a global Toughness Multiplier scaling HP/damage over session time (matches the original) — movement speed stays fixed.
+- [16 - Multiplayer-readiness architecture](issues/16-multiplayer-readiness-architecture.md): instanced player scene, input captured separately from simulation, effect systems take a player instance as a parameter, Autoloads only for genuinely global systems. See [ADR-0001](../adr/0001-multiplayer-ready-single-player-architecture.md).
+- [17 - Enemy spawn pacing](issues/17-enemy-spawn-pacing.md): spawn interval ramps 2.0s→0.3s over ~12 minutes, ~250 concurrent enemy cap (screen-filling, provisional pending real sprite sizes and perf profiling), species mix widens over time, XP pacing sanity-checked.
 
 ## Not yet specified
 
@@ -43,3 +50,4 @@ A complete, implementation-ready design spec for a single-level Crimsonland-clon
 - Ammo scarcity/ammo pickups — the MVP uses infinite ammo with reload time/magazine size as the differentiator instead.
 - Multiple levels or additional game modes (Quest, Rush, etc. from the original) — MVP is a single endless-survival arena only.
 - Live Google Sheets sync for perks — local CSV only for the MVP; live sync could be revisited later if re-exporting becomes a real annoyance.
+- Chapter/Level/Checkpoint campaign progression with permanent Perk unlocks — a real future direction, captured in [future-progression-notes.md](future-progression-notes.md) so it isn't lost, but not part of this single-level MVP.
