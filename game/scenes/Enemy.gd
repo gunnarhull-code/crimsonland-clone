@@ -23,6 +23,18 @@ const WANDER_REROLL_MAX := 2.0
 const BOSS_SPEED_MULT := 0.6
 const OFF_ARENA_STEER_THRESHOLD := 1.5
 
+# Orbit radius per loop-style variant, in px. Large enough to read as a
+# proper loop rather than a tight spin at typical wander speeds (~40-150px/s
+# - a small radius at that speed produces a very high angular rate, which is
+# what "tiny circles, way too fast" actually was: not a speed problem, a
+# missing-radius-control problem).
+const WANDER_RADIUS := {
+	"tight_loop": 70.0,
+	"loop": 130.0,
+	"wide_loop": 200.0,
+	"figure_eight": 110.0,
+}
+
 const PARTICLE_BURST := preload("res://scenes/effects/ParticleBurst.tscn")
 const WEAPON_PICKUP_SCENE := preload("res://scenes/WeaponPickup.tscn")
 
@@ -36,6 +48,7 @@ var _wander_kind: String = "tight_loop"
 var _wander_reroll_timer: float = 0.0
 var _wander_anchor: Vector2 = Vector2.ZERO
 var _wander_orbit_dir: float = 1.0
+var _wander_angle: float = 0.0
 var _wander_sub_timer: float = 0.0
 var _wander_darting: bool = true
 var _wander_dart_dir: Vector2 = Vector2.RIGHT
@@ -110,42 +123,39 @@ func _process_wander(delta: float) -> void:
 		_pick_new_wander_variant()
 
 	var speed: float = stats.get("wander_speed_px_s", 40.0) * (BOSS_SPEED_MULT if variant == "boss" else 1.0)
-	var local_vel := _compute_local_wander_velocity(speed, delta)
 
-	# BUGFIX: the local pattern alone orbits/darts around a fixed spawn point
-	# forever - an enemy spawned on the side edges (>450px from a centered
-	# player) could never geometrically drift into aggro range, so it just
-	# circled at the border indefinitely. A small constant pull toward the
-	# player, blended under whichever local pattern is active, guarantees
-	# every wandering enemy eventually reaches aggro range while keeping the
-	# local pattern as the dominant, visible motion (matches the original's
-	# "gradually enter and make their way toward the player" framing).
-	var drift := Vector2.ZERO
+	# BUGFIX: the anchor drifts toward the player regardless of which local
+	# pattern is active, so wandering always eventually closes the distance
+	# into aggro range even from a spawn point the local pattern alone could
+	# never carry it away from (e.g. the side edges, >450px from a centered
+	# player). Drifting the ANCHOR rather than adding to velocity directly
+	# keeps the orbit's own shape/radius clean instead of distorting it.
 	if _player and is_instance_valid(_player):
-		var to_player: Vector2 = _player.global_position - global_position
+		var to_player: Vector2 = _player.global_position - _wander_anchor
 		if to_player.length() > 1.0:
-			drift = to_player.normalized() * speed * 0.3
+			_wander_anchor += to_player.normalized() * speed * 0.25 * delta
 
-	velocity = local_vel + drift
+	velocity = _compute_local_wander_velocity(speed, delta)
 	_process_soft_boundary(delta)
 
 
 func _compute_local_wander_velocity(speed: float, delta: float) -> Vector2:
 	match _wander_kind:
-		"tight_loop", "loop", "wide_loop":
-			var offset := global_position - _wander_anchor
-			if offset.length() < 1.0:
-				offset = Vector2.RIGHT
-			return offset.normalized().rotated(_wander_orbit_dir * PI / 2.0) * speed
-		"figure_eight":
-			_wander_sub_timer -= delta
-			if _wander_sub_timer <= 0.0:
-				_wander_sub_timer = 0.9
-				_wander_orbit_dir *= -1.0
-			var offset := global_position - _wander_anchor
-			if offset.length() < 1.0:
-				offset = Vector2.RIGHT
-			return offset.normalized().rotated(_wander_orbit_dir * PI / 2.0) * speed
+		"tight_loop", "loop", "wide_loop", "figure_eight":
+			if _wander_kind == "figure_eight":
+				_wander_sub_timer -= delta
+				if _wander_sub_timer <= 0.0:
+					_wander_sub_timer = 0.9
+					_wander_orbit_dir *= -1.0
+			var radius: float = WANDER_RADIUS.get(_wander_kind, 100.0)
+			# Angular rate = speed / radius, so a larger radius reads as a
+			# slower, lazier loop rather than a fast spin at the same speed.
+			_wander_angle += (speed / radius) * _wander_orbit_dir * delta
+			# A touch of "imperfect" wobble - not a mathematically clean circle.
+			var wobble := 1.0 + 0.18 * sin(_wander_angle * 2.3)
+			var target: Vector2 = _wander_anchor + Vector2.RIGHT.rotated(_wander_angle) * radius * wobble
+			var to_target: Vector2 = target - global_position
+			return to_target.normalized() * speed if to_target.length() > 1.0 else Vector2.ZERO
 		"skitter_pause", "zigzag_dart", "freeze_scurry":
 			_wander_sub_timer -= delta
 			if _wander_sub_timer <= 0.0:
@@ -174,10 +184,19 @@ func _pick_new_wander_variant() -> void:
 	_wander_reroll_timer = randf_range(WANDER_REROLL_MIN, WANDER_REROLL_MAX)
 	var options: Array = SPECIES_WANDER_VARIANTS.get(species, ["tight_loop"])
 	_wander_kind = options[randi() % options.size()]
-	_wander_anchor = global_position
 	_wander_orbit_dir = 1.0 if randf() < 0.5 else -1.0
 	_wander_sub_timer = 0.0
 	_wander_darting = true
+	if WANDER_RADIUS.has(_wander_kind):
+		# Start the orbit exactly where the enemy already is, rather than
+		# anchored at the current position (which would force a slow
+		# spiral-in from radius 0 - with only a 1-2s re-roll window, it would
+		# switch variants again before ever tracing a visible loop).
+		_wander_angle = randf() * TAU
+		var radius: float = WANDER_RADIUS[_wander_kind]
+		_wander_anchor = global_position - Vector2.RIGHT.rotated(_wander_angle) * radius
+	else:
+		_wander_anchor = global_position
 
 
 func _process_soft_boundary(delta: float) -> void:
