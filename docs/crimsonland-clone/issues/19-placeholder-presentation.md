@@ -38,3 +38,11 @@ Filled into [enemies.csv](../enemies.csv)'s `hitbox_radius_px` column, left blan
 - Level-up: 6 particles, golden, radiating alongside the expanding ring.
 
 Lives in an `Effects` container alongside the `Enemies`/`Projectiles` containers from [18](18-godot-scene-structure.md)'s scene structure — same instancing pattern, not a new architectural concept.
+
+**Addendum — bullets and gun pickups get real shapes, not generic dots/rings**: direct playtest feedback ("give the weapons shape, not circles — bullets are different from guns") pointed out that the "circle = hitbox" principle above had silently spread to things that aren't hitboxes at all — every bullet was a dot (or, for Gauss, a line), and every dropped weapon was the same ring-and-dot regardless of which weapon it was. Two independent shape languages now exist, deliberately different from each other for the same weapon:
+- **Bullets** (`ProjectileVisual.gd`): Pistol/SMG = elongated capsule, Gauss Gun = long thin beam (unchanged), Electric Gun = small jagged bolt glyph, Shotgun = forward-pointing pellet triangle, Heavy Cannon = tapered rocket nose-cone.
+- **Weapon pickups** (`WeaponPickup.gd`): Pistol = square, Gauss Gun = long diamond, Electric Gun = bolt outline, Shotgun = fan/wedge, SMG = three stacked bars, Heavy Cannon = rocket silhouette. Sits on a small dark diamond plate (not a circle) for ground contrast.
+
+The circle-hitbox rule itself is untouched — it still applies to every Player/Enemy silhouette via `EntityVisual.gd`, unchanged.
+
+**Addendum — Electric Gun chain gets a VFX line**: the chain-lightning jump from the primary target to the nearby enemy it arcs to was previously invisible (both just took damage with no visual link). A brief jagged line (`ZapLine.gd`, same reusable-effect pattern as `ParticleBurst.gd`) now draws between the two enemies for ~0.15s on every chain hit, so the arc is legible.

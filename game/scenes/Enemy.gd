@@ -23,6 +23,18 @@ const WANDER_REROLL_MAX := 2.0
 const BOSS_SPEED_MULT := 0.6
 const OFF_ARENA_STEER_THRESHOLD := 1.5
 
+# Spider jerk randomness (both wander's skitter_pause and chase's burst-dart
+# use these) - per direct playtest request, the old fixed 0.4s/0.3s burst
+# timing read as a metronome, not a jerky, unpredictable spider. Randomizing
+# both how long each dart lasts (timing) and how fast it covers ground
+# (distance) breaks that regularity.
+const SPIDER_BURST_MIN := 0.15
+const SPIDER_BURST_MAX := 0.55
+const SPIDER_FREEZE_MIN := 0.12
+const SPIDER_FREEZE_MAX := 0.5
+const SPIDER_DART_SPEED_MIN := 0.6
+const SPIDER_DART_SPEED_MAX := 1.5
+
 # Orbit radius per loop-style variant, in px. Large enough to read as a
 # proper loop rather than a tight spin at typical wander speeds (~40-150px/s
 # - a small radius at that speed produces a very high angular rate, which is
@@ -55,6 +67,8 @@ var _wander_dart_dir: Vector2 = Vector2.RIGHT
 
 var _spider_bursting: bool = true
 var _spider_phase_timer: float = 0.4
+var _spider_dart_speed_mult: float = 1.0
+var _wander_dart_speed_mult: float = 1.0
 
 var _off_arena_timer: float = 0.0
 var _attack_cooldown_timer: float = 0.0
@@ -163,10 +177,13 @@ func _compute_local_wander_velocity(speed: float, delta: float) -> Vector2:
 				if _wander_darting:
 					_wander_dart_dir = Vector2.RIGHT.rotated(randf() * TAU)
 					_wander_sub_timer = randf_range(0.3, 0.6)
+					if _wander_kind == "skitter_pause":
+						_wander_dart_speed_mult = randf_range(SPIDER_DART_SPEED_MIN, SPIDER_DART_SPEED_MAX)
 				else:
-					var freeze_len := 0.5 if _wander_kind == "skitter_pause" else 0.25
+					var freeze_len := randf_range(SPIDER_FREEZE_MIN, SPIDER_FREEZE_MAX) if _wander_kind == "skitter_pause" else 0.25
 					_wander_sub_timer = freeze_len
-			return _wander_dart_dir * speed if _wander_darting else Vector2.ZERO
+			var speed_mult: float = _wander_dart_speed_mult if _wander_kind == "skitter_pause" else 1.0
+			return _wander_dart_dir * speed * speed_mult if _wander_darting else Vector2.ZERO
 		"long_drift":
 			_wander_sub_timer -= delta
 			if _wander_sub_timer <= 0.0:
@@ -224,8 +241,12 @@ func _process_chase(delta: float) -> void:
 		_spider_phase_timer -= delta
 		if _spider_phase_timer <= 0.0:
 			_spider_bursting = not _spider_bursting
-			_spider_phase_timer = 0.4 if _spider_bursting else 0.3
-		velocity = dir * chase_speed if _spider_bursting else Vector2.ZERO
+			if _spider_bursting:
+				_spider_phase_timer = randf_range(SPIDER_BURST_MIN, SPIDER_BURST_MAX)
+				_spider_dart_speed_mult = randf_range(SPIDER_DART_SPEED_MIN, SPIDER_DART_SPEED_MAX)
+			else:
+				_spider_phase_timer = randf_range(SPIDER_FREEZE_MIN, SPIDER_FREEZE_MAX)
+		velocity = dir * chase_speed * _spider_dart_speed_mult if _spider_bursting else Vector2.ZERO
 	else:
 		velocity = dir * chase_speed
 
@@ -235,9 +256,7 @@ func _process_chase(delta: float) -> void:
 func _process_contact_damage(delta: float) -> void:
 	var my_radius: float = stats.get("hitbox_radius_px", 14.0)
 	var player_radius: float = _player.hitbox_radius if "hitbox_radius" in _player else 14.0
-	# +4px buffer: now that collision keeps bodies from truly overlapping,
-	# physics resolution settles them just outside exact contact distance.
-	var touching: bool = global_position.distance_to(_player.global_position) <= (my_radius + player_radius + 4.0)
+	var touching: bool = global_position.distance_to(_player.global_position) <= (my_radius + player_radius)
 	if not touching:
 		return
 	_attack_cooldown_timer -= delta

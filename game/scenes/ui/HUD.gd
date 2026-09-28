@@ -1,17 +1,22 @@
 extends Control
 ## Live HUD per issues/20 - score shown during play, not just on death.
 
+const WAVE_DISPLAY_SEC := 2.5
+
 @onready var _hp_label: Label = $HPLabel
 @onready var _score_label: Label = $ScoreLabel
 @onready var _level_label: Label = $LevelLabel
 @onready var _weapon_label: Label = $WeaponLabel
 @onready var _ammo_label: Label = $AmmoLabel
+@onready var _wave_label: Label = $WaveLabel
 
 var _player: Node
+var _wave_display_id: int = 0
 
 
 func _ready() -> void:
 	call_deferred("_connect_to_player")
+	EnemySpawner.wave_announced.connect(_on_wave_announced)
 
 
 func _connect_to_player() -> void:
@@ -51,3 +56,14 @@ func _on_xp_changed(xp: float, xp_required: float, level: int) -> void:
 
 func _on_weapon_changed(weapon_id: String) -> void:
 	_weapon_label.text = "Weapon: %s" % weapon_id
+
+
+## A named wave (e.g. "Rat Swarm") shown briefly per EnemySpawner's themed
+## wave events, so a group spawn reads as a deliberate beat, not silent RNG.
+func _on_wave_announced(text: String) -> void:
+	_wave_label.text = text
+	_wave_display_id += 1
+	var id := _wave_display_id
+	await get_tree().create_timer(WAVE_DISPLAY_SEC).timeout
+	if id == _wave_display_id:
+		_wave_label.text = ""

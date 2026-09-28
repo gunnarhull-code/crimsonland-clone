@@ -11,7 +11,15 @@ const CHAIN_RANGE := 150.0
 const PIERCE_COUNT := 3
 const EXPLOSION_RADIUS := 60.0
 
+# Heavy Cannon "rocket taking off" launch curve - per direct playtest
+# request. Starts near-stationary, then rapidly ramps to its normal cruise
+# speed (`speed`, from weapons.csv) over a tiny fraction of a second via a
+# cubic ease-in, instead of leaving the arena at full speed instantly.
+const ROCKET_LAUNCH_START_SPEED := 25.0
+const ROCKET_LAUNCH_ACCEL_SEC := 0.18
+
 const PARTICLE_BURST := preload("res://scenes/effects/ParticleBurst.tscn")
+const ZAP_LINE := preload("res://scenes/effects/ZapLine.tscn")
 
 var direction: Vector2 = Vector2.RIGHT
 var speed: float = 700.0
@@ -21,6 +29,7 @@ var pierce_remaining: int = 0
 
 var _hit_enemies: Array = []
 var _lifetime: float = 0.0
+var _rocket_launch_timer: float = 0.0
 
 @onready var _visual: Node2D = $Visual
 
@@ -39,23 +48,28 @@ func setup(dir: Vector2, stats: Dictionary, w_id: String) -> void:
 func _configure_visual() -> void:
 	match weapon_id:
 		"pistol":
-			_visual.configure_dot(3.0, Color(0.98, 0.97, 0.96))
+			_visual.configure_capsule(9.0, 3.0, Color(0.98, 0.97, 0.96))
 		"gauss_gun":
 			_visual.configure_line(28.0, Color(0.95, 0.78, 0.27))
 		"electric_gun":
-			_visual.configure_dot(4.0, Color(0.435, 0.722, 0.910))
+			_visual.configure_bolt(14.0, Color(0.435, 0.722, 0.910))
 		"shotgun":
-			_visual.configure_dot(2.5, Color(0.69, 0.68, 0.65))
+			_visual.configure_pellet(5.0, Color(0.69, 0.68, 0.65))
 		"smg":
-			_visual.configure_dot(2.5, Color(0.95, 0.57, 0.29))
+			_visual.configure_capsule(7.0, 2.5, Color(0.95, 0.57, 0.29))
 		"heavy_cannon":
-			_visual.configure_dot(12.0, Color(0.7, 0.23, 0.23))
+			_visual.configure_rocket(22.0, 7.0, Color(0.7, 0.23, 0.23))
 		_:
 			_visual.configure_dot(3.0, Color.WHITE)
 
 
 func _physics_process(delta: float) -> void:
-	global_position += direction * speed * delta
+	var travel_speed := speed
+	if weapon_id == "heavy_cannon":
+		_rocket_launch_timer += delta
+		var t: float = clamp(_rocket_launch_timer / ROCKET_LAUNCH_ACCEL_SEC, 0.0, 1.0)
+		travel_speed = lerp(ROCKET_LAUNCH_START_SPEED, speed, t * t * t)
+	global_position += direction * travel_speed * delta
 	_lifetime += delta
 	if _lifetime > MAX_LIFETIME or _is_off_arena():
 		queue_free()
@@ -105,6 +119,7 @@ func _try_chain(origin: Node) -> void:
 	if closest:
 		closest.take_damage(damage)
 		_hit_particles(closest.global_position)
+		_zap_line(origin.global_position, closest.global_position)
 		AudioManager.play_hit()
 
 
@@ -128,3 +143,9 @@ func _hit_particles(at: Vector2) -> void:
 	get_tree().current_scene.get_node("Effects").add_child(burst)
 	burst.global_position = at
 	burst.fire(3, Color(0.95, 0.95, 0.92))
+
+
+func _zap_line(from: Vector2, to: Vector2) -> void:
+	var zap := ZAP_LINE.instantiate()
+	get_tree().current_scene.get_node("Effects").add_child(zap)
+	zap.fire(from, to, Color(0.6, 0.85, 1.0))

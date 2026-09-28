@@ -1,7 +1,7 @@
 id,name,fire_rate_per_sec,magazine_size,reload_time_sec,projectile_speed_px_s,spread_deg,damage,special
 pistol,"Pistol",3.5,12,1.0,950,2,10,"Starting weapon - the baseline every other weapon is judged against"
 gauss_gun,"Gauss Gun",1,5,1.8,1400,0,25,"Pierces up to 3 enemies per shot"
-electric_gun,"Electric Gun",3,20,1.5,700,5,7,"Arcs to 1 enemy within 150px of the primary target; both take full damage"
+electric_gun,"Electric Gun",3,20,1.5,120,5,7,"Way slower bullet than the rest of the roster so the chain-lightning VFX reads - arcs to 1 enemy within 150px of the primary target; both take full damage"
 shotgun,"Shotgun",1,6,1.8,750,25,4,"Fires 6 pellets per shot"
 smg,"SMG",8,30,1.2,950,10,5,"Volume-of-fire weapon - low per-shot damage, relies on rate of fire"
 heavy_cannon,"Heavy Cannon",0.5,4,2.5,300,0,50,"Slowest bullet in the game - deliberately unchanged - the lead-your-shot showcase (~4.3s to cross the 1280px arena); explodes in a 60px radius on impact"
