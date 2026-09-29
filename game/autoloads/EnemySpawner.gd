@@ -30,7 +30,10 @@ const NEST_CAP := 2
 const INTER_WAVE_DELAY_SEC := 2.5
 const SPAWN_STAGGER_SEC := 0.12
 const CLUSTER_SCATTER_PX := 40.0
-const RING_RADIUS := 320.0
+# 320 -> 600 per direct playtest request: a ring wave that drops in close
+# enough to "barely escape" isn't a fun ambush, it's just unfair. 600px
+# gives real room to react before the ring can close in.
+const RING_RADIUS := 600.0
 const LINE_SPACING := 55.0
 
 ## Toughness now scales with the wave marker instead of elapsed session

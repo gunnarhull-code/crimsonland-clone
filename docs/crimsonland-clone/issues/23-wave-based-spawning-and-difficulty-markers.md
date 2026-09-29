@@ -64,3 +64,5 @@ Every wave - authored or procedural - is spawned using a `RandomNumberGenerator`
 ### Verification
 
 Verified headlessly with temporary instrumentation (removed before committing): a fresh run's wave 1 spawns exactly 6 rats; killing them all advances to wave 2 (12 enemies: 10 rats + 2 spiders, matching the CSV); setting `SaveManager.next_run_start_wave = 5` and starting fresh correctly spawns wave 5's full 16-enemy roster (8+6+2) instead of wave 1's. One real bug caught this way: the wave-advance code initially never incremented `current_wave`, so clearing a wave silently repeated it forever - fixed before this shipped.
+
+**Addendum — ring formation was too close to be a fair ambush**: `RING_RADIUS` (used by the `ring` formation - enemies dropping in evenly spaced around the player, e.g. "Web and Fang"/"Eight-Legged Siege") was 320px. Reported directly ("I like when you spawn a ring of guys around me, but... I want them spawned way further. I don't want them spawned so close I can barely escape"). Increased to 600px - enough room to actually react and reposition before the ring closes in, rather than starting the encounter nearly surrounded.

@@ -5,9 +5,17 @@ extends CharacterBody2D
 ## state machine from issues/06/issues/10: dynamic re-rolling wander, then
 ## permanent aggro with a species-specific chase style.
 
+## Per direct playtest request ("I want the spiders to sort of just chill
+## around. But maybe the rats can just move around as a group... meander"):
+## Rat wanders exclusively as a loose pack now (see "group_meander" below,
+## replacing its old solo tight_loop/zigzag_dart/freeze_scurry repertoire).
+## Spider is weighted toward skitter_pause (duplicated in the pool, a cheap
+## way to bias the reroll odds without a full weighted-random system) so it
+## reads as mostly still with the occasional short dart, rather than
+## constantly looping.
 const SPECIES_WANDER_VARIANTS := {
-	"rat": ["tight_loop", "zigzag_dart", "freeze_scurry"],
-	"spider": ["loop", "figure_eight", "skitter_pause"],
+	"rat": ["group_meander"],
+	"spider": ["skitter_pause", "skitter_pause", "loop"],
 	"alien": ["wide_loop", "long_drift", "idle_sway"],
 }
 const SPECIES_INNER_SHAPE := {"rat": "dots", "spider": "diamond", "alien": "hexagon"}
@@ -100,11 +108,22 @@ const SPEED_VARIANCE_MAX := 1.15
 # what "tiny circles, way too fast" actually was: not a speed problem, a
 # missing-radius-control problem).
 const WANDER_RADIUS := {
-	"tight_loop": 70.0,
 	"loop": 130.0,
 	"wide_loop": 200.0,
 	"figure_eight": 110.0,
 }
+
+# Rat's group_meander: cohere toward nearby same-species rats' average
+# position (a cheap decentralized flocking rule - no leader/follower
+# bookkeeping needed) plus a slow shared drift direction. The drift angle
+# is a pure function of wall-clock time, so every rat computes the exact
+# same direction independently without any inter-agent messaging - that's
+# what makes the pack drift together instead of each rat picking its own
+# direction.
+const GROUP_MEANDER_NEIGHBOR_RADIUS := 150.0
+const GROUP_MEANDER_COHESION_SPEED_FRAC := 0.4
+const GROUP_MEANDER_DRIFT_SPEED_FRAC := 0.7
+const GROUP_MEANDER_DRIFT_ANGULAR_RATE := 0.1
 
 const PARTICLE_BURST := preload("res://scenes/effects/ParticleBurst.tscn")
 const WEAPON_PICKUP_SCENE := preload("res://scenes/WeaponPickup.tscn")
@@ -282,20 +301,26 @@ func _compute_local_wander_velocity(speed: float, delta: float) -> Vector2:
 			var target: Vector2 = _wander_anchor + Vector2.RIGHT.rotated(_wander_angle) * radius * wobble
 			var to_target: Vector2 = target - global_position
 			return to_target.normalized() * speed if to_target.length() > 1.0 else Vector2.ZERO
-		"skitter_pause", "zigzag_dart", "freeze_scurry":
+		"skitter_pause":
 			_wander_sub_timer -= delta
 			if _wander_sub_timer <= 0.0:
 				_wander_darting = not _wander_darting
 				if _wander_darting:
 					_wander_dart_dir = Vector2.RIGHT.rotated(randf() * TAU)
 					_wander_sub_timer = randf_range(0.3, 0.6)
-					if _wander_kind == "skitter_pause":
-						_wander_dart_speed_mult = randf_range(SPIDER_DART_SPEED_MIN, SPIDER_DART_SPEED_MAX)
+					_wander_dart_speed_mult = randf_range(SPIDER_DART_SPEED_MIN, SPIDER_DART_SPEED_MAX)
 				else:
-					var freeze_len := randf_range(SPIDER_FREEZE_MIN, SPIDER_FREEZE_MAX) if _wander_kind == "skitter_pause" else 0.25
-					_wander_sub_timer = freeze_len
-			var speed_mult: float = _wander_dart_speed_mult if _wander_kind == "skitter_pause" else 1.0
-			return _wander_dart_dir * speed * speed_mult if _wander_darting else Vector2.ZERO
+					_wander_sub_timer = randf_range(SPIDER_FREEZE_MIN, SPIDER_FREEZE_MAX)
+			return _wander_dart_dir * speed * _wander_dart_speed_mult if _wander_darting else Vector2.ZERO
+		"group_meander":
+			var to_group: Vector2 = _compute_nearby_rat_average() - global_position
+			var cohesion: Vector2 = Vector2.ZERO
+			if to_group.length() > 20.0:
+				cohesion = to_group.normalized() * speed * GROUP_MEANDER_COHESION_SPEED_FRAC
+			var drift_angle: float = sin(Time.get_ticks_msec() / 1000.0 * GROUP_MEANDER_DRIFT_ANGULAR_RATE) * TAU
+			var drift: Vector2 = Vector2.RIGHT.rotated(drift_angle) * speed * GROUP_MEANDER_DRIFT_SPEED_FRAC
+			var combined := cohesion + drift
+			return combined.limit_length(speed)
 		"long_drift":
 			_wander_sub_timer -= delta
 			if _wander_sub_timer <= 0.0:
@@ -307,6 +332,18 @@ func _compute_local_wander_velocity(speed: float, delta: float) -> Vector2:
 			return Vector2.RIGHT.rotated(_wander_orbit_dir) * sin(_wander_sub_timer * 1.5) * speed * 0.5
 		_:
 			return Vector2.ZERO
+
+
+func _compute_nearby_rat_average() -> Vector2:
+	var sum := global_position
+	var count := 1
+	for e in get_tree().get_nodes_in_group("enemies"):
+		if e == self or not is_instance_valid(e) or e.species != "rat":
+			continue
+		if global_position.distance_to(e.global_position) <= GROUP_MEANDER_NEIGHBOR_RADIUS:
+			sum += e.global_position
+			count += 1
+	return sum / count
 
 
 func _pick_new_wander_variant() -> void:
