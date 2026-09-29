@@ -6,11 +6,11 @@ extends Node2D
 ## original static-screen/no-scrolling call.
 
 @onready var _player: CharacterBody2D = $Player
-@onready var _background: ColorRect = $Background
+@onready var _background: Node2D = $Background
 
 
 func _ready() -> void:
-	_background.size = ArenaConfig.size
+	_background.setup(ArenaConfig.size)
 	var enemies: Node2D = $Enemies
 	EnemySpawner.register_arena(enemies, _player, ArenaConfig.size)
 	SessionClock.start()
