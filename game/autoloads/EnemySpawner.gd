@@ -37,6 +37,8 @@ const CLUSTER_SCATTER_PX := 40.0
 # enough to "barely escape" isn't a fun ambush, it's just unfair. 600px
 # gives real room to react before the ring can close in.
 const RING_RADIUS := 600.0
+const RING_RADIUS_SMALL := 380.0
+const RING_RADIUS_LARGE := 900.0
 const LINE_SPACING := 55.0
 
 ## Toughness now scales with the wave marker instead of elapsed session
@@ -52,7 +54,7 @@ const PROCEDURAL_BASE_RAT := 10
 const PROCEDURAL_BASE_SPIDER := 8
 const PROCEDURAL_BASE_ALIEN := 6
 const PROCEDURAL_SCALE_PER_WAVE := 0.12
-const PROCEDURAL_FORMATIONS := ["cluster", "ring", "line", "pincer"]
+const PROCEDURAL_FORMATIONS := ["cluster", "cluster_near", "cluster_far", "scatter", "ring", "ring_small", "ring_large", "double_ring", "wall", "pincer", "arc", "spiral", "cross", "corners"]
 
 var _enemies_container: Node2D
 var _player: Node2D
@@ -134,15 +136,37 @@ func _start_current_wave() -> void:
 	var origin := _random_point_near_player(rng)
 	match wave.get("formation", "cluster"):
 		"ring":
-			_queue_ring(roster, rng)
+			_queue_ring(roster, rng, RING_RADIUS)
+		"ring_small":
+			_queue_ring(roster, rng, RING_RADIUS_SMALL)
+		"ring_large":
+			_queue_ring(roster, rng, RING_RADIUS_LARGE)
+		"double_ring":
+			_queue_double_ring(roster, rng)
 		"line":
 			_queue_line(roster, origin, rng)
+		"wall":
+			_queue_wall(roster, rng)
 		"pincer":
 			_queue_pincer(roster, rng)
+		"arc":
+			_queue_arc(roster, rng)
+		"spiral":
+			_queue_spiral(roster, rng)
+		"cross":
+			_queue_cross(roster, rng)
+		"corners":
+			_queue_corners(roster, rng)
+		"scatter":
+			_queue_scatter(roster, rng)
+		"cluster_near":
+			_queue_cluster(roster, _point_near_player(rng, 400.0, 550.0), rng)
+		"cluster_far":
+			_queue_cluster(roster, _point_near_player(rng, 1000.0, 1300.0), rng)
 		_:
 			_queue_cluster(roster, origin, rng)
 	if wave.get("spawns_nest", false) and _active_nest_count < NEST_CAP:
-		_spawn_nest(rng)
+		_spawn_nest(rng, wave.get("nest_species", ""))
 	_wave_active = true
 
 
@@ -196,7 +220,7 @@ func _queue_cluster(roster: Array, origin: Vector2, rng: RandomNumberGenerator) 
 
 ## Enemies "dropping in" evenly spaced around the player - an ambush rather
 ## than an edge trickle.
-func _queue_ring(roster: Array, rng: RandomNumberGenerator) -> void:
+func _queue_ring(roster: Array, rng: RandomNumberGenerator, radius: float) -> void:
 	if _player == null or not is_instance_valid(_player):
 		return
 	var count := roster.size()
@@ -205,9 +229,8 @@ func _queue_ring(roster: Array, rng: RandomNumberGenerator) -> void:
 	var start_angle := rng.randf() * TAU
 	for i in count:
 		var angle := start_angle + TAU * float(i) / count + rng.randf_range(-0.15, 0.15)
-		var pos: Vector2 = _player.global_position + Vector2.RIGHT.rotated(angle) * RING_RADIUS
-		pos.x = clamp(pos.x, 10.0, _arena_size.x - 10.0)
-		pos.y = clamp(pos.y, 10.0, _arena_size.y - 10.0)
+		var pos: Vector2 = _player.global_position + Vector2.RIGHT.rotated(angle) * radius
+		pos = _clamp_to_arena(pos)
 		_pending_spawns.append({"delay": i * SPAWN_STAGGER_SEC, "species": roster[i]["species"], "variant": roster[i]["variant"], "pos": pos})
 
 
@@ -221,6 +244,106 @@ func _queue_line(roster: Array, origin: Vector2, rng: RandomNumberGenerator) -> 
 		_pending_spawns.append({"delay": i * SPAWN_STAGGER_SEC, "species": roster[i]["species"], "variant": roster[i]["variant"], "pos": pos})
 	# rng unused for line jitter by design - a clean marching line reads better without it.
 	rng.randf()
+
+
+func _clamp_to_arena(pos: Vector2) -> Vector2:
+	return Vector2(clamp(pos.x, 10.0, _arena_size.x - 10.0), clamp(pos.y, 10.0, _arena_size.y - 10.0))
+
+
+func _player_pos() -> Vector2:
+	if _player == null or not is_instance_valid(_player):
+		return _arena_size / 2.0
+	return _player.global_position
+
+
+func _queue_at(i: int, entry: Dictionary, pos: Vector2) -> void:
+	_pending_spawns.append({"delay": i * SPAWN_STAGGER_SEC, "species": entry["species"], "variant": entry["variant"], "pos": _clamp_to_arena(pos)})
+
+
+## Two concentric rings (alternating inner/outer) - pressure from two depths.
+func _queue_double_ring(roster: Array, rng: RandomNumberGenerator) -> void:
+	var start_angle := rng.randf() * TAU
+	var center := _player_pos()
+	for i in roster.size():
+		var ring_radius := RING_RADIUS_SMALL + 60.0 if i % 2 == 0 else RING_RADIUS_LARGE - 50.0
+		var angle := start_angle + TAU * float(i) / roster.size() + rng.randf_range(-0.1, 0.1)
+		_queue_at(i, roster[i], center + Vector2.RIGHT.rotated(angle) * ring_radius)
+
+
+## A two-deep wall 800px away, facing the player - a proper advancing front
+## (unlike "line", which hugs an arena edge).
+func _queue_wall(roster: Array, rng: RandomNumberGenerator) -> void:
+	var center := _player_pos()
+	var angle := rng.randf() * TAU
+	var forward := Vector2.RIGHT.rotated(angle)
+	var side := forward.orthogonal()
+	var per_row := int(ceil(roster.size() / 2.0))
+	for i in roster.size():
+		var row := i / per_row
+		var col := i % per_row
+		var lateral := (col - (per_row - 1) / 2.0) * LINE_SPACING
+		_queue_at(i, roster[i], center + forward * (800.0 + row * 60.0) + side * lateral)
+
+
+## A half-ring on one side of the player - they can only run the other way.
+func _queue_arc(roster: Array, rng: RandomNumberGenerator) -> void:
+	var center := _player_pos()
+	var mid := rng.randf() * TAU
+	var count := roster.size()
+	for i in count:
+		var t: float = float(i) / float(max(1, count - 1)) - 0.5
+		_queue_at(i, roster[i], center + Vector2.RIGHT.rotated(mid + t * PI) * 700.0)
+
+
+## A spiral fanning outward from 450px to 950px away.
+func _queue_spiral(roster: Array, rng: RandomNumberGenerator) -> void:
+	var center := _player_pos()
+	var start_angle := rng.randf() * TAU
+	var count := roster.size()
+	for i in count:
+		var radius: float = 450.0 + 500.0 * float(i) / float(max(1, count - 1))
+		_queue_at(i, roster[i], center + Vector2.RIGHT.rotated(start_angle + i * 0.55) * radius)
+
+
+## Four columns marching in from north/east/south/west.
+func _queue_cross(roster: Array, rng: RandomNumberGenerator) -> void:
+	var center := _player_pos()
+	var start_angle := rng.randf() * TAU
+	for i in roster.size():
+		var arm := i % 4
+		var depth := i / 4
+		_queue_at(i, roster[i], center + Vector2.RIGHT.rotated(start_angle + arm * PI / 2.0) * (550.0 + depth * 55.0))
+
+
+## Four small clusters at the diagonals, 750px out.
+func _queue_corners(roster: Array, rng: RandomNumberGenerator) -> void:
+	var center := _player_pos()
+	var start_angle := rng.randf() * TAU + PI / 4.0
+	var origins: Array = []
+	for k in 4:
+		origins.append(_clamp_to_arena(center + Vector2.RIGHT.rotated(start_angle + k * PI / 2.0) * 750.0))
+	for i in roster.size():
+		var off := Vector2(rng.randf_range(-CLUSTER_SCATTER_PX, CLUSTER_SCATTER_PX), rng.randf_range(-CLUSTER_SCATTER_PX, CLUSTER_SCATTER_PX))
+		_queue_at(i, roster[i], origins[i % 4] + off)
+
+
+## Everyone at an independent random spot 450-1000px out.
+func _queue_scatter(roster: Array, rng: RandomNumberGenerator) -> void:
+	for i in roster.size():
+		_queue_at(i, roster[i], _point_near_player(rng, 450.0, 1000.0))
+
+
+func _point_near_player(rng: RandomNumberGenerator, min_r: float, max_r: float) -> Vector2:
+	var angle := rng.randf() * TAU
+	return _clamp_to_arena(_player_pos() + Vector2.RIGHT.rotated(angle) * rng.randf_range(min_r, max_r))
+
+
+## Seeded species roll for Nests the CSV doesn't pin (alien only from wave 5).
+func _pick_nest_species(rng: RandomNumberGenerator) -> String:
+	var options := ["rat", "spider"]
+	if current_wave >= 5:
+		options.append("alien")
+	return options[rng.randi() % options.size()]
 
 
 func _queue_pincer(roster: Array, rng: RandomNumberGenerator) -> void:
@@ -280,12 +403,12 @@ func spawn_enemy_at(species: String, variant: String, pos: Vector2) -> Node:
 	return enemy
 
 
-func _spawn_nest(rng: RandomNumberGenerator) -> void:
+func _spawn_nest(rng: RandomNumberGenerator, species_override: String = "") -> void:
 	var nest := NEST_SCENE.instantiate()
 	_enemies_container.add_child(nest)
 	_active_nest_count += 1
 	nest.tree_exited.connect(_on_nest_removed)
-	nest.setup(_random_interior_position(rng))
+	nest.setup(_random_interior_position(rng), species_override if species_override != "" else _pick_nest_species(rng))
 
 
 func _on_nest_removed() -> void:

@@ -155,6 +155,7 @@ func _load_waves(path: String) -> Dictionary:
 			"boss_count": int(_num(row, "boss_count")),
 			"spawns_nest": row.get("spawns_nest", "") == "true",
 			"formation": row.get("formation", "cluster"),
+			"nest_species": row.get("nest_species", ""),
 		}
 		table[n] = entry
 	return table

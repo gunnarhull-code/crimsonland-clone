@@ -72,3 +72,9 @@ Verified headlessly with temporary instrumentation (removed before committing): 
 > "I want to make sure there's a shop every wave. And then you can continue run after every wave."
 
 Clearing a wave now stops the spawner (`EnemySpawner.wave_cleared`) and opens `UpgradeShop` in a mid-run mode with a **Continue Run** button (no wave picker) instead of Start Run. The run's score earned so far is banked at that stop (`SaveManager.bank_run_score`, delta-tracked so death doesn't double-bank). Perks bought mid-run take effect next run; weapon upgrades apply immediately. The wave announcement now reads "Wave N: Name".
+
+## Addendum: more formations, size variants, and Nest species (playtest)
+
+Formation column values in `waves.csv` (distances are from the player): `cluster` (~780-950), `cluster_near` (400-550), `cluster_far` (1000-1300), `scatter` (independent spots 450-1000), `ring` (600), `ring_small` (380), `ring_large` (900), `double_ring` (alternating ~440/850), `line` (arena edge), `wall` (two-deep front 800 out), `pincer` (two clusters on opposite sides), `arc` (half-ring, 700), `spiral` (450 -> 950), `cross` (four columns), `corners` (four diagonal clusters, 750). Waves 2, 4, 5, 6, 7, 8, 9 were re-assigned to new formations; procedural waves roll from all of them.
+
+Nests: new optional `nest_species` CSV column (`rat`/`spider`/`alien`). Blank = seeded roll from the wave's RNG (alien only from wave 5) - previously this was an unseeded `randi()`, which broke the "same every time" guarantee. Waves 5 and 8 pin alien and rat.

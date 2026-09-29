@@ -1,11 +1,11 @@
-wave_number,name,rat_count,spider_count,alien_count,boss_species,boss_count,spawns_nest,formation
-1,"First Blood",6,0,0,,0,false,cluster
-2,"Scurry",10,2,0,,0,false,cluster
-3,"Web and Fang",6,6,0,,0,false,ring
-4,"Vermin Tide",14,4,0,,0,false,line
-5,"First Contact",8,6,2,,0,true,cluster
-6,"Eight-Legged Siege",4,14,2,,0,false,ring
-7,"Alien Vanguard",6,6,8,,0,false,line
-8,"The First Boss",10,6,2,rat,1,true,cluster
-9,"Chitin Storm",8,16,4,spider,1,false,ring
-10,"Full Invasion",12,12,10,alien,1,false,pincer
+wave_number,name,rat_count,spider_count,alien_count,boss_species,boss_count,spawns_nest,formation,nest_species
+1,"First Blood",6,0,0,,0,false,cluster,
+2,"Scurry",10,2,0,,0,false,scatter,
+3,"Web and Fang",6,6,0,,0,false,ring,
+4,"Vermin Tide",14,4,0,,0,false,wall,
+5,"First Contact",8,6,2,,0,true,cluster_far,alien
+6,"Eight-Legged Siege",4,14,2,,0,false,double_ring,
+7,"Alien Vanguard",6,6,8,,0,false,arc,
+8,"The First Boss",10,6,2,rat,1,true,corners,rat
+9,"Chitin Storm",8,16,4,spider,1,false,spiral,
+10,"Full Invasion",12,12,10,alien,1,false,pincer,

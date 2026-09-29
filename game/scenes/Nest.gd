@@ -45,11 +45,11 @@ var _spawns_remaining: int = MAX_SPAWNS
 @onready var _health_bar: Node2D = $HealthBar
 
 
-func setup(pos: Vector2) -> void:
+func setup(pos: Vector2, species_override: String = "") -> void:
 	global_position = pos
 	hp = BASE_HP * EnemySpawner.get_toughness_multiplier()
 	_max_hp = hp
-	species = _pick_species()
+	species = species_override if species_override != "" else _pick_species()
 	_spawns_remaining = MAX_SPAWNS
 	if _body:
 		_body.configure(RADIUS, NEST_SPECIES_COLOR.get(species, Color(0.35, 0.32, 0.30)), Color(0.15, 0.13, 0.12), "hexagon", false)
