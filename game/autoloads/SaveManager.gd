@@ -60,6 +60,20 @@ func report_wave_reached(wave: int) -> void:
 		_save()
 
 
+## Wipes all persistent progress (Banked Score, weapon upgrades, permanent
+## Perks, highest wave reached) back to a fresh save's defaults - per direct
+## request, exposed via PauseMenu's "Reset Progress" button. Does not affect
+## the run currently in progress (any permanent Perks already applied to
+## the live Player stay applied until the next run starts).
+func reset_progress() -> void:
+	banked_score = 0
+	unlocked_upgrades = {}
+	unlocked_perks = {}
+	highest_wave_reached = 1
+	next_run_start_wave = 1
+	_save()
+
+
 func _save() -> void:
 	var data := {
 		"banked_score": banked_score,

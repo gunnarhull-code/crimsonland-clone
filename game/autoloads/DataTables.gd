@@ -114,6 +114,7 @@ func _load_weapons(path: String) -> Dictionary:
 			"projectile_speed_px_s": _num(row, "projectile_speed_px_s"),
 			"spread_deg": _num(row, "spread_deg"),
 			"damage": _num(row, "damage"),
+			"range_px": _num(row, "range_px"),
 			"special": row.get("special", ""),
 		}
 		table[entry["id"]] = entry

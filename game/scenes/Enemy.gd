@@ -28,7 +28,21 @@ const INNER_COLOR := Color(0.1, 0.1, 0.08)
 
 const WANDER_REROLL_MIN := 1.0
 const WANDER_REROLL_MAX := 2.0
-const BOSS_SPEED_MULT := 0.6
+# Boss speed used to be base_species_speed * 0.6 applied HERE in code, on
+# top of enemies.csv's boss rows already independently authoring a slower
+# number - a double-reduction (issue 10's original 60% intent, baked into
+# the CSV, then reduced again). Per direct playtest request ("bosses to be
+# the same speed, maybe even a little faster... CSV should be the only
+# thing that modifies it"), that code-side multiplier is gone entirely -
+# enemies.csv's boss rows now directly hold the final chase/wander speed
+# (~1.1x the base row, "a little faster"), no runtime multiplier involved.
+# "No enemy should be faster than the original speed of the player, in
+# general" - a hard cap applied to every computed wander/chase speed.
+# NOTE: must match Player.gd's BASE_MOVE_SPEED - GDScript won't let a
+# const in one script reference another script's const directly (tried;
+# "Identifier not declared in the current scope" at parse time), so this
+# has to be kept in sync by hand if Player's base speed ever changes.
+const SPEED_CAP := 210.0
 const OFF_ARENA_STEER_THRESHOLD := 1.5
 
 # Spider jerk randomness (both wander's skitter_pause and chase's burst-dart
@@ -267,7 +281,7 @@ func _process_wander(delta: float) -> Vector2:
 	if _wander_reroll_timer <= 0.0:
 		_pick_new_wander_variant()
 
-	var speed: float = stats.get("wander_speed_px_s", 40.0) * (BOSS_SPEED_MULT if variant == "boss" else 1.0) * _speed_variance
+	var speed: float = min(stats.get("wander_speed_px_s", 40.0) * _speed_variance, SPEED_CAP)
 
 	# BUGFIX: the anchor drifts toward the player regardless of which local
 	# pattern is active, so wandering always eventually closes the distance
@@ -383,7 +397,7 @@ func _process_soft_boundary(delta: float, desired: Vector2) -> Vector2:
 # ----------------------------------------------------------------- chase --
 
 func _process_chase(delta: float) -> Vector2:
-	var chase_speed: float = stats.get("chase_speed_px_s", 100.0) * (BOSS_SPEED_MULT if variant == "boss" else 1.0) * _speed_variance
+	var chase_speed: float = min(stats.get("chase_speed_px_s", 100.0) * _speed_variance, SPEED_CAP)
 
 	_chase_variety_timer -= delta
 	if _chase_variety_timer <= 0.0:

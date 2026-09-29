@@ -35,6 +35,7 @@ const WEAPON_STAT_MAP := {
 	"projectile_speed": "projectile_speed_px_s",
 	"spread": "spread_deg",
 	"damage": "damage",
+	"range": "range_px",
 }
 
 const SPECIES_SCORE_WEIGHT := {"rat": 1, "spider": 2, "alien": 4}

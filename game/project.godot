@@ -21,7 +21,6 @@ SessionClock="*res://autoloads/SessionClock.gd"
 EnemySpawner="*res://autoloads/EnemySpawner.gd"
 AudioManager="*res://autoloads/AudioManager.gd"
 ArenaConfig="*res://autoloads/ArenaConfig.gd"
-QuitHandler="*res://autoloads/QuitHandler.gd"
 SaveManager="*res://autoloads/SaveManager.gd"
 
 [display]

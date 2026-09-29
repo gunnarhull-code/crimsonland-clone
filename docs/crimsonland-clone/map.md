@@ -40,7 +40,7 @@ A complete, implementation-ready design spec for a single-level Crimsonland-clon
 
 ## Frontier status
 
-All 21 original tickets resolved; the MVP itself is implemented and in its playtest → fix loop. Reopened twice per this map's own allowance ("reopen with a new ticket if something surfaces during implementation"), both now implemented: [22 - Permanent weapon upgrades](issues/22-permanent-weapon-upgrades.md) (a post-death Upgrade Shop spending a persistent "Banked Score" on one-time weapon-mechanic changes and permanent Perks, saved to disk) and [23 - Wave-based spawning and difficulty markers](issues/23-wave-based-spawning-and-difficulty-markers.md) (discrete, authored, deterministic waves replacing [17](issues/17-enemy-spawn-pacing.md)'s continuous spawn timer, with a jumpable "start at wave N" difficulty marker).
+All 21 original tickets resolved; the MVP itself is implemented and in its playtest → fix loop. Reopened three times per this map's own allowance ("reopen with a new ticket if something surfaces during implementation"), all now implemented: [22 - Permanent weapon upgrades](issues/22-permanent-weapon-upgrades.md) (a post-death Upgrade Shop spending a persistent "Banked Score" on one-time weapon-mechanic changes and permanent Perks, saved to disk), [23 - Wave-based spawning and difficulty markers](issues/23-wave-based-spawning-and-difficulty-markers.md) (discrete, authored, deterministic waves replacing [17](issues/17-enemy-spawn-pacing.md)'s continuous spawn timer, with a jumpable "start at wave N" difficulty marker), and [24 - Pause menu](issues/24-pause-menu.md) (Escape opens Resume/Quit/Reset Progress instead of quitting immediately).
 
 ## Not yet specified
 

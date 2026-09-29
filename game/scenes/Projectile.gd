@@ -13,7 +13,11 @@ extends Area2D
 ## knock enemies back (Buckshot Knockback), and the Heavy Cannon's
 ## explosion flings out secondary bomblets (Cluster Warhead).
 
-const MAX_LIFETIME := 3.0
+## Generous safety net only - normal expiry is by distance now (see
+## `max_range` below), not elapsed time. Guards against a pathological
+## case (e.g. a near-zero speed) where distance-based expiry would never
+## trigger.
+const SAFETY_MAX_LIFETIME := 8.0
 const CHAIN_RANGE := 150.0
 const PIERCE_COUNT := 3
 const EXPLOSION_RADIUS := 60.0
@@ -42,9 +46,11 @@ var speed: float = 700.0
 var damage: float = 10.0
 var weapon_id: String = "pistol"
 var pierce_remaining: int = 0
+var max_range: float = 960.0
 
 var _hit_enemies: Array = []
 var _lifetime: float = 0.0
+var _distance_traveled: float = 0.0
 var _rocket_launch_timer: float = 0.0
 
 @onready var _visual: Node2D = $Visual
@@ -55,6 +61,7 @@ func setup(dir: Vector2, stats: Dictionary, w_id: String) -> void:
 	speed = stats["projectile_speed_px_s"]
 	damage = stats["damage"]
 	weapon_id = w_id
+	max_range = stats.get("range_px", 960.0)
 	rotation = direction.angle()
 	if weapon_id == "gauss_gun":
 		pierce_remaining = PIERCE_COUNT
@@ -85,9 +92,11 @@ func _physics_process(delta: float) -> void:
 		_rocket_launch_timer += delta
 		var t: float = clamp(_rocket_launch_timer / ROCKET_LAUNCH_ACCEL_SEC, 0.0, 1.0)
 		travel_speed = lerp(ROCKET_LAUNCH_START_SPEED, speed, t * t * t)
-	global_position += direction * travel_speed * delta
+	var step: Vector2 = direction * travel_speed * delta
+	global_position += step
+	_distance_traveled += step.length()
 	_lifetime += delta
-	if _lifetime > MAX_LIFETIME or _is_off_arena():
+	if _distance_traveled >= max_range or _lifetime > SAFETY_MAX_LIFETIME or _is_off_arena():
 		queue_free()
 
 
