@@ -8,10 +8,10 @@ extends Camera2D
 ## of the world visible), the exact opposite of what was assumed when this
 ## was first written. Caught directly ("you're zooming in, getting closer
 ## towards the character. i want a bigger view"). 0.4 (near-full-map view)
-## was then "a little too far" the other way - 0.55 shows a ~2327x1309
-## area, a wide view without showing almost the whole Arena at once.
+## was "a little too far" the other way; settled at 0.55 ("I like the
+## distance"), then nudged in "just a tad" to 0.62 (~2064x1161 area).
 
-const ZOOM := Vector2(0.55, 0.55)
+const ZOOM := Vector2(0.62, 0.62)
 const SMOOTHING_SPEED := 6.0
 
 

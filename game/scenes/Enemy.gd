@@ -411,10 +411,30 @@ func _process_contact_damage(delta: float) -> void:
 
 # ------------------------------------------------------------------ death --
 
+## Alert radius for "someone nearby just got shot" - per direct playtest
+## request: an enemy that gets shot (or sees a neighbor get shot) should
+## instantly aggro rather than needing to wander into range or wait out the
+## auto-aggro timeout. `aggroed` is a plain bool, not a per-player target
+## reference, so this can't "flip-flop between aggros" in a future
+## multiplayer context (a documented concern, per issues/16) - there's
+## nothing to flip-flop between yet, it's just on/off.
+const HIT_ALERT_RADIUS := 180.0
+
+
 func take_damage(amount: float) -> void:
 	hp -= amount
+	_alert_nearby_on_hit()
 	if hp <= 0.0:
 		_die()
+
+
+func _alert_nearby_on_hit() -> void:
+	aggroed = true
+	for e in get_tree().get_nodes_in_group("enemies"):
+		if e == self or not is_instance_valid(e):
+			continue
+		if global_position.distance_to(e.global_position) <= HIT_ALERT_RADIUS:
+			e.aggroed = true
 
 
 func _die() -> void:

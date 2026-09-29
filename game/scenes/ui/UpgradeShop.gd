@@ -21,8 +21,8 @@ const PERK_COST := 200
 var _selected_wave: int = 1
 
 @onready var _score_label: Label = $Panel/Layout/ScoreLabel
-@onready var _upgrades_box: VBoxContainer = $Panel/Layout/UpgradesBox
-@onready var _perks_box: VBoxContainer = $Panel/Layout/PerksBox
+@onready var _upgrades_box: VBoxContainer = $Panel/Layout/Scroll/ContentBox/UpgradesBox
+@onready var _perks_box: VBoxContainer = $Panel/Layout/Scroll/ContentBox/PerksBox
 @onready var _wave_label: Label = $Panel/Layout/WaveRow/WaveLabel
 @onready var _start_button: Button = $Panel/Layout/StartButton
 
@@ -68,13 +68,14 @@ func _refresh() -> void:
 
 func _build_purchase_button(owned: bool, item_name: String, desc: String, cost: int, on_press: Callable) -> Button:
 	var btn := Button.new()
-	btn.custom_minimum_size = Vector2(620, 52)
+	btn.custom_minimum_size = Vector2(720, 44)
 	btn.autowrap_mode = TextServer.AUTOWRAP_WORD
+	btn.add_theme_font_size_override("font_size", 13)
 	if owned:
-		btn.text = "%s (owned)\n%s" % [item_name, desc]
+		btn.text = "%s (owned) - %s" % [item_name, desc]
 		btn.disabled = true
 	else:
-		btn.text = "%s - %d\n%s" % [item_name, cost, desc]
+		btn.text = "%s - %d - %s" % [item_name, cost, desc]
 		btn.disabled = SaveManager.banked_score < cost
 		btn.pressed.connect(on_press)
 	return btn

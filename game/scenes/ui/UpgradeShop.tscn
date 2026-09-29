@@ -16,33 +16,45 @@ offset_bottom = 720.0
 color = Color(0.078, 0.078, 0.074, 0.9)
 
 [node name="Panel" type="PanelContainer" parent="."]
-position = Vector2(310, 40)
-custom_minimum_size = Vector2(660, 640)
+position = Vector2(240, 15)
+custom_minimum_size = Vector2(800, 690)
 
 [node name="Layout" type="VBoxContainer" parent="Panel"]
-custom_minimum_size = Vector2(620, 620)
+custom_minimum_size = Vector2(760, 670)
+theme_override_constants/separation = 8
 
 [node name="Title" type="Label" parent="Panel/Layout"]
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 22
 text = "Upgrade Shop"
 horizontal_alignment = 1
 
 [node name="ScoreLabel" type="Label" parent="Panel/Layout"]
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 16
 text = "Banked Score: 0"
 horizontal_alignment = 1
 
-[node name="UpgradesHeader" type="Label" parent="Panel/Layout"]
-theme_override_font_sizes/font_size = 16
+[node name="Scroll" type="ScrollContainer" parent="Panel/Layout"]
+custom_minimum_size = Vector2(760, 440)
+horizontal_scroll_mode = 0
+
+[node name="ContentBox" type="VBoxContainer" parent="Panel/Layout/Scroll"]
+custom_minimum_size = Vector2(740, 0)
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="UpgradesHeader" type="Label" parent="Panel/Layout/Scroll/ContentBox"]
+theme_override_font_sizes/font_size = 15
 text = "Weapon Upgrades"
 
-[node name="UpgradesBox" type="VBoxContainer" parent="Panel/Layout"]
+[node name="UpgradesBox" type="VBoxContainer" parent="Panel/Layout/Scroll/ContentBox"]
+theme_override_constants/separation = 4
 
-[node name="PerksHeader" type="Label" parent="Panel/Layout"]
-theme_override_font_sizes/font_size = 16
+[node name="PerksHeader" type="Label" parent="Panel/Layout/Scroll/ContentBox"]
+theme_override_font_sizes/font_size = 15
 text = "Permanent Perks"
 
-[node name="PerksBox" type="VBoxContainer" parent="Panel/Layout"]
+[node name="PerksBox" type="VBoxContainer" parent="Panel/Layout/Scroll/ContentBox"]
+theme_override_constants/separation = 4
 
 [node name="WaveRow" type="HBoxContainer" parent="Panel/Layout"]
 alignment = 1
