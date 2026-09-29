@@ -2,12 +2,17 @@ extends Camera2D
 ## Follows the Player through the Arena (now bigger than the screen, see
 ## issues/02's addendum) by simply being one of its children - no manual
 ## follow logic needed. Clamped to the Arena's true bounds via ArenaConfig.
-## Zoomed out per direct playtest request, three rounds now: 1.15x, then
-## 1.5x ("I'd like to zoom out the screen so I can see more of it"), then
-## this - 1.5x still wasn't enough ("STILL ZOOM WAY OUT"), so this jump is
-## deliberately large rather than another small nudge.
+## Zoomed out per direct playtest request. BUGFIX: every earlier round of
+## this (1.0 -> 1.15 -> 1.5 -> 2.6) actually zoomed further IN each time -
+## Camera2D.zoom is a magnification factor (higher = more zoomed in, less
+## of the world visible), the exact opposite of what was assumed when this
+## was first written. Caught directly ("you're zooming in, getting closer
+## towards the character. i want a bigger view") after three rounds of
+## "zoom out" requests each made it worse. A value below 1.0 is the one
+## that actually shows more of the Arena - 0.4 shows a ~3200x1800 area,
+## close to the full 3840x2160 Arena.
 
-const ZOOM := Vector2(2.6, 2.6)
+const ZOOM := Vector2(0.4, 0.4)
 const SMOOTHING_SPEED := 6.0
 
 
