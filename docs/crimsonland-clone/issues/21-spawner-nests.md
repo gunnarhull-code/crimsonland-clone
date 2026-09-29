@@ -17,3 +17,5 @@ Nests are in — added as a third rung on [17](17-enemy-spawn-pacing.md)'s escal
 - **Cadence**: once the 8-minute mark hits, a new Nest appears every 90s, capped at 2 simultaneous Nests.
 - **Reward**: destroying a Nest awards XP as if it were a kill (120 XP, matching Alien Boss Variant's tier from [15](15-enemy-combat-stats.md)) — a real tactical payoff for prioritizing it over the enemies it's producing.
 - Enemies a Nest spawns count toward [17](17-enemy-spawn-pacing.md)'s ~250 concurrent-enemy cap like any other enemy.
+
+**Addendum — health bar**: a Nest takes 150 HP (scaled by the current wave's toughness) worth of hits to bring down, unlike an Enemy which dies in a handful - with no HP readout, it wasn't clear how close one was to destroyed. Reported directly ("the nests need to have a health bar so I can destroy them"). New reusable `HealthBar.gd`/`.tscn` (dark backing + colored fill, redrawn on `set_fraction()`) is now a child of `Nest.tscn`, updated every `take_damage()` call - the one entity in this game that currently needs this kind of progress readout.

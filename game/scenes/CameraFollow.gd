@@ -1,11 +1,12 @@
 extends Camera2D
 ## Follows the Player through the Arena (now bigger than the screen, see
 ## issues/02's addendum) by simply being one of its children - no manual
-## follow logic needed. Clamped to the Arena's true bounds via ArenaConfig,
-## and zoomed out slightly per direct request ("zoom out the screen a
-## little bit").
+## follow logic needed. Clamped to the Arena's true bounds via ArenaConfig.
+## Zoomed out per direct playtest request: first a little (1.15x), then
+## further ("I'd like to zoom out the screen so I can see more of it... I
+## like the size of the map, I just want to zoom out the screen").
 
-const ZOOM := Vector2(1.15, 1.15)
+const ZOOM := Vector2(1.5, 1.5)
 const SMOOTHING_SPEED := 6.0
 
 

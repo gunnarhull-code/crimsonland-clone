@@ -50,6 +50,19 @@ const CHASE_VARIETY_REROLL_MAX := 4.0
 const CHASE_TURN_RATE_MIN_DEG := 70.0
 const CHASE_TURN_RATE_MAX_DEG := 1000.0
 
+# How stale a player position this enemy reacts to, at range - per direct
+# playtest request ("they all just target me... kite them around, they end
+# up grouping up into a big, tight group... don't just seem like robots").
+# Every enemy previously aimed at the player's exact live position, so a
+# kited crowd converged onto the same point in perfect lockstep. Each
+# enemy instead samples Player.get_position_delayed() at its own rolled
+# lag, so they're chasing slightly different moments of the player's
+# recent path - naturally spreads a kited group instead of merging it, and
+# reads as personality (some react almost instantly, some visibly lag)
+# instead of uniform robotic tracking.
+const CHASE_REACTION_LAG_MIN := 0.1
+const CHASE_REACTION_LAG_MAX := 0.8
+
 # Once an enemy is genuinely close, it stops aiming at its personal offset
 # point and aims straight at the player instead - per direct playtest
 # request ("nobody's really dangerous... I want them to consistently do
@@ -120,6 +133,7 @@ var _chase_dir: Vector2 = Vector2.ZERO
 var _chase_aim_offset: Vector2 = Vector2.ZERO
 var _chase_turn_rate_deg: float = 400.0
 var _chase_variety_timer: float = 0.0
+var _chase_reaction_lag: float = 0.0
 
 var _wander_elapsed: float = 0.0
 var _auto_aggro_timeout: float = 12.0
@@ -339,10 +353,11 @@ func _process_chase(delta: float) -> Vector2:
 		_chase_variety_timer = randf_range(CHASE_VARIETY_REROLL_MIN, CHASE_VARIETY_REROLL_MAX)
 		_chase_aim_offset = Vector2.RIGHT.rotated(randf() * TAU) * randf_range(CHASE_AIM_OFFSET_MIN, CHASE_AIM_OFFSET_MAX)
 		_chase_turn_rate_deg = randf_range(CHASE_TURN_RATE_MIN_DEG, CHASE_TURN_RATE_MAX_DEG)
+		_chase_reaction_lag = randf_range(CHASE_REACTION_LAG_MIN, CHASE_REACTION_LAG_MAX)
 
 	var dist_to_player: float = global_position.distance_to(_player.global_position)
 	var aim_point: Vector2 = _player.global_position if dist_to_player < CHASE_CLOSE_RANGE \
-		else _player.global_position + _chase_aim_offset
+		else _player.get_position_delayed(_chase_reaction_lag) + _chase_aim_offset
 	var to_target: Vector2 = aim_point - global_position
 	var desired_dir: Vector2 = to_target.normalized() if to_target.length() > 1.0 else Vector2.ZERO
 	_chase_dir = _turn_toward(_chase_dir, desired_dir, _chase_turn_rate_deg, delta)

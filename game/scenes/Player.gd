@@ -70,6 +70,17 @@ var _aim_position: Vector2 = Vector2.ZERO
 var _fire_held: bool = false
 var _smg_hold_timer: float = 0.0
 
+# A short rolling buffer of recent positions, per direct playtest request:
+# every enemy chasing the player's exact live position made a kited crowd
+# converge into one tight, perfectly-synchronized clump ("they end up just
+# grouping up into a big, tight group... I don't want... a perfect constant
+# beeline"). Enemies at range sample a point from here instead (see
+# Enemy.gd's per-enemy _reaction_lag), so they're each reacting to a
+# slightly different moment in the player's recent path rather than the
+# same instantaneous position - which also reads as far less robotic.
+const POSITION_HISTORY_MAX_SEC := 1.2
+var _position_history: Array = []
+
 @onready var _hitbox: CollisionShape2D = $CollisionShape2D
 @onready var _body: Node2D = $Body
 
@@ -91,10 +102,33 @@ func _physics_process(delta: float) -> void:
 		return
 	_capture_input()
 	_apply_movement(delta)
+	_record_position_history()
 	_update_regen(delta)
 	_update_weapon(delta)
 	survival_time += delta
 	_update_score()
+
+
+func _record_position_history() -> void:
+	var now := Time.get_ticks_msec() / 1000.0
+	_position_history.append({"time": now, "pos": global_position})
+	while _position_history.size() > 1 and now - _position_history[0]["time"] > POSITION_HISTORY_MAX_SEC:
+		_position_history.pop_front()
+
+
+## The player's position `delay_sec` ago, per the history buffer above.
+## Falls back to the live position if there isn't enough history yet
+## (e.g. the first fraction of a second after spawning).
+func get_position_delayed(delay_sec: float) -> Vector2:
+	if _position_history.is_empty():
+		return global_position
+	var target_time: float = Time.get_ticks_msec() / 1000.0 - delay_sec
+	var best: Vector2 = _position_history[0]["pos"]
+	for entry in _position_history:
+		if entry["time"] > target_time:
+			break
+		best = entry["pos"]
+	return best
 
 
 ## The one place this scene reads Input.* directly - everything downstream
