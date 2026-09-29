@@ -15,7 +15,7 @@ offset_bottom = 720.0
 color = Color(0.078, 0.078, 0.074, 1)
 
 [node name="Player" parent="." instance=ExtResource("2")]
-position = Vector2(640, 360)
+position = Vector2(1920, 1080)
 
 [node name="Enemies" type="Node2D" parent="."]
 

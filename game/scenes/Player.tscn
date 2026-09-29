@@ -1,7 +1,8 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scenes/Player.gd" id="1"]
 [ext_resource type="Script" path="res://scenes/EntityVisual.gd" id="2"]
+[ext_resource type="Script" path="res://scenes/CameraFollow.gd" id="3"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_1"]
 radius = 14.0
@@ -20,3 +21,6 @@ radius = 14.0
 fill_color = Color(0.435, 0.722, 0.910, 1)
 inner_color = Color(0.047, 0.2, 0.314, 1)
 inner_shape = "triangle"
+
+[node name="Camera2D" type="Camera2D" parent="."]
+script = ExtResource("3")

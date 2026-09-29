@@ -36,3 +36,12 @@ Detail the exact numeric/behavioral parameters for the enemy AI state machine fi
 - Turns toward that target at a capped rate (70-1000°/s, randomized per enemy) instead of snapping - a low roll overshoots corners into a wide arc; a high roll reads as near-perfect tracking. "Some of them can, sometimes."
 
 Both the offset and the turn-rate cap reroll every 2-4s per enemy (not fixed for its whole chase), so no enemy is locked into one flanking spot or one turn sharpness for the whole encounter. This sits entirely inside `_process_chase` - the aggro trigger, the 450px radius, and each species' base chase speed above are unchanged; only how directly each enemy steers toward the player changed.
+
+**Addendum — auto-aggro timeout**: now that the Arena is much bigger than the screen ([02](02-arena-session-structure.md)'s addendum), an enemy that spawns far from the player could wander indefinitely without ever crossing the 450px aggro radius - it would just read as "standing there." Per direct playtest request, each enemy now also force-aggroes after a randomized 8-16s of wandering, independent of proximity. Rolled once per enemy at spawn, not a global timer, so a crowd doesn't all snap to aggro on the same frame.
+
+**Addendum — "more natural" movement**: three changes, applied uniformly across all species and both wander/chase, requested together as "the monster movement needs to be a little bit more natural":
+- **Acceleration instead of instant velocity**: every enemy's actual `velocity` now eases toward whatever its current behavior wants (a wander target, a chase direction, a burst/freeze toggle) at a capped 900px/s² via `Vector2.move_toward`, rather than snapping there in one frame. Smooths out the burst/freeze and aggro-transition instants from a hard stop/start into a real accelerate/decelerate.
+- **Separation steering**: each enemy nudges away from other enemies within 46px, blended into its desired velocity rather than a hard push - purely cosmetic (no physics collision exists per [02](02-arena-session-structure.md)'s collision addendum), just discourages bodies from visibly sliding through each other in a crowd.
+- **Per-enemy speed variance**: a fixed ×0.85-1.15 multiplier rolled once at spawn, applied to both wander and chase speed, so a same-species group doesn't move in perfect lockstep.
+
+All three are cheap, general-purpose steering additions, not species-specific - if a particular species still reads as unnatural after playtesting this, that's the next thing to look at.

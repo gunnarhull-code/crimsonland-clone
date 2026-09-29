@@ -111,7 +111,7 @@ func _apply_movement(_delta: float) -> void:
 	move_and_slide()
 	# Hard-capped at the Arena edge per issues/02 - the enemy soft-boundary
 	# drift from issues/10 does not apply to the player.
-	var arena_size: Vector2 = get_viewport_rect().size
+	var arena_size: Vector2 = ArenaConfig.size
 	global_position.x = clamp(global_position.x, hitbox_radius, arena_size.x - hitbox_radius)
 	global_position.y = clamp(global_position.y, hitbox_radius, arena_size.y - hitbox_radius)
 	if _aim_position != global_position:

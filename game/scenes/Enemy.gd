@@ -50,6 +50,26 @@ const CHASE_VARIETY_REROLL_MAX := 4.0
 const CHASE_TURN_RATE_MIN_DEG := 70.0
 const CHASE_TURN_RATE_MAX_DEG := 1000.0
 
+# Auto-aggro: an enemy that never crosses the player's aggro radius would
+# otherwise wander forever, which reads as "just standing there" once the
+# Arena got much bigger than the screen. Per direct playtest request, every
+# enemy forces its own aggro after a randomized timeout even if the player
+# never gets close.
+const AUTO_AGGRO_TIMEOUT_MIN := 8.0
+const AUTO_AGGRO_TIMEOUT_MAX := 16.0
+
+# "More natural" movement, per direct playtest request: real acceleration
+# instead of velocity snapping instantly to whatever the current behavior
+# wants (a wander target, a chase direction, a burst/freeze toggle), a mild
+# steering nudge away from nearby enemies so a crowd doesn't read as bodies
+# sliding through each other, and a fixed per-enemy speed multiplier so a
+# same-species swarm doesn't move in perfect lockstep.
+const ACCEL_PX_S2 := 900.0
+const SEPARATION_RADIUS := 46.0
+const SEPARATION_STRENGTH := 60.0
+const SPEED_VARIANCE_MIN := 0.85
+const SPEED_VARIANCE_MAX := 1.15
+
 # Orbit radius per loop-style variant, in px. Large enough to read as a
 # proper loop rather than a tight spin at typical wander speeds (~40-150px/s
 # - a small radius at that speed produces a very high angular rate, which is
@@ -90,6 +110,10 @@ var _chase_aim_offset: Vector2 = Vector2.ZERO
 var _chase_turn_rate_deg: float = 400.0
 var _chase_variety_timer: float = 0.0
 
+var _wander_elapsed: float = 0.0
+var _auto_aggro_timeout: float = 12.0
+var _speed_variance: float = 1.0
+
 var _off_arena_timer: float = 0.0
 var _attack_cooldown_timer: float = 0.0
 
@@ -120,6 +144,8 @@ func setup(p_species: String, p_variant: String, spawn_pos: Vector2) -> void:
 	_wander_anchor = spawn_pos
 	_pick_new_wander_variant()
 	_attack_cooldown_timer = stats.get("attack_cooldown_sec", 1.0)
+	_auto_aggro_timeout = randf_range(AUTO_AGGRO_TIMEOUT_MIN, AUTO_AGGRO_TIMEOUT_MAX)
+	_speed_variance = randf_range(SPEED_VARIANCE_MIN, SPEED_VARIANCE_MAX)
 	_player = get_tree().get_first_node_in_group("player")
 
 
@@ -130,12 +156,11 @@ func _physics_process(delta: float) -> void:
 			return
 
 	if not aggroed:
-		_check_aggro()
+		_check_aggro(delta)
 
-	if aggroed:
-		_process_chase(delta)
-	else:
-		_process_wander(delta)
+	var desired_velocity: Vector2 = _process_chase(delta) if aggroed else _process_wander(delta)
+	desired_velocity += _compute_separation()
+	velocity = velocity.move_toward(desired_velocity, ACCEL_PX_S2 * delta)
 
 	move_and_slide()
 	_process_contact_damage(delta)
@@ -143,20 +168,40 @@ func _physics_process(delta: float) -> void:
 		_body.rotation = velocity.angle()
 
 
-func _check_aggro() -> void:
+func _check_aggro(delta: float) -> void:
 	var radius: float = stats.get("aggro_radius_px", 450.0) * _player.get_aggro_radius_multiplier()
 	if global_position.distance_to(_player.global_position) <= radius:
 		aggroed = true
+		return
+	_wander_elapsed += delta
+	if _wander_elapsed >= _auto_aggro_timeout:
+		aggroed = true
+
+
+## A mild push away from nearby enemies, blended into the desired velocity
+## rather than a hard shove - the bodies still freely overlap (no physics
+## collision, per issues/02's addendum), this just discourages them from
+## visibly sliding through each other while moving as a crowd.
+func _compute_separation() -> Vector2:
+	var push := Vector2.ZERO
+	for e in get_tree().get_nodes_in_group("enemies"):
+		if e == self:
+			continue
+		var offset: Vector2 = global_position - e.global_position
+		var dist := offset.length()
+		if dist > 0.01 and dist < SEPARATION_RADIUS:
+			push += offset.normalized() * (SEPARATION_RADIUS - dist) / SEPARATION_RADIUS
+	return push * SEPARATION_STRENGTH
 
 
 # ---------------------------------------------------------------- wander --
 
-func _process_wander(delta: float) -> void:
+func _process_wander(delta: float) -> Vector2:
 	_wander_reroll_timer -= delta
 	if _wander_reroll_timer <= 0.0:
 		_pick_new_wander_variant()
 
-	var speed: float = stats.get("wander_speed_px_s", 40.0) * (BOSS_SPEED_MULT if variant == "boss" else 1.0)
+	var speed: float = stats.get("wander_speed_px_s", 40.0) * (BOSS_SPEED_MULT if variant == "boss" else 1.0) * _speed_variance
 
 	# BUGFIX: the anchor drifts toward the player regardless of which local
 	# pattern is active, so wandering always eventually closes the distance
@@ -169,8 +214,8 @@ func _process_wander(delta: float) -> void:
 		if to_player.length() > 1.0:
 			_wander_anchor += to_player.normalized() * speed * 0.25 * delta
 
-	velocity = _compute_local_wander_velocity(speed, delta)
-	_process_soft_boundary(delta)
+	var desired := _compute_local_wander_velocity(speed, delta)
+	return _process_soft_boundary(delta, desired)
 
 
 func _compute_local_wander_velocity(speed: float, delta: float) -> Vector2:
@@ -236,8 +281,8 @@ func _pick_new_wander_variant() -> void:
 		_wander_anchor = global_position
 
 
-func _process_soft_boundary(delta: float) -> void:
-	var size: Vector2 = get_viewport_rect().size
+func _process_soft_boundary(delta: float, desired: Vector2) -> Vector2:
+	var size: Vector2 = ArenaConfig.size
 	var out_of_bounds: bool = global_position.x < 0.0 or global_position.x > size.x \
 		or global_position.y < 0.0 or global_position.y > size.y
 	if out_of_bounds:
@@ -245,15 +290,16 @@ func _process_soft_boundary(delta: float) -> void:
 		if _off_arena_timer > OFF_ARENA_STEER_THRESHOLD:
 			var center := size / 2.0
 			var steer := (center - global_position).normalized()
-			velocity = velocity.lerp(steer * velocity.length(), 0.15)
+			return desired.lerp(steer * desired.length(), 0.15)
 	else:
 		_off_arena_timer = 0.0
+	return desired
 
 
 # ----------------------------------------------------------------- chase --
 
-func _process_chase(delta: float) -> void:
-	var chase_speed: float = stats.get("chase_speed_px_s", 100.0) * (BOSS_SPEED_MULT if variant == "boss" else 1.0)
+func _process_chase(delta: float) -> Vector2:
+	var chase_speed: float = stats.get("chase_speed_px_s", 100.0) * (BOSS_SPEED_MULT if variant == "boss" else 1.0) * _speed_variance
 
 	_chase_variety_timer -= delta
 	if _chase_variety_timer <= 0.0:
@@ -274,9 +320,9 @@ func _process_chase(delta: float) -> void:
 				_spider_dart_speed_mult = randf_range(SPIDER_DART_SPEED_MIN, SPIDER_DART_SPEED_MAX)
 			else:
 				_spider_phase_timer = randf_range(SPIDER_FREEZE_MIN, SPIDER_FREEZE_MAX)
-		velocity = _chase_dir * chase_speed * _spider_dart_speed_mult if _spider_bursting else Vector2.ZERO
+		return _chase_dir * chase_speed * _spider_dart_speed_mult if _spider_bursting else Vector2.ZERO
 	else:
-		velocity = _chase_dir * chase_speed
+		return _chase_dir * chase_speed
 
 
 ## Rotates `current` toward `desired` by at most `max_deg_per_sec`, rather

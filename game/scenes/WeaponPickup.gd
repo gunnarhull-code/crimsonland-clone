@@ -20,7 +20,13 @@ const WEAPON_COLORS := {
 
 const PLATE_COLOR := Color(0.11, 0.105, 0.10)
 
+# Despawns after 10s unpicked, per direct playtest request - blinks in the
+# last 2s as a visible warning rather than vanishing without any tell.
+const LIFETIME_SEC := 10.0
+const BLINK_START_SEC := LIFETIME_SEC - 2.0
+
 var weapon_id: String = "pistol"
+var _life: float = 0.0
 
 
 func setup(w_id: String) -> void:
@@ -84,7 +90,14 @@ func _draw_rocket(color: Color) -> void:
 	draw_colored_polygon(pts, color)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_life += delta
+	if _life >= LIFETIME_SEC:
+		queue_free()
+		return
+	if _life >= BLINK_START_SEC:
+		modulate.a = 0.4 + 0.6 * absf(sin(_life * 10.0))
+
 	var player: Node = get_tree().get_first_node_in_group("player")
 	if player == null:
 		return
