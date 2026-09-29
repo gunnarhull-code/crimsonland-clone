@@ -40,7 +40,7 @@ A complete, implementation-ready design spec for a single-level Crimsonland-clon
 
 ## Frontier status
 
-All 21 tickets resolved. The map's destination — a complete, implementation-ready MVP spec — is reached; nothing is left in Not yet specified. Reopen with a new ticket if something surfaces during implementation.
+All 21 original tickets resolved; the MVP itself is implemented and in its playtest → fix loop. Reopened per this map's own allowance ("reopen with a new ticket if something surfaces during implementation"): [22 - Permanent weapon upgrades](issues/22-permanent-weapon-upgrades.md), a post-death upgrade shop spending a persistent currency on permanent weapon changes — drafted (architecture decided, content list pending sign-off), not yet built.
 
 ## Not yet specified
 
