@@ -131,6 +131,14 @@ var _attack_cooldown_timer: float = 0.0
 var _player: Node2D
 var _weapon_drop_guaranteed: bool = false
 
+# Shotgun's Buckshot Knockback permanent upgrade (issue 22) - a punchy,
+# un-eased shove that overrides normal wander/chase for a brief moment,
+# rather than being blended through the accel/separation smoothing below
+# (which would flatten it into barely noticeable).
+const KNOCKBACK_DURATION_SEC := 0.25
+var _knockback_velocity: Vector2 = Vector2.ZERO
+var _knockback_timer: float = 0.0
+
 @onready var _hitbox: CollisionShape2D = $CollisionShape2D
 @onready var _body: Node2D = $Body
 
@@ -140,7 +148,7 @@ func setup(p_species: String, p_variant: String, spawn_pos: Vector2) -> void:
 	variant = p_variant
 	global_position = spawn_pos
 	stats = DataTables.get_enemy_stats(species, variant)
-	hp = stats.get("hp", 10.0) * SessionClock.get_toughness_multiplier()
+	hp = stats.get("hp", 10.0) * EnemySpawner.get_toughness_multiplier()
 	add_to_group("enemies")
 	if _hitbox.shape is CircleShape2D:
 		_hitbox.shape.radius = stats.get("hitbox_radius_px", 14.0)
@@ -166,6 +174,15 @@ func _physics_process(delta: float) -> void:
 		if _player == null:
 			return
 
+	if _knockback_timer > 0.0:
+		_knockback_timer -= delta
+		velocity = _knockback_velocity * (_knockback_timer / KNOCKBACK_DURATION_SEC)
+		move_and_slide()
+		_process_contact_damage(delta)
+		if velocity.length() > 1.0:
+			_body.rotation = velocity.angle()
+		return
+
 	if not aggroed:
 		_check_aggro(delta)
 
@@ -177,6 +194,11 @@ func _physics_process(delta: float) -> void:
 	_process_contact_damage(delta)
 	if velocity.length() > 1.0:
 		_body.rotation = velocity.angle()
+
+
+func apply_knockback(impulse: Vector2) -> void:
+	_knockback_velocity = impulse
+	_knockback_timer = KNOCKBACK_DURATION_SEC
 
 
 func _check_aggro(delta: float) -> void:

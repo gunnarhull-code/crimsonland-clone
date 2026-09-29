@@ -1,9 +1,13 @@
 extends Node
-## Tracks elapsed session time. Feeds the Toughness Multiplier
-## (docs/crimsonland-clone/issues/15) and the spawn pacing curve
-## (issues/17). Self-contained Autoload: tracks only its own data.
-## Pauses automatically with the rest of gameplay (default process mode)
-## during the level-up choice screen, per issues/14.
+## Tracks elapsed session time. Used only as a raw stopwatch now - the
+## Toughness Multiplier and spawn pacing it used to feed (issues/15, /17)
+## are wave-based per issue 23's addendum (see EnemySpawner.gd's
+## get_toughness_multiplier()), since a jumpable "difficulty marker" has
+## to mean something fixed, which a real-time clock can't give you if a
+## run starts at wave 8 with zero elapsed minutes. Self-contained
+## Autoload: tracks only its own data. Pauses automatically with the rest
+## of gameplay (default process mode) during the level-up choice screen,
+## per issues/14.
 
 var elapsed_sec: float = 0.0
 var running: bool = false
@@ -21,12 +25,3 @@ func start() -> void:
 
 func stop() -> void:
 	running = false
-
-
-func get_elapsed_minutes() -> float:
-	return elapsed_sec / 60.0
-
-
-## docs/crimsonland-clone/issues/15: 1 + elapsed_minutes * 0.15
-func get_toughness_multiplier() -> float:
-	return 1.0 + get_elapsed_minutes() * 0.15

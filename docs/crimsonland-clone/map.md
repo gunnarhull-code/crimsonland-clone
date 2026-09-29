@@ -40,7 +40,7 @@ A complete, implementation-ready design spec for a single-level Crimsonland-clon
 
 ## Frontier status
 
-All 21 original tickets resolved; the MVP itself is implemented and in its playtest → fix loop. Reopened per this map's own allowance ("reopen with a new ticket if something surfaces during implementation"): [22 - Permanent weapon upgrades](issues/22-permanent-weapon-upgrades.md), a post-death upgrade shop spending a persistent currency on permanent weapon changes — drafted (architecture decided, content list pending sign-off), not yet built.
+All 21 original tickets resolved; the MVP itself is implemented and in its playtest → fix loop. Reopened twice per this map's own allowance ("reopen with a new ticket if something surfaces during implementation"), both now implemented: [22 - Permanent weapon upgrades](issues/22-permanent-weapon-upgrades.md) (a post-death Upgrade Shop spending a persistent "Banked Score" on one-time weapon-mechanic changes and permanent Perks, saved to disk) and [23 - Wave-based spawning and difficulty markers](issues/23-wave-based-spawning-and-difficulty-markers.md) (discrete, authored, deterministic waves replacing [17](issues/17-enemy-spawn-pacing.md)'s continuous spawn timer, with a jumpable "start at wave N" difficulty marker).
 
 ## Not yet specified
 

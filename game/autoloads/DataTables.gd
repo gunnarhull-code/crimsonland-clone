@@ -7,12 +7,14 @@ extends Node
 var perks: Dictionary = {}
 var weapons: Dictionary = {}
 var enemies: Dictionary = {}
+var waves: Dictionary = {}
 
 
 func _ready() -> void:
 	perks = _load_perks("res://data/perks.csv")
 	weapons = _load_weapons("res://data/weapons.csv")
 	enemies = _load_enemies("res://data/enemies.csv")
+	waves = _load_waves("res://data/waves.csv")
 
 
 func get_perk(id: String) -> Dictionary:
@@ -33,6 +35,23 @@ func get_all_weapons() -> Array:
 
 func get_enemy_stats(species: String, variant: String) -> Dictionary:
 	return enemies.get("%s_%s" % [species, variant], {})
+
+
+## Empty Dictionary means "no authored wave at this number" - the caller
+## (EnemySpawner) falls back to procedural generation.
+func get_wave(n: int) -> Dictionary:
+	return waves.get(n, {})
+
+
+func get_max_authored_wave() -> int:
+	var keys: Array = waves.keys()
+	if keys.is_empty():
+		return 0
+	var highest: int = keys[0]
+	for k in keys:
+		if k > highest:
+			highest = k
+	return highest
 
 
 ## Reads a CSV file into a list of {column_name: raw_string_value} dicts.
@@ -118,4 +137,23 @@ func _load_enemies(path: String) -> Dictionary:
 			"hitbox_radius_px": _num(row, "hitbox_radius_px"),
 		}
 		table["%s_%s" % [entry["species"], entry["variant"]]] = entry
+	return table
+
+
+func _load_waves(path: String) -> Dictionary:
+	var table := {}
+	for row in _read_csv_rows(path):
+		var n := int(_num(row, "wave_number"))
+		var entry := {
+			"wave_number": n,
+			"name": row.get("name", ""),
+			"rat_count": int(_num(row, "rat_count")),
+			"spider_count": int(_num(row, "spider_count")),
+			"alien_count": int(_num(row, "alien_count")),
+			"boss_species": row.get("boss_species", ""),
+			"boss_count": int(_num(row, "boss_count")),
+			"spawns_nest": row.get("spawns_nest", "") == "true",
+			"formation": row.get("formation", "cluster"),
+		}
+		table[n] = entry
 	return table

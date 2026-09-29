@@ -14,3 +14,4 @@ func _ready() -> void:
 	var enemies: Node2D = $Enemies
 	EnemySpawner.register_arena(enemies, _player, ArenaConfig.size)
 	SessionClock.start()
+	$UI/ResultsScreen.continue_pressed.connect($UI/UpgradeShop.open)

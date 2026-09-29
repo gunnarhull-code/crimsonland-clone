@@ -24,6 +24,10 @@ const BASE_AGGRO_RADIUS_MULT := 1.0
 const BASE_PERK_CHOICES := 3.0
 const POST_LEVELUP_INVULN_SEC := 0.5
 
+const AKIMBO_SPREAD_DEG := 6.0
+const SMG_SPINUP_MAX_MULT := 2.0
+const SMG_SPINUP_RAMP_SEC := 1.5
+
 const WEAPON_STAT_MAP := {
 	"reload_time": "reload_time_sec",
 	"fire_rate": "fire_rate_per_sec",
@@ -64,6 +68,7 @@ var _fire_cooldown_timer: float = 0.0
 var _move_vector: Vector2 = Vector2.ZERO
 var _aim_position: Vector2 = Vector2.ZERO
 var _fire_held: bool = false
+var _smg_hold_timer: float = 0.0
 
 @onready var _hitbox: CollisionShape2D = $CollisionShape2D
 @onready var _body: Node2D = $Body
@@ -71,6 +76,7 @@ var _fire_held: bool = false
 
 func _ready() -> void:
 	add_to_group("player")
+	_apply_permanent_perks()
 	hp = get_effective_stat("player.max_hp", BASE_MAX_HP)
 	ammo_in_magazine = DataTables.get_weapon(weapon_id).get("magazine_size", 0)
 	if _hitbox.shape is CircleShape2D:
@@ -142,7 +148,13 @@ func _update_weapon(delta: float) -> void:
 		if _reload_timer <= 0.0:
 			is_reloading = false
 			ammo_in_magazine = int(get_effective_weapon_stats(weapon_id)["magazine_size"])
+			_smg_hold_timer = 0.0
 		return
+
+	if weapon_id == "smg" and _fire_held:
+		_smg_hold_timer += delta
+	else:
+		_smg_hold_timer = 0.0
 
 	_fire_cooldown_timer -= delta
 	if _fire_held and _fire_cooldown_timer <= 0.0:
@@ -157,9 +169,20 @@ func _start_reload() -> void:
 	_reload_timer = get_effective_weapon_stats(weapon_id)["reload_time_sec"]
 
 
+## Spin-Up Barrel permanent upgrade (issue 22): fire rate ramps toward
+## SMG_SPINUP_MAX_MULT the longer the trigger is held continuously,
+## resetting on release or reload (see _update_weapon/_start_reload above).
+func _smg_spinup_mult() -> float:
+	var t: float = clamp(_smg_hold_timer / SMG_SPINUP_RAMP_SEC, 0.0, 1.0)
+	return lerp(1.0, SMG_SPINUP_MAX_MULT, t)
+
+
 func _fire() -> void:
 	var stats := get_effective_weapon_stats(weapon_id)
-	_fire_cooldown_timer = 1.0 / max(0.01, stats["fire_rate_per_sec"])
+	var fire_rate: float = stats["fire_rate_per_sec"]
+	if weapon_id == "smg" and SaveManager.has_upgrade("smg"):
+		fire_rate *= _smg_spinup_mult()
+	_fire_cooldown_timer = 1.0 / max(0.01, fire_rate)
 	ammo_in_magazine -= 1
 
 	var base_dir: Vector2 = (_aim_position - global_position)
@@ -170,6 +193,11 @@ func _fire() -> void:
 	if weapon_id == "shotgun":
 		for i in 6:
 			_spawn_projectile(base_dir.rotated(deg_to_rad(randf_range(-stats["spread_deg"], stats["spread_deg"]))), stats)
+	elif weapon_id == "pistol" and SaveManager.has_upgrade("pistol"):
+		# Akimbo permanent upgrade: two bullets per pull in a small fixed
+		# V-spread, instead of one bullet with the usual random spread.
+		_spawn_projectile(base_dir.rotated(deg_to_rad(AKIMBO_SPREAD_DEG)), stats)
+		_spawn_projectile(base_dir.rotated(deg_to_rad(-AKIMBO_SPREAD_DEG)), stats)
 	else:
 		var spread: float = stats["spread_deg"]
 		var dir := base_dir.rotated(deg_to_rad(randf_range(-spread, spread)))
@@ -272,6 +300,18 @@ func _roll_perk_choices() -> Array:
 	pool.shuffle()
 	var count := int(get_effective_stat("game.perk_choices_offered", BASE_PERK_CHOICES))
 	return pool.slice(0, min(count, pool.size()))
+
+
+## Permanent perks purchased in the Upgrade Shop (issue 22) apply from the
+## start of every run, via the same stat_modifiers path a level-up choice
+## uses - just applied once at spawn instead of picked mid-run. Must run
+## before _ready()'s stat reads below (max_hp, magazine_size) so they see
+## the modified values immediately.
+func _apply_permanent_perks() -> void:
+	for perk_id in SaveManager.unlocked_perks.keys():
+		var perk: Dictionary = DataTables.get_perk(perk_id)
+		if not perk.is_empty():
+			apply_perk(perk)
 
 
 ## Called by the level-up UI once the player picks. Grants the post-choice

@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/LevelUpChoice.tscn" id="4"]
 [ext_resource type="PackedScene" path="res://scenes/ui/ResultsScreen.tscn" id="5"]
 [ext_resource type="Script" path="res://scenes/GrassBackground.gd" id="6"]
+[ext_resource type="PackedScene" path="res://scenes/ui/UpgradeShop.tscn" id="7"]
 
 [node name="Arena" type="Node2D"]
 script = ExtResource("1")
@@ -29,3 +30,5 @@ position = Vector2(1920, 1080)
 [node name="LevelUpChoice" parent="UI" instance=ExtResource("4")]
 
 [node name="ResultsScreen" parent="UI" instance=ExtResource("5")]
+
+[node name="UpgradeShop" parent="UI" instance=ExtResource("7")]

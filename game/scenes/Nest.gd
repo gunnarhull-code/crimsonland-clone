@@ -18,7 +18,7 @@ var _spawn_timer: float = SPAWN_INTERVAL
 
 func setup(pos: Vector2) -> void:
 	global_position = pos
-	hp = BASE_HP * SessionClock.get_toughness_multiplier()
+	hp = BASE_HP * EnemySpawner.get_toughness_multiplier()
 	if _body:
 		_body.configure(RADIUS, Color(0.35, 0.32, 0.30), Color(0.15, 0.13, 0.12), "hexagon", false)
 

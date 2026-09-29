@@ -1,5 +1,7 @@
 Type: grilling
-Status: resolved
+Status: resolved, superseded
+
+**Superseded by [23 - Wave-based spawning and difficulty markers](23-wave-based-spawning-and-difficulty-markers.md)**: the continuous spawn-timer model below (Q1's answer) and its two addenda ("pack spawns and themed waves", "pre-seeded start") together described a trickle-plus-bursts system that no longer exists in the code - `EnemySpawner.gd` was rewritten around discrete, wait-for-clear waves instead. This ticket is kept for its still-relevant history (why 250 concurrent enemies, the original species-introduction timeline that the authored waves.csv loosely still follows) and because the bugfix addendum below (player-relative spawn positions) is still true of the current code, just applied to wave-roster positions now instead of trickle-spawn positions.
 
 ## Question
 

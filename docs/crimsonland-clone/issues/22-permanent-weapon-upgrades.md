@@ -1,5 +1,5 @@
 Type: grilling
-Status: drafted — architecture decided, content list is a proposal pending confirmation
+Status: implemented
 
 ## Question
 
@@ -60,3 +60,11 @@ This list is still the part most worth pushback on. A couple are more involved t
 - Whether Banked Score should show anywhere during a run (e.g. a small "lifetime total" HUD readout) or only appear at the Upgrade Shop.
 - Whether an upgrade can be un-bought/respecced, or purchases are final (leaning final, matching the no-respec stance implicit in Perks never being un-chosen mid-run).
 - Whether each weapon should ever get a *second* permanent upgrade later (a real tier/tree), or stays capped at one mechanic swap each - the flat boolean save shape above deliberately doesn't block that later, it just doesn't build for it now.
+
+### Implemented — plus permanent Perks, per "go ahead with the next thing... I also want permanent perks that carry over"
+
+Built essentially as drafted above, all six weapon upgrades exactly as sketched, plus one addition beyond this ticket's original scope: **permanent Perk unlocks**, sitting in the same shop, spending the same Banked Score. Rather than opening all 20 Perks to permanent purchase (overlapping with in-run Perk choices in ways that weren't worth designing through right now), only the four `stat_boost`-category Perks from [13](13-perk-content-authoring.md) are offered - Iron Skin, Sprinter, Second Wind, Late Bloomer - flat universal baseline boosts, at 200 Banked Score each. A permanently-owned Perk applies via `Player._apply_permanent_perks()` at `_ready()`, calling the exact same `apply_perk()` a level-up choice calls - it's a baseline the run starts with, not a new mechanism.
+
+The death→continue flow changed from the original "press to restart" sketch, superseded by direct feedback in the same request ("let's make it click a button to continue"): `ResultsScreen` now has a real Continue button (`continue_pressed` signal) instead of restarting on any key/click, which opens `UpgradeShop.tscn` - list of upgrade/perk purchase buttons, a wave picker (see [23](23-wave-based-spawning-and-difficulty-markers.md)), and a Start Run button that sets `SaveManager.next_run_start_wave` and reloads the Arena.
+
+Verified end-to-end headlessly with temporary instrumentation: death correctly banks the run's Score, Continue opens the shop, a purchase correctly deducts cost and flips `has_upgrade()`, the save file is written to `user://save.json`, and - critically, since this is the first persistence this codebase has ever had - a **separate, fresh process launch** correctly loads the same purchased upgrade back from disk. Each of the six weapon mechanics was also individually verified in isolation (cascading Chain Reaction damage falloff, Cluster Warhead bomblets detonating and cleaning themselves up, Railgun Overcharge never freeing on hit, Buckshot Knockback actually moving the enemy, Akimbo's two-projectile spawn, and the permanent Perk's stat change landing before `_ready()` reads it).

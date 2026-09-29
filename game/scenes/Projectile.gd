@@ -5,11 +5,26 @@ extends Area2D
 ## per direct playtest request ("think bazooka"), reversing issues/15's
 ## original "defer splash/AoE post-MVP" call now that the MVP is actually
 ## being played.
+##
+## Also checks SaveManager.has_upgrade() for each weapon's permanent
+## mechanic upgrade (issue 22): Gauss Gun's pierce cap is removed
+## (Railgun Overcharge), the Electric Gun's single arc becomes a real
+## cascading chain with damage falloff (Chain Reaction), Shotgun pellets
+## knock enemies back (Buckshot Knockback), and the Heavy Cannon's
+## explosion flings out secondary bomblets (Cluster Warhead).
 
 const MAX_LIFETIME := 3.0
 const CHAIN_RANGE := 150.0
 const PIERCE_COUNT := 3
 const EXPLOSION_RADIUS := 60.0
+
+const CHAIN_REACTION_FALLOFF := 0.7
+const CHAIN_REACTION_MAX_DEPTH := 12
+const KNOCKBACK_STRENGTH := 260.0
+const CLUSTER_BOMBLET_COUNT := 4
+const CLUSTER_BOMBLET_SCATTER_MIN := 40.0
+const CLUSTER_BOMBLET_SCATTER_MAX := 90.0
+const CLUSTER_BOMBLET_DAMAGE_MULT := 0.5
 
 # Heavy Cannon "rocket taking off" launch curve - per direct playtest
 # request. Starts near-stationary, then rapidly ramps to its normal cruise
@@ -20,6 +35,7 @@ const ROCKET_LAUNCH_ACCEL_SEC := 0.18
 
 const PARTICLE_BURST := preload("res://scenes/effects/ParticleBurst.tscn")
 const ZAP_LINE := preload("res://scenes/effects/ZapLine.tscn")
+const CLUSTER_BOMBLET := preload("res://scenes/effects/ClusterBomblet.tscn")
 
 var direction: Vector2 = Vector2.RIGHT
 var speed: float = 700.0
@@ -89,6 +105,9 @@ func _on_body_entered(body: Node) -> void:
 	_hit_particles(body.global_position)
 	AudioManager.play_hit()
 
+	if weapon_id == "shotgun" and SaveManager.has_upgrade("shotgun") and body.has_method("apply_knockback"):
+		body.apply_knockback(direction * KNOCKBACK_STRENGTH)
+
 	if weapon_id == "heavy_cannon":
 		_explode(body.global_position)
 		queue_free()
@@ -99,14 +118,22 @@ func _on_body_entered(body: Node) -> void:
 		queue_free()
 		return
 
-	if weapon_id == "gauss_gun" and pierce_remaining > 0:
-		pierce_remaining -= 1
+	if weapon_id == "gauss_gun":
+		if SaveManager.has_upgrade("gauss_gun"):
+			return
+		if pierce_remaining > 0:
+			pierce_remaining -= 1
+			return
+		queue_free()
 		return
 
 	queue_free()
 
 
 func _try_chain(origin: Node) -> void:
+	if SaveManager.has_upgrade("electric_gun"):
+		_cascade_chain(origin, damage, 0)
+		return
 	var closest: Node = null
 	var closest_dist := CHAIN_RANGE
 	for e in get_tree().get_nodes_in_group("enemies"):
@@ -123,6 +150,31 @@ func _try_chain(origin: Node) -> void:
 		AudioManager.play_hit()
 
 
+## Chain Reaction upgrade: instead of arcing to exactly one nearby enemy,
+## keep cascading to the next-nearest untouched enemy in range, losing a
+## fraction of damage each jump, until no target is left in range.
+func _cascade_chain(origin: Node, current_damage: float, depth: int) -> void:
+	if depth >= CHAIN_REACTION_MAX_DEPTH:
+		return
+	var closest: Node = null
+	var closest_dist := CHAIN_RANGE
+	for e in get_tree().get_nodes_in_group("enemies"):
+		if e == origin or _hit_enemies.has(e):
+			continue
+		var d: float = origin.global_position.distance_to(e.global_position)
+		if d <= closest_dist:
+			closest_dist = d
+			closest = e
+	if closest == null:
+		return
+	_hit_enemies.append(closest)
+	closest.take_damage(current_damage)
+	_hit_particles(closest.global_position)
+	_zap_line(origin.global_position, closest.global_position)
+	AudioManager.play_hit()
+	_cascade_chain(closest, current_damage * CHAIN_REACTION_FALLOFF, depth + 1)
+
+
 ## Heavy Cannon: full damage to every enemy within EXPLOSION_RADIUS of the
 ## impact point, not just whatever was directly hit - "think bazooka."
 func _explode(center: Vector2) -> void:
@@ -136,6 +188,20 @@ func _explode(center: Vector2) -> void:
 	get_tree().current_scene.get_node("Effects").add_child(burst)
 	burst.global_position = center
 	burst.fire(10, Color(0.85, 0.35, 0.15))
+	if SaveManager.has_upgrade("heavy_cannon"):
+		_spawn_cluster_bomblets(center)
+
+
+## Cluster Warhead upgrade: a few smaller secondary explosions, flung
+## outward and detonating a beat after the primary blast.
+func _spawn_cluster_bomblets(center: Vector2) -> void:
+	for i in CLUSTER_BOMBLET_COUNT:
+		var angle := randf() * TAU
+		var dist := randf_range(CLUSTER_BOMBLET_SCATTER_MIN, CLUSTER_BOMBLET_SCATTER_MAX)
+		var bomblet := CLUSTER_BOMBLET.instantiate()
+		get_tree().current_scene.get_node("Effects").add_child(bomblet)
+		bomblet.global_position = center + Vector2.RIGHT.rotated(angle) * dist
+		bomblet.fire(damage * CLUSTER_BOMBLET_DAMAGE_MULT)
 
 
 func _hit_particles(at: Vector2) -> void:
