@@ -39,6 +39,15 @@ const WAVE_STAGGER_SEC := 0.12
 const WAVE_RING_RADIUS := 320.0
 const WAVE_LINE_SPACING := 55.0
 
+# A run used to start completely empty, with the player having to wander
+# for up to ~10s (the first trickle spawn lands 780-950px away, off-screen)
+# before finding anything - reported directly. These seed a few small
+# clusters scattered around the player (not stacked on top of them) the
+# moment a run starts, so there's something nearby immediately.
+const INITIAL_CLUSTER_COUNT := 3
+const INITIAL_CLUSTER_MIN_DIST := 300.0
+const INITIAL_CLUSTER_MAX_DIST := 650.0
+
 # Each flavor is only eligible once `minutes` reaches its threshold, so the
 # roster of possible waves opens up over a run the same way the regular
 # spawn roster does.
@@ -70,6 +79,23 @@ func register_arena(enemies_container: Node2D, player: Node2D, arena_size: Vecto
 	_active_nest_count = 0
 	_wave_timer = WAVE_FIRST_DELAY_SEC
 	_pending_wave_spawns = []
+	_seed_initial_enemies()
+
+
+## Scatters a few small clusters around the player at run start - not on
+## top of them, just close enough to reach in a few seconds rather than
+## the usual 780-950px trickle-spawn ring.
+func _seed_initial_enemies() -> void:
+	if _player == null or not is_instance_valid(_player):
+		return
+	for i in INITIAL_CLUSTER_COUNT:
+		var angle := (TAU / INITIAL_CLUSTER_COUNT) * i + randf_range(-0.3, 0.3)
+		var dist := randf_range(INITIAL_CLUSTER_MIN_DIST, INITIAL_CLUSTER_MAX_DIST)
+		var origin: Vector2 = _player.global_position + Vector2.RIGHT.rotated(angle) * dist
+		origin.x = clamp(origin.x, 0.0, _arena_size.x)
+		origin.y = clamp(origin.y, 0.0, _arena_size.y)
+		var species := "rat" if randf() < 0.5 else "spider"
+		_spawn_pack(species, "base", origin)
 
 
 func _process(delta: float) -> void:

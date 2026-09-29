@@ -14,7 +14,9 @@ signal xp_changed(xp: float, xp_required: float, level: int)
 signal weapon_changed(weapon_id: String)
 
 const BASE_MAX_HP := 100.0
-const BASE_MOVE_SPEED := 260.0
+# 260 -> 210 per direct playtest request ("I am too fast as well... slow
+# down a little bit") - bullets are untouched, only movement speed.
+const BASE_MOVE_SPEED := 210.0
 const BASE_HP_REGEN := 0.0
 const BASE_PICKUP_LUCK := 0.0
 const BASE_PICKUP_RADIUS := 20.0

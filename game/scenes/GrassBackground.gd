@@ -6,9 +6,9 @@ extends Node2D
 ## - texture for motion cues, not decoration ("super dull... don't want it
 ## to burn my eyes").
 
-const BASE_COLOR := Color(0.075, 0.085, 0.065)
-const BLADE_COLOR_A := Color(0.088, 0.100, 0.077)
-const BLADE_COLOR_B := Color(0.062, 0.072, 0.054)
+const BASE_COLOR := Color(0.24, 0.28, 0.19)
+const BLADE_COLOR_A := Color(0.27, 0.31, 0.22)
+const BLADE_COLOR_B := Color(0.21, 0.25, 0.17)
 const TILE_SIZE := 64.0
 const BLADES_PER_TILE := 5
 

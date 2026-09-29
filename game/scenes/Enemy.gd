@@ -50,6 +50,17 @@ const CHASE_VARIETY_REROLL_MAX := 4.0
 const CHASE_TURN_RATE_MIN_DEG := 70.0
 const CHASE_TURN_RATE_MAX_DEG := 1000.0
 
+# Once an enemy is genuinely close, it stops aiming at its personal offset
+# point and aims straight at the player instead - per direct playtest
+# request ("nobody's really dangerous... I want them to consistently do
+# damage"). The offset was making enemies orbit near the player without
+# ever actually closing to contact distance, so damage landed far less
+# often than the attack cooldown alone would suggest. The offset still
+# does its job at range (fanning a crowd out while approaching); it just
+# doesn't get to override the final approach anymore.
+const CHASE_CLOSE_RANGE := 100.0
+const CONTACT_TOUCH_BUFFER := 6.0
+
 # Auto-aggro: an enemy that never crosses the player's aggro radius would
 # otherwise wander forever, which reads as "just standing there" once the
 # Arena got much bigger than the screen. Per direct playtest request, every
@@ -307,7 +318,10 @@ func _process_chase(delta: float) -> Vector2:
 		_chase_aim_offset = Vector2.RIGHT.rotated(randf() * TAU) * randf_range(CHASE_AIM_OFFSET_MIN, CHASE_AIM_OFFSET_MAX)
 		_chase_turn_rate_deg = randf_range(CHASE_TURN_RATE_MIN_DEG, CHASE_TURN_RATE_MAX_DEG)
 
-	var to_target: Vector2 = (_player.global_position + _chase_aim_offset) - global_position
+	var dist_to_player: float = global_position.distance_to(_player.global_position)
+	var aim_point: Vector2 = _player.global_position if dist_to_player < CHASE_CLOSE_RANGE \
+		else _player.global_position + _chase_aim_offset
+	var to_target: Vector2 = aim_point - global_position
 	var desired_dir: Vector2 = to_target.normalized() if to_target.length() > 1.0 else Vector2.ZERO
 	_chase_dir = _turn_toward(_chase_dir, desired_dir, _chase_turn_rate_deg, delta)
 
@@ -341,12 +355,18 @@ func _turn_toward(current: Vector2, desired: Vector2, max_deg_per_sec: float, de
 # --------------------------------------------------------- contact damage --
 
 func _process_contact_damage(delta: float) -> void:
+	# BUGFIX: this used to only decrement while touching, so an enemy that
+	# bounced in and out of contact range (turn-rate overshoot, separation
+	# jitter) had its cooldown clock effectively pause every time it lost
+	# contact - "barely did damage... took forever to die," reported
+	# directly. The cooldown now always ticks down in real time; touching
+	# only gates whether a *ready* attack can land, exactly like it should.
+	_attack_cooldown_timer -= delta
 	var my_radius: float = stats.get("hitbox_radius_px", 14.0)
 	var player_radius: float = _player.hitbox_radius if "hitbox_radius" in _player else 14.0
-	var touching: bool = global_position.distance_to(_player.global_position) <= (my_radius + player_radius)
+	var touching: bool = global_position.distance_to(_player.global_position) <= (my_radius + player_radius + CONTACT_TOUCH_BUFFER)
 	if not touching:
 		return
-	_attack_cooldown_timer -= delta
 	if _attack_cooldown_timer <= 0.0:
 		_player.take_damage(stats.get("damage", 5.0))
 		_attack_cooldown_timer = stats.get("attack_cooldown_sec", 1.0)
