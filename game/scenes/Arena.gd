@@ -13,5 +13,17 @@ func _ready() -> void:
 	_background.setup(ArenaConfig.size)
 	var enemies: Node2D = $Enemies
 	EnemySpawner.register_arena(enemies, _player, ArenaConfig.size)
+	SaveManager.begin_run()
 	SessionClock.start()
 	$UI/ResultsScreen.continue_pressed.connect($UI/UpgradeShop.open)
+	EnemySpawner.wave_cleared.connect(_on_wave_cleared)
+	$UI/UpgradeShop.run_resumed.connect(EnemySpawner.resume_after_shop)
+
+
+## Per-wave shop stop: bank the score earned so far, then open the shop in
+## its mid-run mode (Continue Run instead of Start Run).
+func _on_wave_cleared(_wave: int) -> void:
+	if not _player.alive:
+		return
+	SaveManager.bank_run_score(_player.score)
+	$UI/UpgradeShop.open_mid_run()

@@ -20,6 +20,9 @@ extends Node
 ##   to wave 1.
 
 signal wave_announced(text: String)
+## Emitted when a wave is fully cleared; the spawner then holds (no next
+## wave) until resume_after_shop() is called - the per-wave shop stop.
+signal wave_cleared(wave: int)
 
 const ENEMY_SCENE := preload("res://scenes/Enemy.tscn")
 const NEST_SCENE := preload("res://scenes/Nest.tscn")
@@ -57,6 +60,7 @@ var _arena_size := Vector2(1280, 720)
 
 var current_wave: int = 1
 var _wave_active: bool = false
+var _awaiting_shop: bool = false
 var _inter_wave_delay_timer: float = 0.0
 var _active_nest_count: int = 0
 var _pending_spawns: Array = []
@@ -72,6 +76,7 @@ func register_arena(enemies_container: Node2D, player: Node2D, arena_size: Vecto
 	# spawned is actually SaveManager.next_run_start_wave, not one past it.
 	current_wave = max(1, SaveManager.next_run_start_wave) - 1
 	_wave_active = false
+	_awaiting_shop = false
 	_active_nest_count = 0
 	_pending_spawns = []
 	_inter_wave_delay_timer = 0.5
@@ -87,12 +92,23 @@ func _process(delta: float) -> void:
 			_wave_active = false
 			SaveManager.report_wave_reached(current_wave)
 			_inter_wave_delay_timer = INTER_WAVE_DELAY_SEC
+			_awaiting_shop = true
+			wave_cleared.emit(current_wave)
+		return
+
+	if _awaiting_shop:
 		return
 
 	_inter_wave_delay_timer -= delta
 	if _inter_wave_delay_timer <= 0.0:
 		current_wave += 1
 		_start_current_wave()
+
+
+## Called by the Arena when the player leaves the per-wave shop.
+func resume_after_shop() -> void:
+	_awaiting_shop = false
+	_inter_wave_delay_timer = 1.0
 
 
 func get_current_wave() -> int:
@@ -113,7 +129,7 @@ func _start_current_wave() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = current_wave
 	var wave := _get_wave_data(current_wave, rng)
-	wave_announced.emit(wave["name"])
+	wave_announced.emit("Wave %d: %s" % [current_wave, wave["name"]])
 	var roster := _build_wave_roster(wave)
 	var origin := _random_point_near_player(rng)
 	match wave.get("formation", "cluster"):

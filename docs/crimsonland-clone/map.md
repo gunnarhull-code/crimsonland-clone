@@ -55,3 +55,5 @@ All prior fog graduated into tickets [18](issues/18-godot-scene-structure.md), [
 - Multiple levels or additional game modes (Quest, Rush, etc. from the original) — MVP is a single endless-survival arena only.
 - Live Google Sheets sync for perks — local CSV only for the MVP; live sync could be revisited later if re-exporting becomes a real annoyance.
 - Chapter/Level/Checkpoint campaign progression with permanent Perk unlocks — a real future direction, captured in [future-progression-notes.md](future-progression-notes.md) so it isn't lost, but not part of this single-level MVP.
+
+- Addendum (playtest): per-wave shop stop added (issue 23 addendum); Electric Gun range 1000 -> 900 and Heavy Cannon range 1600 -> 1100 (roughly half of the ~2065px visible width at zoom 0.62).

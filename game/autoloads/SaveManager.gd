@@ -54,6 +54,23 @@ func purchase_perk(perk_id: String, cost: int) -> bool:
 	return true
 
 
+## Portion of the current run's score already added to banked_score, so
+## banking at each wave-clear shop stop and again on death never double-counts.
+var _run_banked: int = 0
+
+
+func begin_run() -> void:
+	_run_banked = 0
+
+
+## Banks whatever part of `run_score` hasn't been banked yet this run.
+func bank_run_score(run_score: int) -> void:
+	var delta := run_score - _run_banked
+	if delta > 0:
+		_run_banked = run_score
+		add_banked_score(delta)
+
+
 func report_wave_reached(wave: int) -> void:
 	if wave > highest_wave_reached:
 		highest_wave_reached = wave

@@ -18,7 +18,10 @@ const WEAPON_UPGRADES := [
 const PERK_UNLOCKS := ["iron_skin", "sprinter", "second_wind", "late_bloomer"]
 const PERK_COST := 200
 
+signal run_resumed
+
 var _selected_wave: int = 1
+var _mid_run: bool = false
 
 @onready var _score_label: Label = $Panel/Layout/ScoreLabel
 @onready var _upgrades_box: VBoxContainer = $Panel/Layout/Scroll/ContentBox/UpgradesBox
@@ -35,8 +38,23 @@ func _ready() -> void:
 	_start_button.pressed.connect(_on_start_pressed)
 
 
+## Post-death shop: pick a start wave and begin a fresh run.
 func open() -> void:
+	_mid_run = false
 	_selected_wave = max(1, SaveManager.highest_wave_reached)
+	_show()
+
+
+## Shown after every cleared wave: the same shop, but the button continues
+## the current run into the next wave instead of restarting.
+func open_mid_run() -> void:
+	_mid_run = true
+	_show()
+
+
+func _show() -> void:
+	$Panel/Layout/WaveRow.visible = not _mid_run
+	_start_button.text = "Continue Run" if _mid_run else "Start Run"
 	_refresh()
 	visible = true
 	get_tree().paused = true
@@ -102,6 +120,11 @@ func _on_wave_next() -> void:
 
 
 func _on_start_pressed() -> void:
+	if _mid_run:
+		visible = false
+		get_tree().paused = false
+		run_resumed.emit()
+		return
 	SaveManager.next_run_start_wave = _selected_wave
 	visible = false
 	get_tree().paused = false

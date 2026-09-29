@@ -33,7 +33,7 @@ func _on_died() -> void:
 	_score_label.text = "Score: %d" % _player.score
 	_level_label.text = "Level reached: %d" % _player.level
 	_time_label.text = "Survived: %ds" % int(_player.survival_time)
-	SaveManager.add_banked_score(_player.score)
+	SaveManager.bank_run_score(_player.score)
 	visible = true
 	get_tree().paused = true
 	SessionClock.stop()
