@@ -7,12 +7,11 @@ extends Camera2D
 ## Camera2D.zoom is a magnification factor (higher = more zoomed in, less
 ## of the world visible), the exact opposite of what was assumed when this
 ## was first written. Caught directly ("you're zooming in, getting closer
-## towards the character. i want a bigger view") after three rounds of
-## "zoom out" requests each made it worse. A value below 1.0 is the one
-## that actually shows more of the Arena - 0.4 shows a ~3200x1800 area,
-## close to the full 3840x2160 Arena.
+## towards the character. i want a bigger view"). 0.4 (near-full-map view)
+## was then "a little too far" the other way - 0.55 shows a ~2327x1309
+## area, a wide view without showing almost the whole Arena at once.
 
-const ZOOM := Vector2(0.4, 0.4)
+const ZOOM := Vector2(0.55, 0.55)
 const SMOOTHING_SPEED := 6.0
 
 
