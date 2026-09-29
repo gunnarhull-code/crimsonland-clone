@@ -194,9 +194,17 @@ func _queue_wave_line(species: String, minutes: float, count: int, origin: Vecto
 
 
 func _pincer_edge_positions() -> Array:
-	if randi() % 2 == 0:
-		return [Vector2(-20.0, randf() * _arena_size.y), Vector2(_arena_size.x + 20.0, randf() * _arena_size.y)]
-	return [Vector2(randf() * _arena_size.x, -20.0), Vector2(randf() * _arena_size.x, _arena_size.y + 20.0)]
+	if _player == null or not is_instance_valid(_player):
+		return [_random_edge_position(), _random_edge_position()]
+	var radius := randf_range(SPAWN_RING_MIN, SPAWN_RING_MAX)
+	var base_angle := randf() * TAU
+	var p1: Vector2 = _player.global_position + Vector2.RIGHT.rotated(base_angle) * radius
+	var p2: Vector2 = _player.global_position + Vector2.RIGHT.rotated(base_angle + PI) * radius
+	p1.x = clamp(p1.x, 0.0, _arena_size.x)
+	p1.y = clamp(p1.y, 0.0, _arena_size.y)
+	p2.x = clamp(p2.x, 0.0, _arena_size.x)
+	p2.y = clamp(p2.y, 0.0, _arena_size.y)
+	return [p1, p2]
 
 
 func _process_pending_wave_spawns(delta: float) -> void:
@@ -252,23 +260,35 @@ func _on_nest_removed() -> void:
 	_active_nest_count = max(0, _active_nest_count - 1)
 
 
+## Spawn ring radius: past SPAWN_RING_MIN, a spawn is outside the camera's
+## visible area in every direction (viewport 1280x720 at 1.15x zoom gives a
+## ~736x414px visible half-extent from the player; 780 clears the larger of
+## the two with a small margin) - "just off-screen," not "somewhere on the
+## far side of a 3840x2160 map." Fixes enemies spawning at the literal
+## arena edges, which - once the Arena got much bigger than the screen -
+## put most spawns thousands of px from the player, invisible for minutes.
+const SPAWN_RING_MIN := 780.0
+const SPAWN_RING_MAX := 950.0
+
 func _random_edge_position() -> Vector2:
-	var side := randi() % 4
-	match side:
-		0:
-			return Vector2(randf() * _arena_size.x, -20.0)
-		1:
-			return Vector2(randf() * _arena_size.x, _arena_size.y + 20.0)
-		2:
-			return Vector2(-20.0, randf() * _arena_size.y)
-		_:
-			return Vector2(_arena_size.x + 20.0, randf() * _arena_size.y)
+	if _player == null or not is_instance_valid(_player):
+		return _arena_size / 2.0
+	var angle := randf() * TAU
+	var radius := randf_range(SPAWN_RING_MIN, SPAWN_RING_MAX)
+	var pos: Vector2 = _player.global_position + Vector2.RIGHT.rotated(angle) * radius
+	pos.x = clamp(pos.x, 0.0, _arena_size.x)
+	pos.y = clamp(pos.y, 0.0, _arena_size.y)
+	return pos
 
 
 func _random_interior_position() -> Vector2:
-	var pos := Vector2(randf_range(120.0, _arena_size.x - 120.0), randf_range(120.0, _arena_size.y - 120.0))
-	if _player and pos.distance_to(_player.global_position) < 200.0:
-		pos += (pos - _player.global_position).normalized() * 250.0
+	if _player == null or not is_instance_valid(_player):
+		return _arena_size / 2.0
+	var angle := randf() * TAU
+	var radius := randf_range(300.0, 900.0)
+	var pos: Vector2 = _player.global_position + Vector2.RIGHT.rotated(angle) * radius
+	pos.x = clamp(pos.x, 120.0, _arena_size.x - 120.0)
+	pos.y = clamp(pos.y, 120.0, _arena_size.y - 120.0)
 	return pos
 
 

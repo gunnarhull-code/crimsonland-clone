@@ -76,7 +76,7 @@ func _physics_process(delta: float) -> void:
 
 
 func _is_off_arena() -> bool:
-	var size: Vector2 = get_viewport_rect().size
+	var size: Vector2 = ArenaConfig.size
 	return global_position.x < -50.0 or global_position.x > size.x + 50.0 \
 		or global_position.y < -50.0 or global_position.y > size.y + 50.0
 
