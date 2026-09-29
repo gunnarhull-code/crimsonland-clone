@@ -24,45 +24,39 @@ A new `SaveManager` Autoload owns a single JSON file at `user://save.json`:
 ```json
 {
   "banked_score": 0,
-  "upgrades": { "pistol_magazine": 2, "electric_chain": 1 }
+  "unlocked_upgrades": ["gauss_gun", "smg"]
 }
 ```
-`upgrades` maps upgrade id → tier currently owned (0 if absent). Loaded once at game start (`SaveManager._ready()`); written immediately after every purchase (small, infrequent writes — no need to batch). This is the first persistence anything in this codebase has ever needed; every other Autoload ([16](16-multiplayer-readiness-architecture.md)'s architecture) is pure in-memory session state.
+`unlocked_upgrades` is a flat set of weapon ids — since this first pass gives each weapon at most one permanent mechanic upgrade, owning it is boolean, not tiered (no per-upgrade tier count needed, unlike Perks). Loaded once at game start (`SaveManager._ready()`); written immediately after every purchase (small, infrequent writes — no need to batch). This is the first persistence anything in this codebase has ever needed; every other Autoload ([16](16-multiplayer-readiness-architecture.md)'s architecture) is pure in-memory session state.
 
-### Applying upgrades: extend the existing stat-modifier system, don't build a second one
+### Applying upgrades: a second, deliberately different mechanism from Perks
 
-[12](12-perk-effect-architecture.md) already has exactly the right shape for this — `effect_type` (additive/multiplicative) against a `target` stat string, read generically by `Player.get_effective_stat()` / `get_effective_weapon_stats()`. Permanent upgrades reuse that verbatim:
+**Revised after direct feedback**: the first draft below tried to force these into [12](12-perk-effect-architecture.md)'s additive/multiplicative stat-modifier system (bigger magazine, more pierce, wider spread — bigger numbers). Rejected: "go with actual mechanic changes, not just bigger numbers." A mechanic change — an unlimited-pierce beam, a cascading chain, knockback, a fire rate that ramps while held, cluster bomblets — is exactly the kind of thing [12](12-perk-effect-architecture.md) defined `special_handler_id` for: *not* reducible to math against a stat. Since every permanent upgrade in the revised list below is a one-time behavioral unlock (not a stacking tier), the mechanism is simpler than a tiered stat system needs to be:
 
-- A new `weapon_upgrades.csv` (same pattern as `perks.csv`): `id, weapon_id, name, description, cost, effect_type, target, value, max_tier`.
-- At `Player._ready()`, before anything else, every owned upgrade (looked up by id → tier in the save file) gets fed into `stat_modifiers` via the same `_apply_single_effect()` perks already use — tier 2 of an additive upgrade just applies the additive effect twice (or once with `value * tier`, equivalent). Perks chosen mid-run then layer on top of this permanent baseline exactly like they layer on top of the weapon's raw CSV stats today — no interaction code needed, it falls out of the existing layering.
-- **This requires promoting a few currently-hardcoded weapon mechanics into real stats first**, so they're addressable as a `target` string at all:
-  - Gauss Gun's pierce count (`Projectile.gd`'s `PIERCE_COUNT := 3` constant) → new `weapons.csv` column `pierce_count`, read like every other stat.
-  - Electric Gun's chain count (currently always exactly 1, hardcoded in `_try_chain`) → new `weapons.csv` column `chain_targets`.
-  - Heavy Cannon's explosion radius (`Projectile.gd`'s `EXPLOSION_RADIUS := 60.0` constant) → new `weapons.csv` column `explosion_radius_px`.
-  - Shotgun's pellet count (hardcoded `for i in 6` in `Player._fire()`) → new `weapons.csv` column `pellet_count`.
-
-  This is a genuine architecture improvement independent of this feature: it closes the gap between "things expressible as stat math" and "things that were actually hardcoded anyway despite being simple numbers" — the same gap [12](12-perk-effect-architecture.md) already fought to minimize for Perks. Once done, a future Perk could also target `weapon.pierce_count` etc. for free.
+- `SaveManager.has_upgrade(weapon_id: String) -> bool` — each weapon has at most one permanent mechanic upgrade in this first pass, so a flat owned-set (`{"gauss_gun": true, "smg": true}` in the save file) is enough; no tiers, no CSV, no schema to design yet.
+- Each weapon's own script checks it directly at the exact point its behavior diverges — `Projectile.gd`'s `_on_body_entered`/`_try_chain`/`_explode` for Gauss/Electric/Heavy Cannon, `Player.gd`'s `_fire`/`_update_weapon` for Pistol/Shotgun/SMG. No generic dispatch layer, because there's nothing generic about "explosions now spawn bomblets" — it's bespoke by nature, same as Lucky Break was the one perk that needed real code instead of data.
+- This is intentionally a *different* extension point from Perks, not a unification of the two — Perks stay pure stat math via `stat_modifiers`; permanent weapon upgrades stay pure behavior branches via `SaveManager.has_upgrade()`. Trying to force both through one system would mean bending one of them to fit the other for no real benefit.
 
 ### Where it sits in the flow
 
 `ResultsScreen` (per [14](14-player-vitals-and-leveling.md)/[02](02-arena-session-structure.md)) currently shows stats and waits for any key to restart. That becomes a two-step flow: stats panel → **Upgrade Shop panel** (lists affordable/owned upgrades, spend Banked Score, any number of purchases) → press to restart. The shop reads/writes `SaveManager` directly; restart still just reloads the Arena scene exactly as already built, now with `Player._ready()` picking up whatever was purchased.
 
-### Proposed starting upgrade list (draft — six weapons, one or two each, needs your sign-off before authoring into the CSV)
+### Proposed starting upgrade list — one real mechanic change per weapon, one-time unlock each
 
-| Weapon | Upgrade | Effect | Tiers | Cost (Banked Score) |
+| Weapon | Upgrade | What actually changes | Cost (Banked Score) | Implementation sketch |
 |---|---|---|---|---|
-| Pistol | Extended Mag | +1 magazine_size / tier | 5 | 50 × tier |
-| Pistol | Quick Reload | −0.1s reload_time / tier | 3 | 75 × tier |
-| Gauss Gun | Deeper Pierce | +1 pierce_count / tier | 2 (3→5 total) | 150 × tier |
-| Electric Gun | Double Arc | chain_targets 1→2 | 1 (one-time) | 300 |
-| Shotgun | Wider Spread | +1 pellet_count / tier | 3 (6→9 total) | 100 × tier |
-| SMG | Bigger Drum | +10 magazine_size / tier | 3 | 80 × tier |
-| Heavy Cannon | Bigger Boom | +15px explosion_radius_px / tier | 3 (60→105px) | 200 × tier |
+| Pistol | **Akimbo** | Each trigger pull fires two bullets in a slight V-spread instead of one — a real firing-pattern change, not a damage/rate number. | 150 | `Player._fire()`: if unlocked, loop the single-shot branch twice with a small fixed offset angle instead of once. |
+| Gauss Gun | **Railgun Overcharge** | The pierce cap is removed entirely — the beam punches through every enemy in its line, not just 3. Turns it from "a piercing shot" into "a line that erases everything in it." | 300 | `Projectile.gd`: skip the `pierce_remaining` decrement/cutoff check entirely when unlocked, instead of raising `PIERCE_COUNT`. |
+| Electric Gun | **Chain Reaction** | Instead of arcing to exactly one nearby enemy, it keeps cascading to the next-nearest untouched enemy in range, each jump doing less damage than the last, until no target is left in range. Turns a single arc into a real chain. | 300 | `Projectile.gd`'s `_try_chain()`: loop instead of a single jump, tracking a damage-falloff multiplier per jump (e.g. ×0.7 each time), still respecting `_hit_enemies` so it can't double-hit. Each jump still fires a `ZapLine`. |
+| Shotgun | **Buckshot Knockback** | Pellets physically shove enemies back on hit. A new mechanic no weapon has: enemies briefly get pushed instead of just damaged. | 250 | `Enemy.gd` needs a short-lived external-impulse state (e.g. `_knockback_velocity` that decays over ~0.2s and overrides normal wander/chase velocity while active) so `Projectile.gd` has something to push. |
+| SMG | **Spin-Up Barrel** | Fire rate ramps up the longer the trigger is held continuously (starts at its normal rate, climbs toward roughly double over ~1.5s), resetting the moment you release or have to reload. Turns "volume of fire" into an actual spin-up minigun. | 250 | `Player.gd`: track continuous-hold duration in `_update_weapon()`, scale the SMG's effective `fire_rate_per_sec` by a ramp curve while held, reset the timer on release/reload. |
+| Heavy Cannon | **Cluster Warhead** | On explosion, also flings out 3-4 small bomblets that arm mid-air and detonate a moment later, each with their own smaller blast — one big explosion becomes a primary blast plus a handful of secondary ones. | 350 | `Projectile.gd`'s `_explode()`: spawn a few small `Bomblet` instances with a short fuse timer and a smaller `EXPLOSION_RADIUS`-style AoE of their own, flung outward at random angles/speeds. |
 
-This list is the part most worth pushback on — it's a first guess at what "permanently change how weapons work" should mean concretely, not a locked decision like the architecture above.
+This list is still the part most worth pushback on. A couple are more involved than others to build (Chain Reaction and Cluster Warhead touch existing systems; Buckshot Knockback and Spin-Up Barrel are genuinely new mechanics with no precedent in the codebase yet) — flag now if any should be simplified, swapped, or dropped from the first pass.
 
 ### Not yet resolved
 
-- Exact cost curve/balance (numbers above are placeholders, same "provisional, tunable" status every other CSV value in this project gets).
+- Exact costs (numbers above are placeholders, same "provisional, tunable" status every other number in this project gets pending actual play).
 - Whether Banked Score should show anywhere during a run (e.g. a small "lifetime total" HUD readout) or only appear at the Upgrade Shop.
 - Whether an upgrade can be un-bought/respecced, or purchases are final (leaning final, matching the no-respec stance implicit in Perks never being un-chosen mid-run).
+- Whether each weapon should ever get a *second* permanent upgrade later (a real tier/tree), or stays capped at one mechanic swap each - the flat boolean save shape above deliberately doesn't block that later, it just doesn't build for it now.
