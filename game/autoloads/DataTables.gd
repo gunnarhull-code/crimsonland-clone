@@ -68,7 +68,7 @@ func _read_csv_rows(path: String) -> Array:
 			continue
 		var row := {}
 		for i in header.size():
-			row[header[i]] = line[i] if i < line.size() else ""
+			row[header[i].strip_edges()] = line[i].strip_edges() if i < line.size() else ""
 		rows.append(row)
 	file.close()
 	return rows
