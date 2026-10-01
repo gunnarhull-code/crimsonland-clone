@@ -380,6 +380,16 @@ The balance target is a **range at the final level: about 20× to 100× baseline
 
 **Confirmed (owner):** an early boss kill cancels waves that have not spawned yet.
 
+### 13.12 Two separate stats: fire rate and charge time (owner definitions)
+
+- **Fire rate:** how long it takes before you are able to fire another bullet. It is the lockout between shots (the pistol's baseline is 3.5 shots per second, an interval of about 0.29 s). Quickdraw changes this.
+- **Charge time:** how long a bullet takes to leave the gun **after you click**. You just click, and after a delay it charges and fires. **There is no charge time by default**: bullets leave as soon as you click.
+- **Grow adds charge time.** If the weapon has none, Grow gives it a base charge time and then multiplies it by 1.25. If it already has one, Grow just multiplies it by 1.25. Each further stack multiplies by 1.25 again. Grow also makes bullets twice as big and multiplies damage by 1.5 per stack. (This replaces the earlier wording of "a fire-rate penalty", and the earlier ×1.25 and ×1.6 damage numbers.)
+- **Quickdraw does not shorten charge time.** They are separate stats.
+- Charge time may be removed later. Keep it for now.
+- **Code:** a `charge_time_mult(value, base_if_zero)` action, separate from `fire_rate_mult`.
+- *Open:* what the base charge time is (seconds), and whether the charge overlaps the fire-rate lockout or adds to it.
+
 ### 13.9 Rubric
 
 `upgrade-rubric.md` and `upgrade-rubric.csv` score each upgrade against ten pillars: Synergy, Risk, Counterplay, Readable, Run arc, Alien and unusual, Player skill, Power fantasy, Felt immediately and Draft tension. Every pick should be felt in the next level and be a real choice, not an obvious one. The pillar list is a brainstorm and may change. Fill a row before building any upgrade.
