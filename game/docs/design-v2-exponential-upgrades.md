@@ -229,9 +229,75 @@ Answered:
 4. **Self-damage upgrades:** keep rare.
 5. **Effects model:** single-effect building blocks in code, combined into upgrades in the spreadsheet (see section 3).
 
-Still open:
-2. **Ammo:** a "multi-bullet pull" is one click that fires several bullets (because of Split). Does it spend 1 round or 1 per bullet? (Recommended: 1 per pull.)
-6. **Scenario count:** ~24 authored + generated?
-7. **Win bonus:** pick 1 of 3 unlocks plus a heat level?
+2. **Ammo:** one round per pull, regardless of bullet count (owner: use recommendation).
+6. **Scenario count:** about 24 authored plus generated (owner: use recommendation).
+7. **Win bonus:** pick 1 of 3 unlocks plus a heat level (owner: use recommendation).
+
+No decisions are open. Section 13 holds ideas added later, with their own open questions.
 
 Consequence to watch: with no Split penalty, Split at 4 stacks would be ×16 bullets. Cap is 3 stacks (×8) for now; the balance tool decides.
+
+---
+
+## 13. Addendum: ideas added after the first review
+
+None of this is built. Items marked *open* need an owner answer before coding. These add to the sections above and do not replace them, except where noted.
+
+### 13.1 Setting and tone
+
+- **Premise:** the character is stranded in a junkyard of the multiverse, a place where everything lost in space and time ends up, and is trying to escape. Level 10 is the way out.
+- **Why it helps:** it explains the mix of themes without needing consistent lore. Weapon parts are salvage from different realities, enemies are strays from elsewhere, portals are wormholes between scrap-heaps, unlocks are salvage found, and heat levels are deeper layers.
+- **Rules:** original names only, no pop-culture references anywhere in names, text or docs. Upgrades are called **salvage** in the UI. Story is framing only: a line per scenario or unlock in the CSVs, an opening line and a win screen. No dialogue, cutscenes or lore tracking.
+- **Focus:** upgrades change the weapon. Character perks are optional and rare. The pistol should be able to mutate into something strange by the end of a run.
+
+### 13.2 Stacking and unlock rules
+
+- **Stackable by default.** Most upgrades can be picked more than once, with a `stack_rule` per effect and a `max_stacks` cap. Multipliers always need a cap. A hyperbolic stack rule (each extra stack adds less) is a candidate for chance-based effects. *Open:* a limit on how many different upgrades a player may hold.
+- **Draw rule:** each 1-of-3 offer should contain at least one upgrade the player doesn't own, so runs don't collapse into one upgrade. *Open: confirm.*
+- **Stack tooltips** show the next stack, for example "Split 2 to 3: 4 bullets to 8".
+- **Chained upgrades.** An upgrade may list one or two upgrades in a `requires` column. It joins the draw pool only once those are owned. Meeting the requirement makes it eligible, nothing more. It may still never appear in a run. Keep chains to two steps and about three chains in slice one. A prerequisite must be useful on its own.
+- **Linked abilities.** If the player holds both upgrades in a pair, a third upgrade is applied automatically and costs no pick. A short announcement shows when it fires. Links are hidden until found, with a small hint on the pick screen. *Open:* whether a link needs one stack of each or scales with the lower stack count.
+- **Combos table.** One table covers both. A row lists required upgrades (with minimum stacks) and a grant. If the grant is an upgrade it is a linked ability. If the grant is an unlock or a cosmetic it is a combo achievement for a themed build. Order of picks doesn't matter. Slice one: 3 to 5 combos. *Open:* whether combo rewards are in-run bonuses, permanent unlocks, or both.
+
+### 13.3 New upgrade ideas
+
+Names are original. Everything is data built from effects, plus the new actions noted.
+
+| upgrade | idea | needs |
+|---|---|---|
+| **Soul Snatcher** | +0.1% damage per kill in the run, shown on screen as a running total. Counts all kills (bullets, poison, explosions). Resets each run | new `kills` counter, `damage_per_kill` action |
+| **Reaper** | chained, requires Soul Snatcher. +0.1% max HP per kill, and current HP rises with it. Capped (for example +150%) | `max_hp_per_kill` action |
+| **Gravity Seed** | a hit pulls nearby enemies into a clump for a short time. Boosts every explosion | `pull(radius, force)` action |
+| **Shard Bloom** | hits embed shards in the enemy. At 6 shards they detonate together | new state `shard`, detonate-at-cap rule |
+| **Third Strike** | two hits on an enemy within 3 s stuns it, a third disintegrates it | per-enemy hit tracking |
+| **Bond Arc** | a hit links the enemy to the nearest one. Damage and states are shared along the link | link action |
+| **Twin Gate** | the first two walls hit become a linked portal pair for bullets and enemies. Expensive. Later | portal system |
+| **Still Field** | a hit creates a zone that freezes everything inside, then releases bullets with extra speed | zone action |
+
+Percent values assume +0.1% per kill. The raw ".001" is meaningless as a flat bonus on 10 damage or 100 HP. *Open: confirm percent.*
+
+**Keyword tags.** Each strange upgrade carries a tag (clump, link, shard, stasis, gate). Payoffs read tags, not upgrade names, so one payoff works with any upgrade carrying the tag. Players learn the combos, such as clump plus explosion, by experimenting.
+
+**Grow rework.** Grow also adds a charge time: each stack lengthens the fire interval by a percentage. It is implemented as `fire_rate_mult` below 1, as a third effect on the same upgrade. A charge that has started always finishes. One charge is one pull, so Split does not change it. Tuning goal: damage multiplier must exceed time cost, or Grow is a nerf. Candidate numbers: damage ×1.6, size ×2, +25% charge per stack. Add a muzzle glow during the charge. A hold-to-charge skill version is a separate later upgrade.
+
+**Field Medic** heals the player, which is a perk. Rework it into a weapon effect (for example a proc that refunds a round) or cut it.
+
+**Cut or deferred:** small-object character items in the style of other roguelites are out. Mechanics worth considering, not decided: a proc weight on each bullet that lowers the chance of further effects (a softer alternative to the generation cap in 4.3), and a rare "cursed" upgrade category for risky upgrades.
+
+### 13.4 Pickups (reverses part of "no pickups")
+
+The earlier decision "no weapon pickups" stands for swapping weapons. **Addendum:** temporary pickups that modify the pistol are allowed. A pickup applies an upgrade's effects as a temporary stack with a limited number of charges, for example "next 20 rounds do fire", and everything else in the build multiplies it.
+- Charges count **pulls**, so Split doesn't drain them faster (matches the ammo decision).
+- Fire needs a `burn` state in `states.csv` (listed as a later idea in section 6).
+- Source: enemy drops on a small chance per kill. Collecting a second one adds more charges.
+- Slice one: two or three pickups.
+
+### 13.5 Later (bigger version, not the MVP)
+
+- **Visual changes:** each upgrade visibly changes the weapon or character. Weapon has 4 to 6 attachment slots, each upgrade names a slot and a sprite, shared pieces are recolored. Bullet color, size and trail follow the upgrade. Reserve `slot` and `visual_id` columns in `upgrades.csv` now.
+- **Slice one version:** bullet color and size per upgrade with placeholder shapes.
+
+### 13.6 Rubric
+
+`upgrade-rubric.md` and `upgrade-rubric.csv` score each upgrade against six pillars: Synergy, Risk, Counterplay, Readable, Run arc and Alien and unusual. Fill a row before building any upgrade.
+

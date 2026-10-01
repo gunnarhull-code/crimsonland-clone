@@ -9,6 +9,7 @@ For a fresh Claude Code session (e.g. via remote control on the owner's PC). Rea
 - Docs on that branch, in `game/docs/`:
   - `design-v2-exponential-upgrades.md`: **current spec. This is the source of truth.**
   - `design-weapons-perks-shop.md`: **superseded** (weapon roster, mods, discovery shop). Only useful for background.
+  - `upgrade-rubric.md` and `upgrade-rubric.csv`: pillar definitions and a score per upgrade.
   - `HANDOFF.md`: this file.
 
 ## The owner's goals and working style
@@ -32,7 +33,7 @@ The owner chose **set 3**. Sets 1 and 2 are parked, not rejected.
 ## Decisions made
 
 - V2 is a **fork**: keep the current game untouched, create `game_v2/` (a copy) for V2.
-- Pistol only. No weapon pickups, no weapon shop. The pistol changes only via upgrades.
+- Pistol only. No weapon swaps, no weapon shop. The pistol changes only via upgrades. (Addendum: temporary modifier pickups are allowed, see spec 13.4.)
 - Upgrades are **exponential and interacting**: e.g. Split doubles bullets (2 stacks = 4 bullets), so a Poison-on-hit upgrade then poisons all 4. Not just +damage.
 - Triggers count *all* bullets, including ones spawned by other upgrades ("every 4th bullet spawns another bullet, and that one counts too"). Needs caps to stay stable.
 - States on enemies (poison, chill), and payoffs that read them ("debuffed enemies take ×2").
@@ -50,12 +51,12 @@ Answered by the owner:
 - No Split damage penalty: Split just adds a second bullet (a separate debuff effect may be added later).
 - Self-damaging upgrades stay rare.
 
-Still open (ask the owner):
-1. Ammo: one round per pull (recommended) or one per bullet. A "pull" is one click that may fire several bullets because of Split. Explain it in those words.
-2. Scenario count (~24 authored + generated).
-3. Win reward (pick 1 of 3 unlocks + a "heat" level).
+Also answered ("use your recommendations"):
+- Ammo: one round per pull, regardless of bullet count.
+- Scenarios: about 24 authored plus generated.
+- Win reward: pick 1 of 3 unlocks plus a heat level.
 
-If the owner says "use your recommendations", use the recommended option for each.
+No original decision is open. Later ideas are in section 13 of the spec: junkyard-of-the-multiverse setting (original names, no pop-culture references), stackable-by-default upgrades, chained upgrades, linked abilities and a combos table, Soul Snatcher and Reaper, alien upgrade ideas, Grow charge time, temporary pickups (a narrow reversal of "no pickups"), and later visual weapon changes. Open questions are marked *open* there. The upgrade rubric is `upgrade-rubric.md` and `upgrade-rubric.csv`.
 
 ## Existing code you'll need to know (`game/`)
 
