@@ -368,7 +368,7 @@ The balance target is a **range at the final level: about 20× to 100× baseline
 - **Theme:** a damage check. It punishes weak bullets and rewards big hits, poison ticks, and anything that ignores armor, such as Third Strike or Heat Coil's beam.
 - **Why it ends the run:** a build that only clears crowds cannot kill it, which is the point of having the final test be single-target damage.
 
-*Open:* confirm that an early boss kill cancels unspawned waves (recommended: yes).
+**Confirmed (owner):** an early boss kill cancels waves that have not spawned yet.
 
 ### 13.9 Rubric
 
