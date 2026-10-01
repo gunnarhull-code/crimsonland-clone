@@ -34,7 +34,7 @@ Tag an upgrade with a pillar only if it passes that pillar's test. When in doubt
 
 ### Run arc
 **Meaning:** the upgrade plays differently early in a run (one stack) than late (built up).
-- **Test:** do the `early_run_function` and `late_run_function` columns say meaningfully different things?
+- **Test:** do the `with_one_stack` and `built_up` columns say meaningfully different things?
 - **Counts:** a trigger that is rare at first and constant later, a payoff that needs a state source, a counter that grows with the run.
 - **Does not count:** the same effect that is just bigger.
 
@@ -97,7 +97,9 @@ Ideas from a card-draft arena shooter where players pick upgrade cards between r
 
 ## Other columns
 
-- `early_run_function` / `late_run_function`: what it does with one stack versus a built-up run. If both say the same thing, the upgrade is probably flat.
+- `what_it_does`: a plain description of the upgrade with its numbers.
+- `how_it_stacks`: what picking it again does, and the cap.
+- `with_one_stack` / `built_up`: design notes on how the same upgrade plays when you hold one copy early in a run, versus when it is combined with others later. They are not separate abilities and do not trigger anything. If both say the same thing, the upgrade is probably flat.
 - `pairs_with`: the synergy partners. Any upgrade with none is an orphan.
 - `deliberate_weakness`: the designed-in reason it can be a bad pick.
 - `engine_cost`: low, med or high, for the stability caps (bullets, generation, explosions).
