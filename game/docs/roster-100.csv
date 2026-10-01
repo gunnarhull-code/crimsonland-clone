@@ -1,0 +1,101 @@
+slot,group,name,status,summary,requires_or_pair
+1,Shape,Split,rubric,Adds a bullet; fans into a spread,
+2,Shape,Grow,rubric,Bigger harder bullets; slower charge,
+3,Shape,Pierce,rubric,Passes through enemies; loses damage per enemy,
+4,Shape,Quickdraw,rubric,Faster fire rate; drains magazine,
+5,Shape,Zigzag,rubric,Weaving bullets cross enemies twice,
+6,Shape,Ricochet,rubric,Bounces off walls and enemies,
+7,Shape,Bloodshot,rubric,Health becomes extra bullets,
+8,Shape,Fault Line,rubric,Bullet path cracks and erupts,
+9,Shape,Lance,new,Fast narrow bullets; damage rises with distance travelled,
+10,Shape,Scatter Seed,new,Bullets burst into 3 small bullets mid-flight,
+11,Shape,Curve Round,new,Bullets arc left or right alternating each pull,
+12,Shape,Boomerang Shard,new,Bullets return after max range and hit again,
+13,States,Poison,rubric,Damage over time; trades direct damage,
+14,States,Chill,rubric,Slows enemies,
+15,States,Shard Bloom,rubric,Shards embed and detonate together at 6,
+16,States,Bond Arc,rubric,Links two enemies; shares damage and states,
+17,States,Burn,new,Fast damage over time; short duration,
+18,States,Bleed,new,Damage per distance the enemy moves,
+19,States,Static,new,Ticks jump to a nearby enemy,
+20,States,Mark,new,Marked enemies take bonus damage from every source,
+21,States,Corrode,new,Each stack lowers enemy armor,
+22,States,Daze,new,Enemies move erratically,
+23,States,Rot,new,Ticks spread to enemies near the target,
+24,States,Sap,new,Speed drains further the longer the state lasts,
+25,Triggers,Shrapnel,rubric,Every hit explodes in a small blast,
+26,Triggers,Blast Ring,rubric,Every 5th bullet explodes around you; hurts you,
+27,Triggers,Shockwave,rubric,Every 4th bullet shoves nearby enemies,
+28,Triggers,Echo,rubric,Every 4th hit spawns a stray bullet,
+29,Triggers,Volatile Core,rubric,Kills pop a fixed blast,
+30,Triggers,Brood Seed,rubric,Kills may hatch a biting drone,
+31,Triggers,Orbit Shard,rubric,Every 5th bullet orbits you as a shield,
+32,Triggers,Overflow,new,Every 8th pull fires double bullets,
+33,Triggers,Backdraft,new,Reloading releases a burst around you,
+34,Triggers,Last Round,new,Final bullet of a magazine is a huge explosive round,
+35,Triggers,Recoil Pulse,new,Taking damage releases a shockwave,
+36,Triggers,Kill Surge,new,Every 10 kills within 5 s gives a fire-rate burst,
+37,Triggers,Rooted Shot,new,Standing still charges your next shot,
+38,Triggers,Wake Trail,new,While moving you leave a damaging trail,
+39,Payoffs,Exploit,rubric,Bonus vs debuffed enemies; small bonus to all,
+40,Payoffs,Soul Snatcher,rubric,Damage grows with kills,
+41,Payoffs,Adaptive Round,rubric,Bonus vs the species you hit most this level,
+42,Payoffs,Pressure,new,Bonus damage per enemy near you,
+43,Payoffs,Lone Hunter,new,Bonus vs enemies with no others nearby,
+44,Payoffs,Opening Shot,new,Bonus on the first hit against a full-HP enemy,
+45,Payoffs,Finisher,new,Bonus vs enemies under 25% HP,
+46,Payoffs,Overkill Spill,new,Excess damage on a kill splashes to neighbors,
+47,Payoffs,Stacked Debt,new,Bonus per state stack on the target,
+48,Payoffs,Momentum,new,Damage rises while hits keep landing; resets on a miss,
+49,Payoffs,Tally,new,Bonus per different state type on the target,
+50,Payoffs,Bounty,new,Kills grant a short fire-rate bonus,
+51,Alien and space,Gravity Seed,rubric,Hits pull enemies into a clump,
+52,Alien and space,Third Strike,rubric,Two hits stun; third disintegrates,
+53,Alien and space,Twin Gate,rubric,First two walls hit become a portal pair,
+54,Alien and space,Still Field,rubric,Hit freezes a zone; bullets leave faster,
+55,Alien and space,Rift Pop,new,Bullets that expire open a small pulling rift,
+56,Alien and space,Anchor Round,new,A hit pins an enemy in place for 1 s,
+57,Alien and space,Mirror Pair,new,A hit repeats on the far side of the nearest wall,
+58,Alien and space,Void Seed,new,Kills leave a damaging void zone,
+59,Alien and space,Phase Round,new,Bullets pass through the first enemies then turn solid,
+60,Alien and space,Web Lines,new,Bullets link by beams that damage anything crossing them,
+61,Alien and space,Lens Field,new,Bullets grow when passing through a zone,
+62,Alien and space,Spore Cloud,new,Kills release clouds that spread states,
+63,Alien and space,Singularity Shot,new,Every 20th bullet collapses into a huge pull and blast,
+64,Alien and space,Ghost Copy,new,Every 6th bullet spawns a ghost that repeats your next pull,
+65,Ammo and rhythm,Reclaimer,rubric,Every 6th bullet refunds a round,
+66,Ammo and rhythm,Heat Coil,rubric,Heat builds; full heat fires a huge beam,
+67,Ammo and rhythm,Active Reload,new,Well-timed reload boosts the next magazine,
+68,Ammo and rhythm,Deep Magazine,new,Bigger magazine; slower reload,
+69,Ammo and rhythm,Overclock,new,Fire rate rises while holding fire; resets on release,
+70,Ammo and rhythm,Capacitor,new,Every 10th pull costs no ammo,
+71,Ammo and rhythm,Vent Shot,new,After 1 s without firing the next shot is huge,
+72,Ammo and rhythm,Burst Mode,new,Fires 3-bullet bursts then pauses,
+73,Ammo and rhythm,Chain Reload,new,Killing with the last round reloads instantly,
+74,Ammo and rhythm,Dry Fire,new,An empty magazine fires a weak pulse,
+75,Chained,Reaper,rubric,+HP per kill,Soul Snatcher
+76,Chained,Antimatter Round,new,Bullets passing a gate erase armor,Twin Gate
+77,Chained,Collapse,new,A clump collapses to a point and blasts,Gravity Seed
+78,Chained,Chain Detonation,new,Shard blasts chain to nearby shard bearers,Shard Bloom
+79,Chained,Plague Carrier,new,Poison ticks spread to neighbors,Poison + Bond Arc
+80,Chained,Wildfire,new,Burning enemies spread fire on death,Burn
+81,Chained,Shatter,new,Frozen enemies shatter when killed,Chill + Still Field
+82,Chained,Hive Queen,new,A larger drone that spawns more drones,Brood Seed
+83,Chained,Orbit Storm,new,More orbiting bullets that also count as shots,Orbit Shard
+84,Chained,Fault Cascade,new,Cracks erupt in sequence along the line,Fault Line + Pierce
+85,Chained,Overdrive,new,The heat beam fires twice,Heat Coil + Quickdraw
+86,Chained,Executioner,new,Disintegrations jump to a nearby enemy,Third Strike
+87,Chained,Grand Echo,new,Stray bullets split in two,Echo + Split
+88,Chained,Soul Harvest,new,Blast kills count double for Soul Snatcher,Soul Snatcher + Volatile Core
+89,Chained,Prism Core,new,Big bullets split into beams on pierce,Grow + Pierce
+90,Chained,Blood Engine,new,Max HP becomes extra bullets,Bloodshot + Reaper
+91,Linked,Toxic Shrapnel,new,Splash applies poison,Poison + Shrapnel
+92,Linked,Deep Freeze,new,Chilled enemies take Exploit damage twice,Chill + Exploit
+93,Linked,Needle Storm,new,Pierce bullets split at each enemy,Split + Pierce
+94,Linked,Vacuum Ring,new,Blast Ring pulls enemies in before it goes off,Gravity Seed + Blast Ring
+95,Linked,Siege Beam,new,The heat beam grows with Grow stacks,Grow + Heat Coil
+96,Linked,Satellite Loop,new,Orbiting bullets trigger Echo,Echo + Orbit Shard
+97,Linked,Contagion Web,new,Linked enemies spread Burn,Bond Arc + Burn
+98,Linked,Pinball Gate,new,Ricochets pass through gates,Ricochet + Twin Gate
+99,Linked,Feeding Frenzy,new,Drone kills count for Soul Snatcher,Soul Snatcher + Brood Seed
+100,Linked,Overcharge Core,new,Quickdraw speeds Heat Coil heat building,Quickdraw + Heat Coil
