@@ -178,8 +178,8 @@ No ranged shooters, per your note.
 
 - A scenario is one `scenarios.csv` row (composition + formation + behaviors + difficulty).
 - **Pool size:** hand-authoring 200 is too much. Plan: author ~24 scenarios, then **generate** the rest from `theme × formation × intensity` templates with a seeded RNG (same seed = same level, matching how `EnemySpawner` already works). The pool can grow later without code changes.
-- **Run draw:** levels 1-10 have difficulty bands (level 1 = difficulty 1-2 … level 10 = 9-10).
-- **Portals:** after a level, draw 2 scenarios from the next band. Each portal shows the `hint_icon` of the species that dominates it (an alien or a spider), with nothing else revealed.
+- **Run draw:** difficulty comes from the level scaling table in 13.10 (enemy HP, enemies per wave, number of waves), not from rating bands. Scenarios are drawn for variety of enemy mix, formation and behaviors. The `difficulty` column of `scenarios.csv` is no longer used for gating.
+- **Portals:** after a level, draw 2 scenarios. Each portal shows the `hint_icon` of the species that dominates it (an alien or a spider), with nothing else revealed.
 - Boss scenarios at levels 5 and 10.
 
 ---
@@ -330,7 +330,13 @@ The prototype only needs 16 to 24. 100 is the goal for the bigger version. Rough
 The balance target is a **range at the final level: about 20× to 100× baseline damage per pull**, depending on how well the player builds. It is not a guaranteed 100×. Chaos late in the run is intended (see the table in section 10).
 - **Same upgrade stacks add; different upgrades multiply.** Within one upgrade, extra stacks add (for example Grow +25% damage per stack: 3.5× after 10 stacks), so spamming one pick loses. Across upgrades, effects multiply (bullet count × damage × state ticks × payoffs), so complementary builds grow exponentially. Ten picks of ×1.5 each would be 58×, which is why plain stat upgrades should use the `add` stack rule, with `mult` kept for true engine multipliers like Split's bullet count.
 - **No guaranteed floor.** There is no built-in growth curve and no minimum per upgrade. A bad build should lose. Failure comes from enemy scaling.
-- **Enemy scaling: 20× by level 10**, geometric (about ×1.39 per level, 20 to the power of (level minus 1) / 9). It applies to **enemy HP only** for now (owner decision). Speed and contact damage do not scale. *Open:* how this combines with the scenario difficulty bands in section 8, which also raise difficulty. Recommended: keep the bands mostly about enemy composition.
+- **Enemy scaling: 20× by level 10**, geometric (about ×1.39 per level, 20 to the power of (level minus 1) / 9). It applies to **enemy HP only** for now (owner decision). Speed and contact damage do not scale. 
+- **Level scaling (owner decision):** as levels go up, enemies gain more HP, **and** each level spawns more enemies at a time and/or more waves. There must be an **overwhelming factor** late in the run, so players have a reason to improve their build: crowds should be too big to handle with a weak build. Numbers vary by enemy species (a swarm species scales in count, a heavy species in HP).
+  - **Dials, all data:** a per-level scaling table (`scaling.csv`: `level, hp_mult, count_mult, wave_count`), plus per-species scaling multipliers in `enemies.csv` (for example `hp_scale_weight`, `count_scale_weight`).
+  - **HP dial:** reaches 20× by level 10 as above. Count and waves come on top, so total enemy HP in a level grows faster than 20×. That makes multi-hit and area builds (Split, Shrapnel, Pierce, explosions) more valuable than single-target damage alone.
+  - **First guess:** enemies per wave about 3× and waves from 1 to 3 by level 10. Tune by playtesting.
+  - *Open:* whether the 20× break-even line should be measured on single-target damage only or on total clearing speed. Recommended: total clearing speed, since the build calculator can then reward area effects.
+  - Section 8's difficulty bands are replaced by this.
 - **Caps matter.** Bullets per pull are capped at 32, so most of the 100× has to come from damage multipliers, states, triggers and kill-scaling payoffs like Soul Snatcher, not from bullet count alone. The caps in 4.3 need stress-testing at this scale, especially live bullets (300) and explosions per frame (20).
 - **Enemies must keep up.** Late levels need enough HP or density that a 100× build is exciting and not trivial. Tune scenario difficulty bands (section 8) against this curve.
 - **Picks are fixed by level.** Entering level L the player holds exactly L picks (one at the start plus one per cleared level), so level 8 means 8 picks, level 5 means 5. Every stack is a pick. The "11 picks per run" in section 2 is really **10 useful picks**, since the pick after clearing level 10 comes after the win.
