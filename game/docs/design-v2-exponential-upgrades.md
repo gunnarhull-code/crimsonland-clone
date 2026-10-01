@@ -324,6 +324,10 @@ The prototype only needs 16 to 24. 100 is the goal for the bigger version. Rough
 The balance target for a strong planned build is **100× baseline damage per pull**, arriving around levels 7 and 8, not earlier. Chaos late in the run is intended (see the table in section 10).
 - **Caps matter.** Bullets per pull are capped at 32, so most of the 100× has to come from damage multipliers, states, triggers and kill-scaling payoffs like Soul Snatcher, not from bullet count alone. The caps in 4.3 need stress-testing at this scale, especially live bullets (300) and explosions per frame (20).
 - **Enemies must keep up.** Late levels need enough HP or density that a 100× build is exciting and not trivial. Tune scenario difficulty bands (section 8) against this curve.
+- **Picks are fixed by level.** Entering level L the player holds exactly L picks (one at the start plus one per cleared level), so level 8 means 8 picks, level 5 means 5. Every stack is a pick. The "11 picks per run" in section 2 is really **10 useful picks**, since the pick after clearing level 10 comes after the win.
+- **Per-pick multiplier needed.** 100× in 8 picks is about ×1.8 damage per pick on average. 12× in 5 picks is about ×1.6 per pick. Small stacks like Grow ×1.25 or Quickdraw ×1.25 cannot reach this curve alone. Total damage counts every source (bullets, splash, poison ticks, triggers), so a pick that adds a second damage source counts heavily.
+- **Chains cost picks.** A chained upgrade costs its prerequisite pick as well, so it must be worth two picks. Linked abilities are free and are the most pick-efficient reward.
+- **Calculator scope.** Test builds of exactly L picks for level L only, not every combination up to 8.
 - **Early levels are the risk.** A build that reaches 30×+ by level 4 ruins the arc. The build calculator should flag that, using the level it is reachable at (picks so far = level + 1).
 
 ### 13.9 Rubric
