@@ -1,5 +1,5 @@
 slot,group,name,status,summary,requires_or_pair
-1,Shape,Split,rubric,Adds a bullet; fans into a spread,
+1,Shape,Spread,rubric,Adds a bullet; fans into a spread,
 2,Shape,Grow,rubric,Bigger harder bullets; slower charge,
 3,Shape,Pierce,rubric,Passes through enemies; loses damage per enemy,
 4,Shape,Quickdraw,rubric,Faster fire rate; drains magazine,
@@ -85,13 +85,13 @@ slot,group,name,status,summary,requires_or_pair
 84,Chained,Fault Cascade,new,Cracks erupt in sequence along the line,Fault Line + Pierce
 85,Chained,Overdrive,new,The heat beam fires twice,Heat Coil + Quickdraw
 86,Chained,Executioner,new,Disintegrations jump to a nearby enemy,Third Strike
-87,Chained,Grand Echo,new,Stray bullets split in two,Echo + Split
+87,Chained,Grand Echo,new,Stray bullets split in two,Echo + Spread
 88,Chained,Soul Harvest,new,Blast kills count double for Soul Snatcher,Soul Snatcher + Volatile Core
 89,Chained,Prism Core,new,Big bullets split into beams on pierce,Grow + Pierce
 90,Chained,Blood Engine,new,Max HP becomes extra bullets,Bloodshot + Reaper
 91,Linked,Toxic Shrapnel,new,Splash applies poison,Poison + Shrapnel
 92,Linked,Deep Freeze,new,Chilled enemies take Exploit damage twice,Chill + Exploit
-93,Linked,Needle Storm,new,Pierce bullets split at each enemy,Split + Pierce
+93,Linked,Needle Storm,new,Pierce bullets split at each enemy,Spread + Pierce
 94,Linked,Vacuum Ring,new,Blast Ring pulls enemies in before it goes off,Gravity Seed + Blast Ring
 95,Linked,Siege Beam,new,The heat beam grows with Grow stacks,Grow + Heat Coil
 96,Linked,Satellite Loop,new,Orbiting bullets trigger Echo,Echo + Orbit Shard
@@ -99,3 +99,4 @@ slot,group,name,status,summary,requires_or_pair
 98,Linked,Pinball Gate,new,Ricochets pass through gates,Ricochet + Twin Gate
 99,Linked,Feeding Frenzy,new,Drone kills count for Soul Snatcher,Soul Snatcher + Brood Seed
 100,Linked,Overcharge Core,new,Quickdraw speeds Heat Coil heat building,Quickdraw + Heat Coil
+101,Triggers,Split,rubric,Every hit fires another bullet in a random direction,

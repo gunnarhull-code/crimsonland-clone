@@ -34,7 +34,7 @@ The owner chose **set 3**. Sets 1 and 2 are parked, not rejected.
 
 - V2 is a **fork**: keep the current game untouched, create `game_v2/` (a copy) for V2.
 - Pistol only. No weapon swaps, no weapon shop. The pistol changes only via upgrades. (Addendum: temporary modifier pickups are allowed, see spec 13.4.)
-- Upgrades are **exponential and interacting**: e.g. Split doubles bullets (2 stacks = 4 bullets), so a Poison-on-hit upgrade then poisons all 4. Not just +damage.
+- Upgrades are **exponential and interacting**: e.g. Spread doubles bullets (2 stacks = 4 bullets), so a Poison-on-hit upgrade then poisons all 4. Not just +damage.
 - Triggers count *all* bullets, including ones spawned by other upgrades ("every 4th bullet spawns another bullet, and that one counts too"). Needs caps to stay stable.
 - States on enemies (poison, chill), and payoffs that read them ("debuffed enemies take ×2").
 - Enemy behaviors should be **antitheses of builds** (armor punishes weak bullets, regeneration punishes slow poison). No ranged shooters. At most web/slow traps, shields.
@@ -48,7 +48,7 @@ The owner chose **set 3**. Sets 1 and 2 are parked, not rejected.
 Answered by the owner:
 - Upgrades only at level clears (11 per run). No XP level-ups.
 - **Effects model:** code implements single-effect building blocks; upgrades are *combinations* of those effects defined in the spreadsheet (`upgrades.csv` + `upgrade_effects.csv`). An upgrade may have several effects, each effect does one thing.
-- No Split damage penalty: Split just adds a second bullet (a separate debuff effect may be added later).
+- No Spread damage penalty: Spread just adds a second bullet (a separate debuff effect may be added later).
 - Self-damaging upgrades stay rare.
 
 Also answered ("use your recommendations"):

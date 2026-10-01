@@ -82,8 +82,8 @@ Adds `behavior` (id from the behavior list in section 7) and `tags` (e.g. `armor
 
 1. **Bullet count** = `(1 + Σ additive sources) × Π multiplier sources`, then clamped.
    - additive: e.g. Bloodshot (+1 per 25 current HP).
-   - multiplier: Split (×2 per stack).
-   - **Example:** 2 Split stacks = ×4. Bloodshot at 100 HP + 2 Splits = (1 + 4) × 4 = 20 bullets.
+   - multiplier: Spread (×2 per stack).
+   - **Example:** 2 Spread stacks = ×4. Bloodshot at 100 HP + 2 Splits = (1 + 4) × 4 = 20 bullets.
 2. Each bullet gets its stats: damage, size, speed, pierce, pattern. Same additive-then-multiplicative order as today's `get_effective_stat`.
 3. Fire the bullets in a fan. Then run `on_fire` triggers once per bullet, and count each bullet toward the `fired` counter.
 4. Ammo: **one pull uses one round regardless of bullet count.** Magazine and reload work as today, otherwise multipliers would drain ammo.
@@ -124,7 +124,7 @@ Baseline pistol: 10 damage, 3.5 shots/s, 12-round magazine (about 35 damage/s). 
 
 | upgrade | trigger | effect | stack rule | cap |
 |---|---|---|---|---|
-| ★ **Split** | passive | bullets ×2 (no damage change) | mult | 3 |
+| ★ **Spread** | passive | bullets ×2 (no damage change) | mult | 3 |
 | ★ **Grow** | passive | `size_mult` 2 + `damage_mult` 1.25 (two effects) | mult | 3 |
 | ★ **Poison** | on_hit | apply Poison (1 stack) | add | 3 |
 | ★ **Pierce** | passive | +2 pierce | add | 3 |
@@ -143,7 +143,7 @@ Baseline pistol: 10 damage, 3.5 shots/s, 12-round magazine (about 35 damage/s). 
 
 Deliberate weak links (so bad builds exist): Zigzag (just `pattern_zigzag`) does nothing for damage by itself and makes aim less precise; Blast Ring hurts you; Shockwave with a slow fire rate rarely triggers; Chill without a payoff does little. Field Medic needs a high bullet count to matter. The pistol's slow rate makes every_n_fired upgrades feel bad until multipliers arrive, which is intended.
 
-**Sanity check for a great build** (the loop the design should reward): Split ×2, Grow ×2, Poison ×2, Exploit, Echo. Bullets per pull: ×4, each at full damage. Each poisoned; Exploit multiplies damage on poisoned enemies; Echo bullets count toward the next Echo. With no Split penalty this is already ×4 raw damage from Split alone, so the real ceiling needs checking with the balance tool. That is the ceiling I'm aiming for. See section 10.
+**Sanity check for a great build** (the loop the design should reward): Spread ×2, Grow ×2, Poison ×2, Exploit, Echo. Bullets per pull: ×4, each at full damage. Each poisoned; Exploit multiplies damage on poisoned enemies; Echo bullets count toward the next Echo. With no Spread penalty this is already ×4 raw damage from Spread alone, so the real ceiling needs checking with the balance tool. That is the ceiling I'm aiming for. See section 10.
 
 ---
 
@@ -166,11 +166,11 @@ Design rule: each behavior is the **antithesis of a build**, so build choices ma
 |---|---|---|---|
 | Spider (base) | **Lunge**: short telegraph, then a fast dash | standing still, slow single-target builds | keep moving, Chill, Shockwave |
 | Rat | **Back-biter**: aims behind you | builds that only cover the front | Blast Ring, Ricochet, Echo |
-| Alien | **Armored**: flat -4 damage per bullet hit (min 1) | many low-damage bullets (rapid fire, Split spam of weak shots); poison ticks are unaffected | any damage-per-bullet upgrade, Poison |
+| Alien | **Armored**: flat -4 damage per bullet hit (min 1) | many low-damage bullets (rapid fire, Spread spam of weak shots); poison ticks are unaffected | any damage-per-bullet upgrade, Poison |
 | Alien | **Regenerator**: heals 3/s if not hit for 2s | slow poison-only builds | burst damage, Exploit |
 | Later | Web-thrower (slow zone), Shielded (front block) | | |
 
-Armor takes 4 off every hit, so a 10-damage bullet does 6. Since Split no longer lowers per-bullet damage, armor punishes weak bullets in general, and the counters are damage-per-bullet upgrades and states. Enemy data gets a `tags` column so `payoff` upgrades and counters both read the same tags.
+Armor takes 4 off every hit, so a 10-damage bullet does 6. Since Spread no longer lowers per-bullet damage, armor punishes weak bullets in general, and the counters are damage-per-bullet upgrades and states. Enemy data gets a `tags` column so `payoff` upgrades and counters both read the same tags.
 
 No ranged shooters, per your note.
 
@@ -239,7 +239,7 @@ Each step ends playable.
 
 Answered:
 1. **Picks:** level clears only (11 per run). XP level-ups dropped.
-3. **Split penalty:** none. Split is the single effect `bullets_mult` ×2. The owner may add a separate debuff effect later.
+3. **Spread penalty:** none. Spread is the single effect `bullets_mult` ×2. The owner may add a separate debuff effect later.
 4. **Self-damage upgrades:** keep rare.
 5. **Effects model:** single-effect building blocks in code, combined into upgrades in the spreadsheet (see section 3).
 
@@ -249,7 +249,7 @@ Answered:
 
 No decisions are open. Section 13 holds ideas added later, with their own open questions.
 
-Consequence to watch: with no Split penalty, Split at 4 stacks would be ×16 bullets. Stack caps were later removed (see 13.10), so the balance tool and the performance caps in 4.3 are what limit it.
+Consequence to watch: with no Spread penalty, Spread at 4 stacks would be ×16 bullets. Stack caps were later removed (see 13.10), so the balance tool and the performance caps in 4.3 are what limit it.
 
 ---
 
@@ -268,7 +268,7 @@ None of this is built. Items marked *open* need an owner answer before coding. T
 
 - **Stackable by default, with no artificial stack caps (owner decision).** Most upgrades can be picked more than once, with a `stack_rule` per effect, and `max_stacks` defaults to uncapped. A hyperbolic stack rule (each extra stack adds less) is a candidate for chance-based effects. *Open:* a limit on how many different upgrades a player may hold.
 - **Draw rule:** each 1-of-3 offer should contain at least one upgrade the player doesn't own, so runs don't collapse into one upgrade. *Open: confirm.*
-- **Stack tooltips** show the next stack, for example "Split 2 to 3: 4 bullets to 8".
+- **Stack tooltips** show the next stack, for example "Spread 2 to 3: 4 bullets to 8".
 - **Chained upgrades.** An upgrade may list one or two upgrades in a `requires` column. It joins the draw pool only once those are owned. Meeting the requirement makes it eligible, nothing more. It may still never appear in a run. Keep chains to two steps and about three chains in slice one. A prerequisite must be useful on its own.
 - **Linked abilities.** If the player holds both upgrades in a pair, a third upgrade is applied automatically and costs no pick. A short announcement shows when it fires. Links are hidden until found, with a small hint on the pick screen. *Open:* whether a link needs one stack of each or scales with the lower stack count.
 - **Combos table.** One table covers both. A row lists required upgrades (with minimum stacks) and a grant. If the grant is an upgrade it is a linked ability. If the grant is an unlock or a cosmetic it is a combo achievement for a themed build. Order of picks doesn't matter. Slice one: 3 to 5 combos. *Open:* whether combo rewards are in-run bonuses, permanent unlocks, or both.
@@ -292,7 +292,7 @@ Percent values assume +0.1% per kill. The raw ".001" is meaningless as a flat bo
 
 **Keyword tags.** Each strange upgrade carries a tag (clump, link, shard, stasis, gate). Payoffs read tags, not upgrade names, so one payoff works with any upgrade carrying the tag. Players learn the combos, such as clump plus explosion, by experimenting.
 
-**Grow rework.** Grow also adds a charge time: each stack lengthens the fire interval by a percentage. It is implemented as `fire_rate_mult` below 1, as a third effect on the same upgrade. A charge that has started always finishes. One charge is one pull, so Split does not change it. Tuning goal: damage multiplier must exceed time cost, or Grow is a nerf. Candidate numbers: damage ×1.6, size ×2, +25% charge per stack. Add a muzzle glow during the charge. A hold-to-charge skill version is a separate later upgrade.
+**Grow rework.** Grow also adds a charge time: each stack lengthens the fire interval by a percentage. It is implemented as `fire_rate_mult` below 1, as a third effect on the same upgrade. A charge that has started always finishes. One charge is one pull, so Spread does not change it. Tuning goal: damage multiplier must exceed time cost, or Grow is a nerf. Candidate numbers: damage ×1.6, size ×2, +25% charge per stack. Add a muzzle glow during the charge. A hold-to-charge skill version is a separate later upgrade.
 
 **Field Medic** heals the player, which is a perk. Rework it into a weapon effect (for example a proc that refunds a round) or cut it.
 
@@ -301,12 +301,12 @@ Percent values assume +0.1% per kill. The raw ".001" is meaningless as a flat bo
 ### 13.4 Pickups (reverses part of "no pickups")
 
 The earlier decision "no weapon pickups" stands for swapping weapons. **Addendum:** temporary pickups that modify the pistol are allowed. A pickup applies an upgrade's effects as a temporary stack with a limited number of charges, for example "next 20 rounds do fire", and everything else in the build multiplies it.
-- Charges count **pulls**, so Split doesn't drain them faster (matches the ammo decision).
+- Charges count **pulls**, so Spread doesn't drain them faster (matches the ammo decision).
 - Fire needs a `burn` state in `states.csv` (listed as a later idea in section 6).
 - Source: enemy drops on a small chance per kill. Collecting a second one adds more charges.
 - Slice one: two or three pickups.
 
-**Ground pickups (owner addition):** pickups also appear **randomly on the ground** during a level, in the way of Crimsonland's bonus pickups. They are one-off, quick abilities. Their charm is that **your current upgrades modify them**. Example: a *burst* pickup fires one plain pistol bullet in each of 20 directions and does nothing else. Because those are ordinary pistol bullets, they go through the normal firing pipeline (4.1), so Split doubles each of them, Poison tags them, Pierce passes them through enemies, Shrapnel explodes them, and so on. A simple pickup becomes a different effect in every build.
+**Ground pickups (owner addition):** pickups also appear **randomly on the ground** during a level, in the way of Crimsonland's bonus pickups. They are one-off, quick abilities. Their charm is that **your current upgrades modify them**. Example: a *burst* pickup fires one plain pistol bullet in each of 20 directions and does nothing else. Because those are ordinary pistol bullets, they go through the normal firing pipeline (4.1), so Spread doubles each of them, Poison tags them, Pierce passes them through enemies, Shrapnel explodes them, and so on. A simple pickup becomes a different effect in every build.
 - **Rule:** a pickup should be as simple as possible and make bullets or effects that the upgrade pipeline already understands. Do not give pickups their own special damage numbers. The upgrades do the work.
 - **To decide later:** do bullets from a pickup count toward the fired and hit counters (my recommendation: yes, so they feed every-N triggers), does a pickup burst count as a pull, and how often pickups spawn. The list of pickups is for later.
 
@@ -321,7 +321,7 @@ Not every upgrade needs every pillar. Missing a couple is normal, and a handful 
 - **Soul Snatcher, Reaper:** front-loaded. +5% damage at pick, then +0.1% per kill. +10 max HP at pick, then +0.1% per kill.
 - **Field Medic** is replaced by **Reclaimer**: every 6th bullet refunds a round. It stops being a heal.
 - **Zigzag:** weaving bullets cross the same enemy twice, so on-hit effects trigger twice.
-- **Cost on formerly automatic picks:** Split fans into a spread (strong close, weaker at range). Poison trades 20% direct damage for its ticks. Pierce loses 20% damage per enemy passed. Quickdraw drains the magazine faster. Ricochet loses 15% damage per bounce. Some plain anchors are fine among the 5 starting upgrades.
+- **Cost on formerly automatic picks:** Spread fans into a spread (strong close, weaker at range). Poison trades 20% direct damage for its ticks. Pierce loses 20% damage per enemy passed. Quickdraw drains the magazine faster. Ricochet loses 15% damage per bounce. Some plain anchors are fine among the 5 starting upgrades.
 - **Exploit:** +15% damage to everything, plus the large bonus against debuffed enemies, so it is felt at once.
 - **Cost reductions:** Volatile Core uses a fixed blast size. Echo's spawned bullets are limited to generation 2. Twin Gate stays but is scheduled last.
 
@@ -334,7 +334,7 @@ The prototype only needs 16 to 24. 100 is the goal for the bigger version. Rough
 ### 13.10 Balance ceiling: 100× late in the run
 
 The balance target is a **range at the final level: about 20× to 100× baseline damage per pull**, depending on how well the player builds. It is not a guaranteed 100×. Chaos late in the run is intended (see the table in section 10).
-- **Stacking is doubling or tripling (owner decision, replaces an earlier "add" rule).** Where it fits, a stack literally doubles (or triples) what you have: one Split turns 1 bullet into 2, a second turns 2 into 4, a third makes 8. Every-N triggers halve N per stack (min 2), which is the same feel. `add` is used only where doubling would be meaningless or dangerous. Numbers can be played with, but the doubling feel is the aim.
+- **Stacking is doubling or tripling (owner decision, replaces an earlier "add" rule).** Where it fits, a stack literally doubles (or triples) what you have: one Spread turns 1 bullet into 2, a second turns 2 into 4, a third makes 8. Every-N triggers halve N per stack (min 2), which is the same feel. `add` is used only where doubling would be meaningless or dangerous. Numbers can be played with, but the doubling feel is the aim.
 - **Why this is safe: duplicates are rare.** With 100 upgrades, a given upgrade shows up in a 3-card draft only about 3% of the time (roughly 26% over 10 drafts), so players will be lucky to get three of one. With the **prototype roster of about 16 to 29**, a given upgrade shows up 10 to 19% of the time, so duplicates are common. There are no stack caps, so this is the thing to watch in early playtests. If a single upgrade runs away, fix it with its numbers, not a cap.
 - **Don't bias the draft toward owned upgrades** (this reverses the earlier suggestion), so duplicates stay rare. Exclude upgrades already at their cap from the draw.
 - **Performance caps still exist** (4.3), set high. The calculator must apply them so it matches the game.
@@ -343,7 +343,7 @@ The balance target is a **range at the final level: about 20× to 100× baseline
 - **Enemy scaling: 20× by level 10**, geometric (about ×1.39 per level, 20 to the power of (level minus 1) / 9). It applies to **enemy HP only** for now (owner decision). Speed and contact damage do not scale. 
 - **Level scaling (owner decision):** as levels go up, enemies gain more HP, **and** each level spawns more enemies at a time and/or more waves. There must be an **overwhelming factor** late in the run, so players have a reason to improve their build: crowds should be too big to handle with a weak build. Numbers vary by enemy species (a swarm species scales in count, a heavy species in HP).
   - **Dials, all data:** a per-level scaling table (`scaling.csv`: `level, hp_mult, count_mult, wave_count`), plus per-species scaling multipliers in `enemies.csv` (for example `hp_scale_weight`, `count_scale_weight`).
-  - **HP dial:** reaches 20× by level 10 as above. Count and waves come on top, so total enemy HP in a level grows faster than 20×. That makes multi-hit and area builds (Split, Shrapnel, Pierce, explosions) more valuable than single-target damage alone.
+  - **HP dial:** reaches 20× by level 10 as above. Count and waves come on top, so total enemy HP in a level grows faster than 20×. That makes multi-hit and area builds (Spread, Shrapnel, Pierce, explosions) more valuable than single-target damage alone.
   - **First guess:** enemies per wave about 3× and waves from 1 to 3 by level 10. Tune by playtesting.
   - **How the break-even line is measured (owner decision):** clearing speed is a contributing factor. The calculator reports two measures against the enemy line: **crowd clearing speed** on normal levels (area, multi-hit and splash count fully), and **single-target damage** on boss levels 5 and 10 (only damage landing on one enemy counts). A single boss is one target, so clearing speed alone would hide a weak single-target build. Result: a pure area build struggles against bosses and a pure single-target build is overwhelmed by crowds, so players must plan for both.
   - **Bosses spawn adds (owner decision).** Both measures then matter at once. The number and kind of adds depends on the boss's species, nature and theme. For example, a **Rat King** spawns a large stream of rats, while a heavier boss spawns few. Adds also scale with the level scaling table.
@@ -373,7 +373,7 @@ The balance target is a **range at the final level: about 20× to 100× baseline
 - **Answers:** burst on the boss to stop the stream, or area builds to hold the flood. Chill and Shockwave help with the swarm. Placeholder numbers, to tune.
 
 **Sketch: Level 10, the Gate Warden** (the guardian of the way out). A slow, heavily armored alien.
-- **Behavior:** armored (flat damage reduction per hit). Small bullets from Split spam do very little to it.
+- **Behavior:** armored (flat damage reduction per hit). Small bullets from Spread spam do very little to it.
 - **Adds:** a few armored escorts at HP thresholds (75%, 50% and 25%).
 - **Theme:** a damage check. It punishes weak bullets and rewards big hits, poison ticks, and anything that ignores armor, such as Third Strike or Heat Coil's beam.
 - **Why it ends the run:** a build that only clears crowds cannot kill it, which is the point of having the final test be single-target damage.
@@ -389,6 +389,15 @@ The balance target is a **range at the final level: about 20× to 100× baseline
 - Charge time may be removed later. Keep it for now.
 - **Code:** a `charge_time_mult(value, base_if_zero)` action, separate from `fire_rate_mult`.
 - *Open:* what the base charge time is (seconds), and whether the charge overlaps the fire-rate lockout or adds to it.
+
+### 13.13 Spread renamed, and a new Split
+
+- **Spread** (the old "Split"): one shot fans into several bullets (1 to 2 to 4 to 8). Every mention of the old Split in these docs now says Spread.
+- **Split (new):** when a bullet hits an enemy, it fires another bullet in a random direction. The new bullet is fired **as if from the gun**, so it goes through the whole firing pipeline: Spread fans it into several bullets, and Poison, Pierce, Shrapnel and every other upgrade apply to it. Each stack doubles the bullets fired per hit (1, 2, 4). Because the new bullets also hit enemies and split again, one hit grows into a chain, which multiplies very fast.
+  - **The new bullet is weaker** (proposed half damage). *Open: confirm the amount.*
+  - **Chain limit:** a bullet fired by Split is one generation later, and generation 3 stops spawning (4.3). With stack caps removed and Spread multiplying the first bullet, this generation limit is what stops runaway chains, so tune it carefully. Raising it later is the main knob for how chaotic Split gets.
+  - **Counters:** the new bullets count as fired bullets and their hits count as hits, so they feed every-N triggers.
+- **Echo already exists and is similar:** Echo fires a stray bullet on every 4th hit (halving the count per stack). Split is the every-hit version, so Echo is controlled and Split is exponential. Both are kept for now. *Open: whether to merge them into one upgrade where Echo's count is just Split's early stage.*
 
 ### 13.9 Rubric
 
