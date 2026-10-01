@@ -214,7 +214,7 @@ Picks equal the level number. The ceiling is the most a perfect build can reach 
 | 9 | 14× | 63× |
 | 10 | 20× | 100× |
 
-Break-even and best are therefore 20× and 100× at the end: a build at 20× barely survives, and a perfect one has a 5× margin. The calculator flags a build above the ceiling for its level (too strong too early). It also reports the level where each build falls below the enemy line, to show how long it survives. Example: ten Grow picks give 3.5× at level 10, far below 20×, so that build dies.
+Break-even and best are therefore 20× and 100× at the end: a build at 20× barely survives, and a perfect one has a 5× margin. The calculator flags a build above the ceiling for its level (too strong too early). It also reports the level where each build falls below the enemy line, to show how long it survives. Example: Grow is capped at 3 stacks (about 3.4× damage), far below 20×, so a build that leans only on Grow dies.
 
 **Tool:** a small script (`tools/build_calc.py`) that reads `upgrades.csv`, takes a list of picks, and prints expected bullet count, per-bullet damage, hit chance assumptions, and damage per pull. It runs over all pick combinations of size ≤ 8 and flags builds over the "broken" threshold. This is the "difference of one number" safety net. The numbers in section 5 are a starting point for it, not final.
 
@@ -328,7 +328,11 @@ The prototype only needs 16 to 24. 100 is the goal for the bigger version. Rough
 ### 13.10 Balance ceiling: 100× late in the run
 
 The balance target is a **range at the final level: about 20× to 100× baseline damage per pull**, depending on how well the player builds. It is not a guaranteed 100×. Chaos late in the run is intended (see the table in section 10).
-- **Same upgrade stacks add; different upgrades multiply.** Within one upgrade, extra stacks add (for example Grow +25% damage per stack: 3.5× after 10 stacks), so spamming one pick loses. Across upgrades, effects multiply (bullet count × damage × state ticks × payoffs), so complementary builds grow exponentially. Ten picks of ×1.5 each would be 58×, which is why plain stat upgrades should use the `add` stack rule, with `mult` kept for true engine multipliers like Split's bullet count.
+- **Stacking is doubling or tripling (owner decision, replaces an earlier "add" rule).** Where it fits, a stack literally doubles (or triples) what you have: one Split turns 1 bullet into 2, a second turns 2 into 4, a third makes 8. Every-N triggers halve N per stack (min 2), which is the same feel. `add` is used only where doubling would be meaningless or dangerous. Numbers can be played with, but the doubling feel is the aim.
+- **Why this is safe: duplicates are rare.** With 100 upgrades, a given upgrade shows up in a 3-card draft only about 3% of the time (roughly 26% over 10 drafts), so players will be lucky to get three of one. With the **prototype roster of about 16 to 29**, a given upgrade shows up 10 to 19% of the time, so duplicates are common. Keep the caps in `how_it_stacks` for the prototype. Relax them only as the roster grows.
+- **Don't bias the draft toward owned upgrades** (this reverses the earlier suggestion), so duplicates stay rare. Exclude upgrades already at their cap from the draw.
+- **Engine caps still bite.** 8 Split bullets with Bloodshot can exceed the 32-bullet cap. The calculator must apply the caps.
+- All 29 upgrades now have a doubling or halving rule in `upgrade-rubric.csv` (`how_it_stacks`).
 - **No guaranteed floor.** There is no built-in growth curve and no minimum per upgrade. A bad build should lose. Failure comes from enemy scaling.
 - **Enemy scaling: 20× by level 10**, geometric (about ×1.39 per level, 20 to the power of (level minus 1) / 9). It applies to **enemy HP only** for now (owner decision). Speed and contact damage do not scale. 
 - **Level scaling (owner decision):** as levels go up, enemies gain more HP, **and** each level spawns more enemies at a time and/or more waves. There must be an **overwhelming factor** late in the run, so players have a reason to improve their build: crowds should be too big to handle with a weak build. Numbers vary by enemy species (a swarm species scales in count, a heavy species in HP).
