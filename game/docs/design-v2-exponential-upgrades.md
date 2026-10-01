@@ -46,7 +46,7 @@ Two questions this prototype exists to answer:
 | `stack_rule` | how extra stacks scale: `add` (value × stacks), `mult` (value ^ stacks), `reduce_n` (N − 1 per extra stack, min 2), `count` (stacks is the count) |
 | `tags` | free tags used by `payoff` upgrades and enemy counters (`poison`, `explosive`, `multi`) |
 
-An upgrade that needs two effects gets **two rows sharing an `id`** (loader merges). This is simpler than the second-effect columns in `perks.csv` and lets any number of effects attach.
+**Single-term rule (owner decision): one upgrade = one row = one effect.** No bundled bonuses or built-in drawbacks (no "+size and +damage", no "more bullets but less damage"). Anything bundled becomes two separate upgrades, and a downside, if wanted, is its own debuff upgrade. This keeps balancing and the loader simple, so the `perks.csv`-style second-effect columns and merged multi-row ids are not needed.
 
 ### `states.csv` (enemy states)
 
@@ -114,8 +114,8 @@ Baseline pistol: 10 damage, 3.5 shots/s, 12-round magazine (about 35 damage/s). 
 
 | upgrade | trigger | effect | stack rule | cap |
 |---|---|---|---|---|
-| ★ **Split** | passive | bullets ×2, each bullet's damage ×0.75 | mult | 4 |
-| ★ **Grow** | passive | size ×1.6, damage ×1.25 | mult | 4 |
+| ★ **Split** | passive | bullets ×2 (no damage change) | mult | 3 |
+| ★ **Grow** | passive | bullet size ×2 (hit area only) | mult | 3 |
 | ★ **Poison** | on_hit | apply Poison (1 stack) | add | 3 |
 | ★ **Pierce** | passive | +2 pierce | add | 3 |
 | ★ **Quickdraw** | passive | fire rate ×1.25 | mult | 4 |
@@ -124,16 +124,16 @@ Baseline pistol: 10 damage, 3.5 shots/s, 12-round magazine (about 35 damage/s). 
 | **Chill** | on_hit | apply Chill | count | 2 |
 | **Bloodshot** | passive | +1 bullet per 25 current HP | none | 1 |
 | **Field Medic** | every_n_fired (N=6) | heal 4 HP | reduce_n | 3 |
-| **Blast Ring** | every_n_fired (N=5) | explode around you, radius 90, 120% damage, **hurts you 8 HP** | reduce_n | 2 |
+| **Blast Ring** | every_n_fired (N=5) | explosion around you, radius 90, 120% damage; **it also hurts you (8 HP)**, as the `hurts_player` flag of one action | reduce_n | 2 |
 | **Shockwave** | every_n_fired (N=4) | shove all enemies within 160 | reduce_n | 3 |
 | **Echo** | every_n_hits (N=4) | spawn 1 bullet in a random direction (counts as a bullet) | reduce_n | 2 |
-| **Zigzag** | passive | bullets weave; +40% hit width, -15% damage | none | 1 |
+| **Zigzag** | passive | bullets weave side to side | none | 1 |
 | **Ricochet** | passive | +1 wall/enemy bounce | add | 3 |
 | **Volatile Core** | on_kill | dead enemies explode (radius 50, 60% of the killed enemy's max HP as damage) | none | 1 |
 
-Deliberate weak links (so bad builds exist): Zigzag on a single bullet is a small nerf; Blast Ring hurts you; Shockwave with a slow fire rate rarely triggers; Chill without a payoff does little. Field Medic needs a high bullet count to matter. The pistol's slow rate makes every_n_fired upgrades feel bad until multipliers arrive, which is intended.
+Deliberate weak links (so bad builds exist): Zigzag does nothing for damage by itself, it just makes aim less precise; Blast Ring hurts you; Shockwave with a slow fire rate rarely triggers; Chill without a payoff does little. Field Medic needs a high bullet count to matter. The pistol's slow rate makes every_n_fired upgrades feel bad until multipliers arrive, which is intended.
 
-**Sanity check for a great build** (the loop the design should reward): Split ×2, Grow ×2, Poison ×2, Exploit, Echo. Bullets per pull: ×4. Each poisoned; Exploit doubles damage on poisoned enemies; Echo bullets count toward the next Echo. Expected damage per pull is around 20× baseline. That is the ceiling I'm aiming for. See section 10.
+**Sanity check for a great build** (the loop the design should reward): Split ×2, Grow ×2, Poison ×2, Exploit, Echo. Bullets per pull: ×4, each at full damage. Each poisoned; Exploit multiplies damage on poisoned enemies; Echo bullets count toward the next Echo. With no Split penalty this is already ×4 raw damage from Split alone, so the real ceiling needs checking with the balance tool. That is the ceiling I'm aiming for. See section 10.
 
 ---
 
@@ -156,11 +156,11 @@ Design rule: each behavior is the **antithesis of a build**, so build choices ma
 |---|---|---|---|
 | Spider (base) | **Lunge**: short telegraph, then a fast dash | standing still, slow single-target builds | keep moving, Chill, Shockwave |
 | Rat | **Back-biter**: aims behind you | builds that only cover the front | Blast Ring, Ricochet, Echo |
-| Alien | **Armored**: flat -4 damage per bullet hit (min 1) | Split spam (small bullets), poison ticks are unaffected | Grow, Pierce with big damage, Poison |
+| Alien | **Armored**: flat -4 damage per bullet hit (min 1) | many low-damage bullets (rapid fire, Split spam of weak shots); poison ticks are unaffected | any damage-per-bullet upgrade, Poison |
 | Alien | **Regenerator**: heals 3/s if not hit for 2s | slow poison-only builds | burst damage, Exploit |
 | Later | Web-thrower (slow zone), Shielded (front block) | | |
 
-Armor is the intended answer to Split: 10 damage × 0.75 = 7.5, minus 4 = 3.5 per bullet. Grow (dmg ×1.25) helps proportionally more. Enemy data gets a `tags` column so `payoff` upgrades and counters both read the same tags.
+Armor takes 4 off every hit, so a 10-damage bullet does 6. Since Split no longer lowers per-bullet damage, armor punishes weak bullets in general, and the counters are damage-per-bullet upgrades and states. Enemy data gets a `tags` column so `payoff` upgrades and counters both read the same tags.
 
 No ranged shooters, per your note.
 
@@ -213,11 +213,16 @@ Each step ends playable.
 
 ---
 
-## 12. Decisions I need from you
+## 12. Decisions
 
-1. **Picks:** upgrades only at level clears (11 per run), or keep XP level-ups?
-2. **Ammo:** one round per pull regardless of bullet count (my recommendation), or per bullet?
-3. **Split damage penalty (×0.75 per split bullet):** keep, or do you want full damage per bullet and rely on caps/armor to keep it in check?
-4. **Self-damage:** Blast Ring hurts you. Do you want more risky upgrades like it, or keep them rare?
-5. **Scenario count:** is ~24 authored + generated fine?
-6. **Win bonus:** is "pick 1 of 3 unlocks plus heat level" the right win reward?
+Answered:
+1. **Picks:** level clears only (11 per run). XP level-ups dropped.
+3. **Split penalty:** none. Split only creates a second bullet. The owner may add a separate debuff later. **All upgrades and debuffs are single-term** (see section 3).
+4. **Self-damage upgrades:** keep rare.
+
+Still open:
+2. **Ammo:** a "multi-bullet pull" is one click that fires several bullets (because of Split). Does it spend 1 round or 1 per bullet? (Recommended: 1 per pull.)
+5. **Scenario count:** ~24 authored + generated?
+6. **Win bonus:** pick 1 of 3 unlocks plus a heat level?
+
+New consequence to watch: with no Split penalty, Split at 4 stacks is ×16 bullets. Cap lowered to 3 stacks (×8) for now; the balance tool decides.

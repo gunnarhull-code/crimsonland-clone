@@ -42,16 +42,19 @@ The owner chose **set 3**. Sets 1 and 2 are parked, not rejected.
 - A run is 10 levels drawn from a large scenario pool, with a two-portal choice after each level (each portal shows only the dominant enemy icon).
 - Roughly 24 authored scenarios plus generated ones (seeded, like the current `EnemySpawner`).
 
-## Open decisions (the owner has not answered these)
+## Decisions (updated)
 
-1. Upgrades only at level clears (11 per run) versus keeping XP level-ups. Recommended: level clears.
-2. One ammo round per pull regardless of bullet count (recommended) versus per bullet.
-3. Split's per-bullet damage penalty (×0.75): keep or not.
-4. More self-damaging risky upgrades (like Blast Ring) or keep them rare.
+Answered by the owner:
+1. Upgrades only at level clears (11 per run). No XP level-ups.
+3. No Split damage penalty: Split just adds a second bullet. **Every upgrade and debuff is a single term** (one effect each, no bundled bonus/penalty) for easier balancing and programming.
+4. Self-damaging upgrades stay rare.
+
+Still open (ask the owner):
+2. Ammo: one round per pull (recommended) or one per bullet. A "pull" is one click that may fire several bullets because of Split. Explain it in those words.
 5. Scenario count (~24 authored + generated).
 6. Win reward (pick 1 of 3 unlocks + a "heat" level).
 
-Ask about these before coding. If the owner says "use your recommendations", go with the recommended option for each.
+If the owner says "use your recommendations", use the recommended option for each.
 
 ## Existing code you'll need to know (`game/`)
 
