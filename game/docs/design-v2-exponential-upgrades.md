@@ -187,7 +187,7 @@ No ranged shooters, per your note.
 ## 9. Unlocks (never a dead run)
 
 - **Every run end (win or lose):** unlock 1 upgrade, weighted by `unlock_weight` and tier. Death before level 3 still unlocks a tier-1 item.
-- **Win bonus:** pick 1 of 3 locked upgrades to unlock, plus a "heat" level (harder enemies) for the next run.
+- **Win bonus:** pick 1 of 3 locked upgrades to unlock. No heat levels (owner removed them).
 - Start with the 5 defaults (★). Save the unlocked set in `save.json`.
 - The unlocked pool is what the pick-1-of-3 draws from. More unlocks means more build variety.
 
@@ -243,7 +243,7 @@ Answered:
 
 2. **Ammo:** one round per pull, regardless of bullet count (owner: use recommendation).
 6. **Scenario count:** about 24 authored plus generated (owner: use recommendation).
-7. **Win bonus:** pick 1 of 3 unlocks plus a heat level (owner: use recommendation).
+7. **Win bonus:** pick 1 of 3 unlocks. Heat levels were later removed by the owner.
 
 No decisions are open. Section 13 holds ideas added later, with their own open questions.
 
@@ -258,7 +258,7 @@ None of this is built. Items marked *open* need an owner answer before coding. T
 ### 13.1 Setting and tone
 
 - **Premise:** the character is stranded in a junkyard of the multiverse, a place where everything lost in space and time ends up, and is trying to escape. Level 10 is the way out.
-- **Why it helps:** it explains the mix of themes without needing consistent lore. Weapon parts are salvage from different realities, enemies are strays from elsewhere, portals are wormholes between scrap-heaps, unlocks are salvage found, and heat levels are deeper layers.
+- **Why it helps:** it explains the mix of themes without needing consistent lore. Weapon parts are salvage from different realities, enemies are strays from elsewhere, portals are wormholes between scrap-heaps, and unlocks are salvage found.
 - **Rules:** original names only, no pop-culture references anywhere in names, text or docs. Upgrades are called **salvage** in the UI. Story is framing only: a line per scenario or unlock in the CSVs, an opening line and a win screen. No dialogue, cutscenes or lore tracking.
 - **Focus:** upgrades change the weapon. Character perks are optional and rare. The pistol should be able to mutate into something strange by the end of a run.
 
@@ -330,7 +330,7 @@ The prototype only needs 16 to 24. 100 is the goal for the bigger version. Rough
 The balance target is a **range at the final level: about 20× to 100× baseline damage per pull**, depending on how well the player builds. It is not a guaranteed 100×. Chaos late in the run is intended (see the table in section 10).
 - **Same upgrade stacks add; different upgrades multiply.** Within one upgrade, extra stacks add (for example Grow +25% damage per stack: 3.5× after 10 stacks), so spamming one pick loses. Across upgrades, effects multiply (bullet count × damage × state ticks × payoffs), so complementary builds grow exponentially. Ten picks of ×1.5 each would be 58×, which is why plain stat upgrades should use the `add` stack rule, with `mult` kept for true engine multipliers like Split's bullet count.
 - **No guaranteed floor.** There is no built-in growth curve and no minimum per upgrade. A bad build should lose. Failure comes from enemy scaling.
-- **Enemy scaling: 20× by level 10**, geometric (about ×1.39 per level, 20 to the power of (level minus 1) / 9). It applies to **enemy HP only** for now (owner decision). Speed and contact damage do not scale. *Open:* how this combines with the scenario difficulty bands in section 8, which also raise difficulty. Recommended: keep the bands mostly about enemy composition, and whether heat levels (win reward) make the line steeper.
+- **Enemy scaling: 20× by level 10**, geometric (about ×1.39 per level, 20 to the power of (level minus 1) / 9). It applies to **enemy HP only** for now (owner decision). Speed and contact damage do not scale. *Open:* how this combines with the scenario difficulty bands in section 8, which also raise difficulty. Recommended: keep the bands mostly about enemy composition.
 - **Caps matter.** Bullets per pull are capped at 32, so most of the 100× has to come from damage multipliers, states, triggers and kill-scaling payoffs like Soul Snatcher, not from bullet count alone. The caps in 4.3 need stress-testing at this scale, especially live bullets (300) and explosions per frame (20).
 - **Enemies must keep up.** Late levels need enough HP or density that a 100× build is exciting and not trivial. Tune scenario difficulty bands (section 8) against this curve.
 - **Picks are fixed by level.** Entering level L the player holds exactly L picks (one at the start plus one per cleared level), so level 8 means 8 picks, level 5 means 5. Every stack is a pick. The "11 picks per run" in section 2 is really **10 useful picks**, since the pick after clearing level 10 comes after the win.

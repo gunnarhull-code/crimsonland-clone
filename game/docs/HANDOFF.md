@@ -54,7 +54,7 @@ Answered by the owner:
 Also answered ("use your recommendations"):
 - Ammo: one round per pull, regardless of bullet count.
 - Scenarios: about 24 authored plus generated.
-- Win reward: pick 1 of 3 unlocks plus a heat level.
+- Win reward: pick 1 of 3 unlocks. No heat levels (owner removed them).
 
 No original decision is open. Later ideas are in section 13 of the spec: junkyard-of-the-multiverse setting (original names, no pop-culture references), stackable-by-default upgrades, chained upgrades, linked abilities and a combos table, Soul Snatcher and Reaper, alien upgrade ideas, Grow charge time, temporary pickups (a narrow reversal of "no pickups"), and later visual weapon changes. Open questions are marked *open* there. The upgrade rubric is `upgrade-rubric.md` and `upgrade-rubric.csv`.
 
