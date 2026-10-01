@@ -197,12 +197,18 @@ No ranged shooters, per your note.
 
 Balance needs numbers, not feel. Targets (first pass, to be validated):
 
-| build quality | damage per pull vs. baseline |
-|---|---|
-| no synergy (random picks) | 1.5-3× |
-| decent (2-3 related picks) | 4-8× |
-| strong (planned loop) | 12-25× |
-| broken (should not be reachable) | > 40× |
+**Updated by the owner (13.10):** chaos is welcome, as long as it arrives late. A planned build may reach **100× baseline**, but not before level 7 or 8. The calculator flags a build that reaches a high multiplier too early, not a build that reaches 100× late.
+
+| level in the run | planned build, damage per pull vs. baseline | random picks |
+|---|---|---|
+| 1-2 | 1-2× | 1-2× |
+| 3-4 | 2-6× | 1.5-3× |
+| 5 (boss) | 5-12× | 2-4× |
+| 6 | 10-30× | 3-6× |
+| 7-8 | 30-100× | 4-10× |
+| 9-10 | up to 100× or more | 6-15× |
+
+A build is "too early" if it exceeds the planned range for its level. The old ceiling was 40× for any build.
 
 **Tool:** a small script (`tools/build_calc.py`) that reads `upgrades.csv`, takes a list of picks, and prints expected bullet count, per-bullet damage, hit chance assumptions, and damage per pull. It runs over all pick combinations of size ≤ 8 and flags builds over the "broken" threshold. This is the "difference of one number" safety net. The numbers in section 5 are a starting point for it, not final.
 
@@ -312,6 +318,13 @@ Not every upgrade needs every pillar. Missing a couple is normal, and a handful 
 ### 13.8 Target: 100 upgrades (long term)
 
 The prototype only needs 16 to 24. 100 is the goal for the bigger version. Rough breakdown: bullet shape and behavior 12, states 12, triggers 14, payoffs 12, alien and space 14, ammo and rhythm 10, chained follow-ups 16, linked abilities 10. Limits: new effect types grow from about 17 to perhaps 40 and each is coded once, and balance cost rises with the number of combinations, so the build calculator (section 10) should exist before the roster passes about 30. It is not written yet and Python is not installed on the owner's PC, so use GDScript or another available tool.
+
+### 13.10 Balance ceiling: 100× late in the run
+
+The balance target for a strong planned build is **100× baseline damage per pull**, arriving around levels 7 and 8, not earlier. Chaos late in the run is intended (see the table in section 10).
+- **Caps matter.** Bullets per pull are capped at 32, so most of the 100× has to come from damage multipliers, states, triggers and kill-scaling payoffs like Soul Snatcher, not from bullet count alone. The caps in 4.3 need stress-testing at this scale, especially live bullets (300) and explosions per frame (20).
+- **Enemies must keep up.** Late levels need enough HP or density that a 100× build is exciting and not trivial. Tune scenario difficulty bands (section 8) against this curve.
+- **Early levels are the risk.** A build that reaches 30×+ by level 4 ruins the arc. The build calculator should flag that, using the level it is reachable at (picks so far = level + 1).
 
 ### 13.9 Rubric
 
