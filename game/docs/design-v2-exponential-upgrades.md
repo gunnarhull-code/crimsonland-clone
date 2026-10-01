@@ -197,18 +197,24 @@ No ranged shooters, per your note.
 
 Balance needs numbers, not feel. Targets (first pass, to be validated):
 
-**Updated by the owner (13.10):** chaos is welcome, as long as it arrives late. A planned build may reach **100× baseline**, but not before level 7 or 8. The calculator flags a build that reaches a high multiplier too early, not a build that reaches 100× late.
+**Updated by the owner (13.10):** the target is a **range at the final level**: about **20× for a weak but reasonable build** up to about **100× for the best build**. Clever, complementary picks should reach the top, and picking one upgrade over and over should lose. The old ceiling was 40× for any build.
 
-| level in the run | planned build, damage per pull vs. baseline | random picks |
+Per-level range (picks = level number, geometric from 1× at the start to 20× / 100× at level 10):
+
+| level | floor | ceiling |
 |---|---|---|
-| 1-2 | 1-2× | 1-2× |
-| 3-4 | 2-6× | 1.5-3× |
-| 5 (boss) | 5-12× | 2-4× |
-| 6 | 10-30× | 3-6× |
-| 7-8 | 30-100× | 4-10× |
-| 9-10 | up to 100× or more | 6-15× |
+| 1 | 1.3× | 1.6× |
+| 2 | 1.8× | 2.5× |
+| 3 | 2.5× | 4× |
+| 4 | 3.3× | 6.3× |
+| 5 (boss) | 4.5× | 10× |
+| 6 | 6× | 16× |
+| 7 | 8× | 25× |
+| 8 | 11× | 40× |
+| 9 | 15× | 63× |
+| 10 | 20× | 100× |
 
-A build is "too early" if it exceeds the planned range for its level. The old ceiling was 40× for any build.
+The calculator flags a build above the ceiling for its level (too strong too early) and a reasonable build below the floor. A degenerate build, such as only poison picks, may fall below the floor on purpose.
 
 **Tool:** a small script (`tools/build_calc.py`) that reads `upgrades.csv`, takes a list of picks, and prints expected bullet count, per-bullet damage, hit chance assumptions, and damage per pull. It runs over all pick combinations of size ≤ 8 and flags builds over the "broken" threshold. This is the "difference of one number" safety net. The numbers in section 5 are a starting point for it, not final.
 
@@ -321,11 +327,13 @@ The prototype only needs 16 to 24. 100 is the goal for the bigger version. Rough
 
 ### 13.10 Balance ceiling: 100× late in the run
 
-The balance target for a strong planned build is **100× baseline damage per pull**, arriving around levels 7 and 8, not earlier. Chaos late in the run is intended (see the table in section 10).
+The balance target is a **range at the final level: about 20× to 100× baseline damage per pull**, depending on how well the player builds. It is not a guaranteed 100×. Chaos late in the run is intended (see the table in section 10).
+- **Same upgrade stacks add; different upgrades multiply.** Within one upgrade, extra stacks add (for example Grow +25% damage per stack: 3.5× after 10 stacks), so spamming one pick loses. Across upgrades, effects multiply (bullet count × damage × state ticks × payoffs), so complementary builds grow exponentially. Ten picks of ×1.5 each would be 58×, which is why plain stat upgrades should use the `add` stack rule, with `mult` kept for true engine multipliers like Split's bullet count.
+- **How the 20× floor is made.** Recommended: a built-in weapon growth curve of roughly +35% per level that every player gets automatically (about 7× by level 10), so upgrades take a player from there to 20×-100× in total. The alternative is to guarantee that every upgrade is worth at least a minimum multiplier. *Open: owner to choose.*
 - **Caps matter.** Bullets per pull are capped at 32, so most of the 100× has to come from damage multipliers, states, triggers and kill-scaling payoffs like Soul Snatcher, not from bullet count alone. The caps in 4.3 need stress-testing at this scale, especially live bullets (300) and explosions per frame (20).
 - **Enemies must keep up.** Late levels need enough HP or density that a 100× build is exciting and not trivial. Tune scenario difficulty bands (section 8) against this curve.
 - **Picks are fixed by level.** Entering level L the player holds exactly L picks (one at the start plus one per cleared level), so level 8 means 8 picks, level 5 means 5. Every stack is a pick. The "11 picks per run" in section 2 is really **10 useful picks**, since the pick after clearing level 10 comes after the win.
-- **Per-pick multiplier needed.** 100× in 8 picks is about ×1.8 damage per pick on average. 12× in 5 picks is about ×1.6 per pick. Small stacks like Grow ×1.25 or Quickdraw ×1.25 cannot reach this curve alone. Total damage counts every source (bullets, splash, poison ticks, triggers), so a pick that adds a second damage source counts heavily.
+- **Per-pick multiplier needed.** 100× in 10 picks is about ×1.58 damage per pick on average, and 20× is about ×1.35. Total damage counts every source (bullets, splash, poison ticks, triggers), so a pick that adds a second damage source counts heavily.
 - **Chains cost picks.** A chained upgrade costs its prerequisite pick as well, so it must be worth two picks. Linked abilities are free and are the most pick-efficient reward.
 - **Calculator scope.** Test builds of exactly L picks for level L only, not every combination up to 8.
 - **Early levels are the risk.** A build that reaches 30×+ by level 4 ruins the arc. The build calculator should flag that, using the level it is reachable at (picks so far = level + 1).
