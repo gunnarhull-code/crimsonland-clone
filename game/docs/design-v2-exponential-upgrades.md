@@ -348,6 +348,28 @@ The balance target is a **range at the final level: about 20× to 100× baseline
 - **Calculator scope.** Test builds of exactly L picks for level L only, not every combination up to 8.
 - **Early levels are the risk.** A build that reaches 30×+ by level 4 ruins the arc. The build calculator should flag that, using the level it is reachable at (picks so far = level + 1).
 
+### 13.11 Boss levels (levels 5 and 10)
+
+**Rules (owner decisions):**
+- The boss **spawns immediately** when the level starts.
+- The waves are **built into the boss**: its adds (see 13.10) are its waves, driven by a timer or by HP thresholds.
+- The level ends when the **boss is dead and every enemy already spawned is dead**.
+- **Killing the boss sooner spares the remaining waves.** When the boss dies, spawning stops, so waves that have not appeared yet never do. Enemies already on the field still have to be cleared. This rewards burst and single-target damage, and ties to the boss damage measure in 13.10.
+- Boss HP and add counts scale with the level scaling table, and boss rows are data in `enemies.csv`.
+
+**Sketch: Level 5, the Rat King.** A huge rat on a mound of junk, with a back-biting attack.
+- **Adds:** a constant stream of rats on a timer (about every 2 seconds) that grows with the level scaling.
+- **Theme:** crowds. Area builds shred the rats, but the King keeps feeding them until it dies.
+- **Answers:** burst on the boss to stop the stream, or area builds to hold the flood. Chill and Shockwave help with the swarm. Placeholder numbers, to tune.
+
+**Sketch: Level 10, the Gate Warden** (the guardian of the way out). A slow, heavily armored alien.
+- **Behavior:** armored (flat damage reduction per hit). Small bullets from Split spam do very little to it.
+- **Adds:** a few armored escorts at HP thresholds (75%, 50% and 25%).
+- **Theme:** a damage check. It punishes weak bullets and rewards big hits, poison ticks, and anything that ignores armor, such as Third Strike or Heat Coil's beam.
+- **Why it ends the run:** a build that only clears crowds cannot kill it, which is the point of having the final test be single-target damage.
+
+*Open:* confirm that an early boss kill cancels unspawned waves (recommended: yes).
+
 ### 13.9 Rubric
 
 `upgrade-rubric.md` and `upgrade-rubric.csv` score each upgrade against ten pillars: Synergy, Risk, Counterplay, Readable, Run arc, Alien and unusual, Player skill, Power fantasy, Felt immediately and Draft tension. Every pick should be felt in the next level and be a real choice, not an obvious one. The pillar list is a brainstorm and may change. Fill a row before building any upgrade.
