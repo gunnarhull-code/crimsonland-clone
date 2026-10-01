@@ -197,24 +197,24 @@ No ranged shooters, per your note.
 
 Balance needs numbers, not feel. Targets (first pass, to be validated):
 
-**Updated by the owner (13.10):** the target is a **range at the final level**: about **20× for a weak but reasonable build** up to about **100× for the best build**. Clever, complementary picks should reach the top, and picking one upgrade over and over should lose. The old ceiling was 40× for any build.
+**Updated by the owner (13.10):** the target is a **range**, with no guaranteed floor. The best possible build reaches about **100×** baseline damage per pull at the final level. A good build reaches around 20×. A bad build falls behind the enemies and **loses**, and that is intended. Enemies scale +20% per level (compounding), so any build whose damage multiplier is below the enemy scale is falling behind. The old ceiling was 40× for any build.
 
-Per-level range (picks = level number, geometric from 1× at the start to 20× / 100× at level 10):
+Picks equal the level number. The ceiling is the most a perfect build can reach at that level (geometric from 1× to 100× at level 10). Enemy scale is the break-even line:
 
-| level | floor | ceiling |
+| level | enemy scale (×1.2 per level) | ceiling (best build) |
 |---|---|---|
-| 1 | 1.3× | 1.6× |
-| 2 | 1.8× | 2.5× |
-| 3 | 2.5× | 4× |
-| 4 | 3.3× | 6.3× |
-| 5 (boss) | 4.5× | 10× |
-| 6 | 6× | 16× |
-| 7 | 8× | 25× |
-| 8 | 11× | 40× |
-| 9 | 15× | 63× |
-| 10 | 20× | 100× |
+| 1 | 1.0× | 1.6× |
+| 2 | 1.2× | 2.5× |
+| 3 | 1.4× | 4× |
+| 4 | 1.7× | 6.3× |
+| 5 (boss) | 2.1× | 10× |
+| 6 | 2.5× | 16× |
+| 7 | 3.0× | 25× |
+| 8 | 3.6× | 40× |
+| 9 | 4.3× | 63× |
+| 10 | 5.2× | 100× |
 
-The calculator flags a build above the ceiling for its level (too strong too early) and a reasonable build below the floor. A degenerate build, such as only poison picks, may fall below the floor on purpose.
+The calculator flags a build above the ceiling for its level (too strong too early). It also reports where each build crosses the enemy-scale line, to show how many levels it keeps up. Example: ten Grow picks give 3.5× at level 10, below 5.2×, so it loses.
 
 **Tool:** a small script (`tools/build_calc.py`) that reads `upgrades.csv`, takes a list of picks, and prints expected bullet count, per-bullet damage, hit chance assumptions, and damage per pull. It runs over all pick combinations of size ≤ 8 and flags builds over the "broken" threshold. This is the "difference of one number" safety net. The numbers in section 5 are a starting point for it, not final.
 
@@ -329,7 +329,8 @@ The prototype only needs 16 to 24. 100 is the goal for the bigger version. Rough
 
 The balance target is a **range at the final level: about 20× to 100× baseline damage per pull**, depending on how well the player builds. It is not a guaranteed 100×. Chaos late in the run is intended (see the table in section 10).
 - **Same upgrade stacks add; different upgrades multiply.** Within one upgrade, extra stacks add (for example Grow +25% damage per stack: 3.5× after 10 stacks), so spamming one pick loses. Across upgrades, effects multiply (bullet count × damage × state ticks × payoffs), so complementary builds grow exponentially. Ten picks of ×1.5 each would be 58×, which is why plain stat upgrades should use the `add` stack rule, with `mult` kept for true engine multipliers like Split's bullet count.
-- **How the 20× floor is made.** Recommended: a built-in weapon growth curve of roughly +35% per level that every player gets automatically (about 7× by level 10), so upgrades take a player from there to 20×-100× in total. The alternative is to guarantee that every upgrade is worth at least a minimum multiplier. *Open: owner to choose.*
+- **No guaranteed floor.** There is no built-in growth curve and no minimum per upgrade. A bad build should lose. Failure comes from enemy scaling.
+- **Enemy scaling: +20% per level, compounding** (about 5.2× by level 10; 1.2 to the power of level minus 1). It applies to enemy HP. This is a rate of 20% per level, not a 20× jump. *Open:* whether other stats (speed, contact damage) also scale, and how this combines with the scenario difficulty bands in section 8, which also raise difficulty. Recommended: HP only, and keep the bands mostly about composition.
 - **Caps matter.** Bullets per pull are capped at 32, so most of the 100× has to come from damage multipliers, states, triggers and kill-scaling payoffs like Soul Snatcher, not from bullet count alone. The caps in 4.3 need stress-testing at this scale, especially live bullets (300) and explosions per frame (20).
 - **Enemies must keep up.** Late levels need enough HP or density that a 100× build is exciting and not trivial. Tune scenario difficulty bands (section 8) against this curve.
 - **Picks are fixed by level.** Entering level L the player holds exactly L picks (one at the start plus one per cleared level), so level 8 means 8 picks, level 5 means 5. Every stack is a pick. The "11 picks per run" in section 2 is really **10 useful picks**, since the pick after clearing level 10 comes after the win.
