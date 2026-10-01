@@ -102,7 +102,7 @@ Two run-wide counters, both counting **all** bullets, including ones spawned by 
 |---|---|
 | bullets per pull | 256 (placeholder, raise until the frame rate drops) |
 | live bullets at once | 1500 (placeholder, same) |
-| generation depth (a bullet spawned by an upgrade is generation +1; generation ≥ 3 can't spawn more) | 3 (a crash guard against endless loops, not a design limit) |
+| generation depth (a bullet spawned by an upgrade is generation +1; generation ≥ 3 can't spawn more) | 3 (a crash guard, and since Split chains never fade it is also a main balance control, see 13.14) |
 | explosions per frame | 60 (placeholder) |
 
 **Owner decision:** these are performance safety valves, not design limits. A bullet costs the game work each frame (movement and collision), but it does not cost ammo, since a pull still uses one round. Hundreds of bullets on screen are welcome in the last level or two. Raise the numbers as far as the frame rate allows, and measure on the owner's PC.
@@ -393,24 +393,26 @@ The balance target is a **range at the final level: about 20× to 100× baseline
 ### 13.13 Spread renamed, and a new Split
 
 - **Spread** (the old "Split"): one shot fans into several bullets (1 to 2 to 4 to 8). Every mention of the old Split in these docs now says Spread.
-- **Split (new):** when a bullet hits an enemy, it fires another bullet in a random direction. The new bullet is fired **as if from the gun**, so it goes through the whole firing pipeline: Spread fans it into several bullets, and Poison, Pierce, Shrapnel and every other upgrade apply to it. Each stack doubles the bullets fired per hit (1, 2, 4). Because the new bullets also hit enemies and split again, one hit grows into a chain, which multiplies very fast.
-  - **The new bullet is weaker:** half base damage (confirmed by the owner), and it inherits only half of every upgrade (see 13.14).
+- **Split (new):** when a bullet hits an enemy, it fires another bullet in a random direction. The new bullet is fired **as if from the gun**, so it goes through the whole firing pipeline: Spread fans it into several bullets, and Poison, Pierce, Shrapnel and every other upgrade apply to it. Each Split stack adds 1 guaranteed split per hit (1, 2, 3). Because the new bullets also hit enemies and split again, one hit grows into a chain, which multiplies very fast.
+  - **The new bullet keeps full base damage.** It is weaker only because each of its upgrades has a chance to fail (see 13.14).
   - **Chain limit:** a bullet fired by Split is one generation later, and generation 3 stops spawning (4.3). With stack caps removed and Spread multiplying the first bullet, this generation limit is what stops runaway chains, so tune it carefully. Raising it later is the main knob for how chaotic Split gets.
   - **Counters:** the new bullets count as fired bullets and their hits count as hits, so they feed every-N triggers.
 - **Echo already exists and is similar:** Echo fires a stray bullet on every 4th hit (halving the count per stack). Split is the every-hit version, so Echo is controlled and Split is exponential. Both are kept for now. *Open: whether to merge them into one upgrade where Echo's count is just Split's early stage.*
 
-### 13.14 Inheritance: what a spawned bullet gets (owner idea, applies to all upgrades)
+### 13.14 Spawned bullets: chance to keep upgrades (owner rule, replaces the earlier "half of every upgrade")
 
-A bullet fired by Split (or any other upgrade that spawns bullets) is weaker. It does **half base damage** and carries **half of every upgrade's stacks, rounded down**, with no fractional stacks. Example: 2 Poison stacks give the child 1 Poison stack. 4 Spread stacks give the child 2.
+Bullets spawned by **Split** are not weaker in base damage. They keep **full base damage**. The only weakening is a chance on their upgrades.
 
-**Odd stacks and single stacks (so a one-stack upgrade is not lost on the first split):** the leftover half stack is decided by a **coin flip per upgrade, per bullet**. With 1 Poison and 1 Fire, each child bullet has a 50% chance of Poison and an independent 50% chance of Fire. On average a child carries half of every upgrade, with no fractions, and different bullets in one burst get different effects. With 3 Poison stacks a child gets 1, or 2 on a heads. (Alternative the owner suggested: give each child exactly one upgrade picked at random from the single-stack upgrades. It has less variety in the number of effects but gives a single-stack upgrade a lower chance than a coin flip when the player holds many of them. *Open: coin flip is recommended as the default.*)
-
-**Which upgrades inherit:** anything that belongs to the bullet: size, damage, pierce, ricochet, Spread, states applied on hit (Poison, Chill, Burn), on-hit effects like Shrapnel and Split itself. **Gun-level things do not inherit:** fire rate, charge time, magazine and reload, and the every-N counters, since those belong to the gun and are not carried by a bullet.
-
-**Side effect, a natural chain limit:** because Split halves its own stacks, a chain fades. Split ×4 gives children with Split ×2, then ×1, then on a coin flip ×0 or ×1. The generation limit (4.3) stays as a crash guard, but it matters less.
-
-**Data-driven:** each spawn source has an `inherit` value on its effect row: 0.5 for Split and Echo, and 1.0 (full upgrades) for ground pickups, which are meant to be plain bullets that all your upgrades modify (13.4).
-
+- **Split is guaranteed and is not halved.** Each Split stack adds **1 guaranteed split per hit** (stacks add: 1, 2, 3). Children keep Split, so the chain continues: that is how a split bullet can split again.
+- **Every other upgrade is a chance on a spawned bullet.** On each consecutive split generation, every upgrade (except Split) is **50% less likely to activate**. Each upgrade is tested **independently, per bullet** (a coin flip). Generation 1 children test each upgrade at 50%, generation 2 at 25%, generation 3 at 12.5% (chance = 0.5 to the power of the generation, our reading of "50% less each time").
+- **This includes damage upgrades.** If an upgrade changes damage in any way (Grow, Exploit, Soul Snatcher), it can also fail its test, so a child may deal only the plain base damage. Base damage is never reduced.
+- **A one-stack upgrade is never lost for good.** Because it is a chance, a single Poison still shows up on about half of the first-generation children. Example: with Poison and Fire, each child has an independent 50% chance of each.
+- **Per upgrade, not per stack (as the owner said).** An upgrade with several stacks either activates with all its stacks or not at all. *Open: per-stack testing would be smoother (2 Poison stacks would test twice) and is the alternative.*
+- **Gun-level things don't inherit:** fire rate, charge time, magazine and reload, and the every-N counters.
+- **Which upgrades are tested:** anything that belongs to the bullet: size, damage, pierce, ricochet, Spread, states applied on hit, Shrapnel and so on. (Spread on a child fans it into several bullets only when it passes its test.)
+- **Chain size:** because Split is guaranteed and does not fade, a chain only stops at the **generation limit** (4.3, currently 3). With Split ×N, one hit makes N children, each hit makes N more, and so on to the limit: Split ×1 gives 3 extra bullets per hit, ×2 gives 14, ×3 gives 39. The generation limit is now a main balance control, not only a crash guard.
+- **Data-driven:** each spawn source has an `inherit_mode` on its effect row (`chance_per_generation` for Split and Echo, `full` for ground pickups, which stay plain bullets that all your upgrades modify, see 13.4).
+- *Open:* does "consecutive hit" mean the generation of the spawned bullet (our reading), or also count a piercing bullet's second and third enemy hits? We assumed generation only.
 ### 13.9 Rubric
 
 `upgrade-rubric.md` and `upgrade-rubric.csv` score each upgrade against ten pillars: Synergy, Risk, Counterplay, Readable, Run arc, Alien and unusual, Player skill, Power fantasy, Felt immediately and Draft tension. Every pick should be felt in the next level and be a real choice, not an obvious one. The pillar list is a brainstorm and may change. Fill a row before building any upgrade.
