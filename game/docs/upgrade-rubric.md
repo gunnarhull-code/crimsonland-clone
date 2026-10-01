@@ -43,17 +43,47 @@ Tag an upgrade with a pillar only if it passes that pillar's test. When in doubt
 - **Test:** would a player describe it as strange, not just as stronger?
 - **Counts:** bending space or gravity, linking enemies, bullets that behave oddly, new rules for ammo or health.
 - **Does not count:** stat increases, however large. No pop-culture references in names or text.
-- **Note:** this pillar is new. The 16 upgrades in the CSV are not yet re-tagged for it.
+
+### Player skill
+**Meaning:** the upgrade still rewards aiming, movement and positioning, so the player's hands matter and the build doesn't play itself.
+- **Test:** does a good player get noticeably more out of it than a poor one?
+- **Counts:** shots that need lining up (pierce, ricochet angles), timing windows, positioning for portals or zones, focus fire.
+- **Does not count:** automatic effects, homing, or a flat stat bump.
+
+### Power fantasy
+**Meaning:** built up, the upgrade produces a screen-filling, satisfying moment that makes the player feel overpowered.
+- **Test:** would a player want to screenshot or clip the moment it goes off?
+- **Counts:** chain explosions, crowd-wide effects, a snowball that visibly takes over a late level.
+- **Does not count:** a quiet numeric gain that never shows up on screen. This differs from Synergy, which is about the combo, not the spectacle.
 
 ## Score
 
 `score = number of pillars supported - engine cost penalty` (low 0, med 1, high 2).
 
-- 4 or more: core, build first.
-- 2-3: include if the roster needs it.
-- 1 or less: cut first if scope is forced, or build last.
+The score only answers one question: how well does this upgrade fit the game we want? More pillars means more reasons to say yes, so pillars can be added, weighted or dropped freely as the feel of the game becomes clearer. The pillar list is not final.
 
-Every pillar counts the same for now. If one matters more (for example Synergy), weight it.
+- 5 or more: core, build first.
+- 3-4: include if the roster needs it.
+- 2 or less: cut first if scope is forced, or build last.
+
+Bands were rescaled when the list grew from six to eight pillars. Every pillar counts the same for now. If one matters more (for example Synergy), weight it.
+
+## Candidate pillars (brainstorm, not adopted)
+
+Ideas from a card-draft arena shooter where players pick upgrade cards between rounds (a rough match for 10 levels of picks), and from other survivor-style games. Add any that sound like the feel you want.
+
+- **Double-edged:** one card has an upside and a downside together, for example more damage and less health. Close to Risk, but about the same card doing both.
+- **Felt immediately:** the effect is noticeable in the very next level, so each pick gives quick feedback.
+- **Draft tension:** the pick is hard because it costs you a different strong option, so no choice is obvious.
+- **Comeback:** helps a struggling player recover, which matters because there are no dead runs.
+- **Absurdity:** deliberately silly or extreme, in a way that makes players laugh.
+- **One-line clarity:** you can explain it in one sentence, so the pick screen stays fast.
+- **Changes movement:** alters how the player moves or positions, not just how the gun shoots.
+- **Surprise:** does something the player didn't predict, for example an effect that triggers from another upgrade.
+- **Build identity:** pushes the player toward a named, recognizable build, so later picks get easier to choose.
+- **Evolution:** unlocks or upgrades into something new when paired with another upgrade. Matches chained upgrades and linked abilities.
+- **Escalation:** gets stronger as enemy density rises, so late levels feel bigger.
+- **Short-run fit:** matters within the 11 picks of one run, not only over a long campaign.
 
 ## Other columns
 
