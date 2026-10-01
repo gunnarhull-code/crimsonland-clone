@@ -299,5 +299,5 @@ The earlier decision "no weapon pickups" stands for swapping weapons. **Addendum
 
 ### 13.6 Rubric
 
-`upgrade-rubric.md` and `upgrade-rubric.csv` score each upgrade against eight pillars: Synergy, Risk, Counterplay, Readable, Run arc, Alien and unusual, Player skill and Power fantasy. The pillar list is a brainstorm and may change. Fill a row before building any upgrade.
+`upgrade-rubric.md` and `upgrade-rubric.csv` score each upgrade against ten pillars: Synergy, Risk, Counterplay, Readable, Run arc, Alien and unusual, Player skill, Power fantasy, Felt immediately and Draft tension. Every pick should be felt in the next level and be a real choice, not an obvious one. The pillar list is a brainstorm and may change. Fill a row before building any upgrade.
 
