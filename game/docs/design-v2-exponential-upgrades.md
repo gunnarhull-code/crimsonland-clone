@@ -40,7 +40,7 @@ Two questions this prototype exists to answer:
 `id, name, description, category, tier, unlocked_default, max_stacks, tags`
 
 - `category`: `shape`, `state`, `trigger`, `payoff`, `utility` (UI grouping).
-- `max_stacks`: cap on duplicate picks (0 = uncapped).
+- `max_stacks`: cap on duplicate picks. **Default 0 = uncapped** (owner decision: no artificial stack caps, see how it plays).
 - `tags`: used by `payoff` effects and enemy counters (`poison`, `explosive`, `multi`).
 
 #### `upgrade_effects.csv` (one row per effect; many rows can share an `upgrade_id`)
@@ -100,10 +100,12 @@ Two run-wide counters, both counting **all** bullets, including ones spawned by 
 
 | cap | starting value |
 |---|---|
-| bullets per pull | 32 |
-| live bullets at once | 300 |
-| generation depth (a bullet spawned by an upgrade is generation +1; generation ≥ 3 can't spawn more) | 3 |
-| explosions per frame | 20 |
+| bullets per pull | 256 (placeholder, raise until the frame rate drops) |
+| live bullets at once | 1500 (placeholder, same) |
+| generation depth (a bullet spawned by an upgrade is generation +1; generation ≥ 3 can't spawn more) | 3 (a crash guard against endless loops, not a design limit) |
+| explosions per frame | 60 (placeholder) |
+
+**Owner decision:** these are performance safety valves, not design limits. A bullet costs the game work each frame (movement and collision), but it does not cost ammo, since a pull still uses one round. Hundreds of bullets on screen are welcome in the last level or two. Raise the numbers as far as the frame rate allows, and measure on the owner's PC.
 
 When a cap blocks a bullet, it silently doesn't spawn. Caps are constants in one file so they can be tuned after profiling.
 
@@ -214,7 +216,7 @@ Picks equal the level number. The ceiling is the most a perfect build can reach 
 | 9 | 14× | 63× |
 | 10 | 20× | 100× |
 
-Break-even and best are therefore 20× and 100× at the end: a build at 20× barely survives, and a perfect one has a 5× margin. The calculator flags a build above the ceiling for its level (too strong too early). It also reports the level where each build falls below the enemy line, to show how long it survives. Example: Grow is capped at 3 stacks (about 3.4× damage), far below 20×, so a build that leans only on Grow dies.
+Break-even and best are therefore 20× and 100× at the end: a build at 20× barely survives, and a perfect one has a 5× margin. The calculator flags a build above the ceiling for its level (too strong too early). It also reports the level where each build falls below the enemy line, to show how long it survives. Example: a build of ten Grow picks gets ×1.5 damage but ×1.25 charge time per stack, a net of about ×1.2 per pick, so about 6× at level 10, below 20×, and it dies.
 
 **Tool:** a small script (`tools/build_calc.py`) that reads `upgrades.csv`, takes a list of picks, and prints expected bullet count, per-bullet damage, hit chance assumptions, and damage per pull. It runs over all pick combinations of size ≤ 8 and flags builds over the "broken" threshold. This is the "difference of one number" safety net. The numbers in section 5 are a starting point for it, not final.
 
@@ -247,7 +249,7 @@ Answered:
 
 No decisions are open. Section 13 holds ideas added later, with their own open questions.
 
-Consequence to watch: with no Split penalty, Split at 4 stacks would be ×16 bullets. Cap is 3 stacks (×8) for now; the balance tool decides.
+Consequence to watch: with no Split penalty, Split at 4 stacks would be ×16 bullets. Stack caps were later removed (see 13.10), so the balance tool and the performance caps in 4.3 are what limit it.
 
 ---
 
@@ -264,7 +266,7 @@ None of this is built. Items marked *open* need an owner answer before coding. T
 
 ### 13.2 Stacking and unlock rules
 
-- **Stackable by default.** Most upgrades can be picked more than once, with a `stack_rule` per effect and a `max_stacks` cap. Multipliers always need a cap. A hyperbolic stack rule (each extra stack adds less) is a candidate for chance-based effects. *Open:* a limit on how many different upgrades a player may hold.
+- **Stackable by default, with no artificial stack caps (owner decision).** Most upgrades can be picked more than once, with a `stack_rule` per effect, and `max_stacks` defaults to uncapped. A hyperbolic stack rule (each extra stack adds less) is a candidate for chance-based effects. *Open:* a limit on how many different upgrades a player may hold.
 - **Draw rule:** each 1-of-3 offer should contain at least one upgrade the player doesn't own, so runs don't collapse into one upgrade. *Open: confirm.*
 - **Stack tooltips** show the next stack, for example "Split 2 to 3: 4 bullets to 8".
 - **Chained upgrades.** An upgrade may list one or two upgrades in a `requires` column. It joins the draw pool only once those are owned. Meeting the requirement makes it eligible, nothing more. It may still never appear in a run. Keep chains to two steps and about three chains in slice one. A prerequisite must be useful on its own.
@@ -329,9 +331,9 @@ The prototype only needs 16 to 24. 100 is the goal for the bigger version. Rough
 
 The balance target is a **range at the final level: about 20× to 100× baseline damage per pull**, depending on how well the player builds. It is not a guaranteed 100×. Chaos late in the run is intended (see the table in section 10).
 - **Stacking is doubling or tripling (owner decision, replaces an earlier "add" rule).** Where it fits, a stack literally doubles (or triples) what you have: one Split turns 1 bullet into 2, a second turns 2 into 4, a third makes 8. Every-N triggers halve N per stack (min 2), which is the same feel. `add` is used only where doubling would be meaningless or dangerous. Numbers can be played with, but the doubling feel is the aim.
-- **Why this is safe: duplicates are rare.** With 100 upgrades, a given upgrade shows up in a 3-card draft only about 3% of the time (roughly 26% over 10 drafts), so players will be lucky to get three of one. With the **prototype roster of about 16 to 29**, a given upgrade shows up 10 to 19% of the time, so duplicates are common. Keep the caps in `how_it_stacks` for the prototype. Relax them only as the roster grows.
+- **Why this is safe: duplicates are rare.** With 100 upgrades, a given upgrade shows up in a 3-card draft only about 3% of the time (roughly 26% over 10 drafts), so players will be lucky to get three of one. With the **prototype roster of about 16 to 29**, a given upgrade shows up 10 to 19% of the time, so duplicates are common. There are no stack caps, so this is the thing to watch in early playtests. If a single upgrade runs away, fix it with its numbers, not a cap.
 - **Don't bias the draft toward owned upgrades** (this reverses the earlier suggestion), so duplicates stay rare. Exclude upgrades already at their cap from the draw.
-- **Engine caps still bite.** 8 Split bullets with Bloodshot can exceed the 32-bullet cap. The calculator must apply the caps.
+- **Performance caps still exist** (4.3), set high. The calculator must apply them so it matches the game.
 - All 29 upgrades now have a doubling or halving rule in `upgrade-rubric.csv` (`how_it_stacks`).
 - **No guaranteed floor.** There is no built-in growth curve and no minimum per upgrade. A bad build should lose. Failure comes from enemy scaling.
 - **Enemy scaling: 20× by level 10**, geometric (about ×1.39 per level, 20 to the power of (level minus 1) / 9). It applies to **enemy HP only** for now (owner decision). Speed and contact damage do not scale. 
@@ -344,7 +346,7 @@ The balance target is a **range at the final level: about 20× to 100× baseline
     - **Data:** boss rows in `enemies.csv` get `adds_species`, `adds_count`, `adds_interval_sec` and `adds_trigger` (`timer`, or an HP threshold such as `hp_50`). Adding a boss is a CSV row.
     - **Examples to design:** Rat King (constant rats), a spider matriarch (spiderlings when she drops to certain HP thresholds), a heavy armored alien (a few escorts). Names are placeholders.
   - Section 8's difficulty bands are replaced by this.
-- **Caps matter.** Bullets per pull are capped at 32, so most of the 100× has to come from damage multipliers, states, triggers and kill-scaling payoffs like Soul Snatcher, not from bullet count alone. The caps in 4.3 need stress-testing at this scale, especially live bullets (300) and explosions per frame (20).
+- **Bullet counts can be large.** Hundreds of bullets are fine late in the run (the last level or two), but not by level 3. The performance caps in 4.3 are set high and need stress-testing on the owner's PC, especially live bullets and explosions per frame.
 - **Enemies must keep up.** Late levels need enough HP or density that a 100× build is exciting and not trivial. Tune scenario difficulty bands (section 8) against this curve.
 - **Picks are fixed by level.** Entering level L the player holds exactly L picks (one at the start plus one per cleared level), so level 8 means 8 picks, level 5 means 5. Every stack is a pick. The "11 picks per run" in section 2 is really **10 useful picks**, since the pick after clearing level 10 comes after the win.
 - **Per-pick multiplier needed.** 100× in 10 picks is about ×1.58 damage per pick on average, and 20× is about ×1.35. Total damage counts every source (bullets, splash, poison ticks, triggers), so a pick that adds a second damage source counts heavily.
