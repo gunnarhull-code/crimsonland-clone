@@ -297,7 +297,23 @@ The earlier decision "no weapon pickups" stands for swapping weapons. **Addendum
 - **Visual changes:** each upgrade visibly changes the weapon or character. Weapon has 4 to 6 attachment slots, each upgrade names a slot and a sprite, shared pieces are recolored. Bullet color, size and trail follow the upgrade. Reserve `slot` and `visual_id` columns in `upgrades.csv` now.
 - **Slice one version:** bullet color and size per upgrade with placeholder shapes.
 
-### 13.6 Rubric
+### 13.7 Upgrade fixes (from the rubric pass)
+
+Not every upgrade needs every pillar. Missing a couple is normal, and a handful of slow builders is fine. These changes aim for "felt immediately" and a real choice on each pick, and cut engine cost where possible.
+- **Soul Snatcher, Reaper:** front-loaded. +5% damage at pick, then +0.1% per kill. +10 max HP at pick, then +0.1% per kill.
+- **Field Medic** is replaced by **Reclaimer**: every 6th bullet refunds a round. It stops being a heal.
+- **Zigzag:** weaving bullets cross the same enemy twice, so on-hit effects trigger twice.
+- **Cost on formerly automatic picks:** Split fans into a spread (strong close, weaker at range). Poison trades 20% direct damage for its ticks. Pierce loses 20% damage per enemy passed. Quickdraw drains the magazine faster. Ricochet loses 15% damage per bounce. Some plain anchors are fine among the 5 starting upgrades.
+- **Exploit:** +15% damage to everything, plus the large bonus against debuffed enemies, so it is felt at once.
+- **Cost reductions:** Volatile Core uses a fixed blast size. Echo's spawned bullets are limited to generation 2. Twin Gate stays but is scheduled last.
+
+**Five new upgrades** (all in `upgrade-rubric.csv`): **Brood Seed** (kills may hatch a drone that bites for about 6 s), **Orbit Shard** (every 5th bullet orbits you as a shield for 5 s), **Fault Line** (a bullet's path cracks and erupts after 1.5 s), **Heat Coil** (heat builds per pull and full heat fires a huge piercing beam), and **Adaptive Round** (bonus damage against the species you've hit most this level, a deliberate slow builder).
+
+### 13.8 Target: 100 upgrades (long term)
+
+The prototype only needs 16 to 24. 100 is the goal for the bigger version. Rough breakdown: bullet shape and behavior 12, states 12, triggers 14, payoffs 12, alien and space 14, ammo and rhythm 10, chained follow-ups 16, linked abilities 10. Limits: new effect types grow from about 17 to perhaps 40 and each is coded once, and balance cost rises with the number of combinations, so the build calculator (section 10) should exist before the roster passes about 30. It is not written yet and Python is not installed on the owner's PC, so use GDScript or another available tool.
+
+### 13.9 Rubric
 
 `upgrade-rubric.md` and `upgrade-rubric.csv` score each upgrade against ten pillars: Synergy, Risk, Counterplay, Readable, Run arc, Alien and unusual, Player skill, Power fantasy, Felt immediately and Draft tension. Every pick should be felt in the next level and be a real choice, not an obvious one. The pillar list is a brainstorm and may change. Fill a row before building any upgrade.
 
