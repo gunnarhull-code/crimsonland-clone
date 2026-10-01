@@ -394,10 +394,22 @@ The balance target is a **range at the final level: about 20× to 100× baseline
 
 - **Spread** (the old "Split"): one shot fans into several bullets (1 to 2 to 4 to 8). Every mention of the old Split in these docs now says Spread.
 - **Split (new):** when a bullet hits an enemy, it fires another bullet in a random direction. The new bullet is fired **as if from the gun**, so it goes through the whole firing pipeline: Spread fans it into several bullets, and Poison, Pierce, Shrapnel and every other upgrade apply to it. Each stack doubles the bullets fired per hit (1, 2, 4). Because the new bullets also hit enemies and split again, one hit grows into a chain, which multiplies very fast.
-  - **The new bullet is weaker** (proposed half damage). *Open: confirm the amount.*
+  - **The new bullet is weaker:** half base damage (confirmed by the owner), and it inherits only half of every upgrade (see 13.14).
   - **Chain limit:** a bullet fired by Split is one generation later, and generation 3 stops spawning (4.3). With stack caps removed and Spread multiplying the first bullet, this generation limit is what stops runaway chains, so tune it carefully. Raising it later is the main knob for how chaotic Split gets.
   - **Counters:** the new bullets count as fired bullets and their hits count as hits, so they feed every-N triggers.
 - **Echo already exists and is similar:** Echo fires a stray bullet on every 4th hit (halving the count per stack). Split is the every-hit version, so Echo is controlled and Split is exponential. Both are kept for now. *Open: whether to merge them into one upgrade where Echo's count is just Split's early stage.*
+
+### 13.14 Inheritance: what a spawned bullet gets (owner idea, applies to all upgrades)
+
+A bullet fired by Split (or any other upgrade that spawns bullets) is weaker. It does **half base damage** and carries **half of every upgrade's stacks, rounded down**, with no fractional stacks. Example: 2 Poison stacks give the child 1 Poison stack. 4 Spread stacks give the child 2.
+
+**Odd stacks and single stacks (so a one-stack upgrade is not lost on the first split):** the leftover half stack is decided by a **coin flip per upgrade, per bullet**. With 1 Poison and 1 Fire, each child bullet has a 50% chance of Poison and an independent 50% chance of Fire. On average a child carries half of every upgrade, with no fractions, and different bullets in one burst get different effects. With 3 Poison stacks a child gets 1, or 2 on a heads. (Alternative the owner suggested: give each child exactly one upgrade picked at random from the single-stack upgrades. It has less variety in the number of effects but gives a single-stack upgrade a lower chance than a coin flip when the player holds many of them. *Open: coin flip is recommended as the default.*)
+
+**Which upgrades inherit:** anything that belongs to the bullet: size, damage, pierce, ricochet, Spread, states applied on hit (Poison, Chill, Burn), on-hit effects like Shrapnel and Split itself. **Gun-level things do not inherit:** fire rate, charge time, magazine and reload, and the every-N counters, since those belong to the gun and are not carried by a bullet.
+
+**Side effect, a natural chain limit:** because Split halves its own stacks, a chain fades. Split ×4 gives children with Split ×2, then ×1, then on a coin flip ×0 or ×1. The generation limit (4.3) stays as a crash guard, but it matters less.
+
+**Data-driven:** each spawn source has an `inherit` value on its effect row: 0.5 for Split and Echo, and 1.0 (full upgrades) for ground pickups, which are meant to be plain bullets that all your upgrades modify (13.4).
 
 ### 13.9 Rubric
 
