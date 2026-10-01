@@ -31,22 +31,30 @@ Two questions this prototype exists to answer:
 
 ## 3. Data tables (all under `game_v2/data/`)
 
-### `upgrades.csv`
+### Upgrades are built from effects (owner decision)
+
+**Code holds single-effect building blocks ("effects"). Spreadsheet rows combine them into upgrades.** An upgrade can have any number of effects; each effect does exactly one thing. This keeps the code small and testable (each effect is programmed once) while content lives in CSV.
+
+#### `upgrades.csv` (one row per upgrade)
+
+`id, name, description, category, tier, unlocked_default, max_stacks, tags`
+
+- `category`: `shape`, `state`, `trigger`, `payoff`, `utility` (UI grouping).
+- `max_stacks`: cap on duplicate picks (0 = uncapped).
+- `tags`: used by `payoff` effects and enemy counters (`poison`, `explosive`, `multi`).
+
+#### `upgrade_effects.csv` (one row per effect; many rows can share an `upgrade_id`)
 
 | column | meaning |
 |---|---|
-| `id`, `name`, `description` | as in `perks.csv`. Description must state the *concept*; numbers come from `value` columns and are shown in the UI |
-| `category` | `shape` (how bullets look/move/multiply), `state` (applies/uses a state), `trigger` (every-Nth effects), `payoff` (amplifies something), `utility` |
-| `unlocked_default` | true for the starting set |
-| `max_stacks` | cap on duplicate picks (0 = uncapped) |
-| `trigger` | `passive`, `on_fire`, `on_hit`, `on_kill`, `every_n_fired`, `every_n_hits` |
+| `upgrade_id` | which upgrade this effect belongs to |
+| `trigger` | when it runs: `passive`, `on_fire`, `on_hit`, `on_kill`, `every_n_fired`, `every_n_hits` |
 | `every_n` | N for the `every_n_*` triggers (base value) |
-| `action` | one of the action vocabulary below |
+| `action` | one effect from the vocabulary in 4.4 |
 | `value`, `value_2` | numeric parameters of the action |
-| `stack_rule` | how extra stacks scale: `add` (value × stacks), `mult` (value ^ stacks), `reduce_n` (N − 1 per extra stack, min 2), `count` (stacks is the count) |
-| `tags` | free tags used by `payoff` upgrades and enemy counters (`poison`, `explosive`, `multi`) |
+| `stack_rule` | how this effect scales with stacks: `add` (value × stacks), `mult` (value ^ stacks), `reduce_n` (N − 1 per extra stack, min 2), `count` (stacks is the count) |
 
-**Single-term rule (owner decision): one upgrade = one row = one effect.** No bundled bonuses or built-in drawbacks (no "+size and +damage", no "more bullets but less damage"). Anything bundled becomes two separate upgrades, and a downside, if wanted, is its own debuff upgrade. This keeps balancing and the loader simple, so the `perks.csv`-style second-effect columns and merged multi-row ids are not needed.
+**Example, Blast Ring** = two rows: `explode(radius 90, damage_mult 1.2)` and `self_damage(8)`, both `every_n_fired` with N=5. **Grow** = `size_mult 2` and `damage_mult 1.25`. A "debuff" is just another effect row on the same upgrade.
 
 ### `states.csv` (enemy states)
 
@@ -102,9 +110,9 @@ When a cap blocks a bullet, it silently doesn't spawn. Caps are constants in one
 ### 4.4 Action vocabulary (the fixed code surface)
 
 Stat: `bullets_add`, `bullets_add_per_hp` (value = HP per +1 bullet), `bullets_mult`, `damage_mult`, `size_mult`, `speed_mult`, `fire_rate_mult`, `pierce_add`, `pattern_zigzag`, `ricochet_add`.
-Effect: `apply_state(id, stacks)`, `explode(radius, damage_mult, hurts_player)`, `heal(amount)`, `shove(radius, force)`, `spawn_bullet(random_direction)`, `damage_vs_state(state|any, mult)`.
+Effect: `apply_state(id, stacks)`, `explode(radius, damage_mult)`, `self_damage(amount)`, `heal(amount)`, `shove(radius, force)`, `spawn_bullet(random_direction)`, `damage_vs_state(state|any, mult)`.
 
-About 17 actions. Everything in section 5 is a row using these.
+About 17 actions, each implemented once. Everything in section 5 is built from them via `upgrade_effects.csv` rows.
 
 ---
 
@@ -115,7 +123,7 @@ Baseline pistol: 10 damage, 3.5 shots/s, 12-round magazine (about 35 damage/s). 
 | upgrade | trigger | effect | stack rule | cap |
 |---|---|---|---|---|
 | ★ **Split** | passive | bullets ×2 (no damage change) | mult | 3 |
-| ★ **Grow** | passive | bullet size ×2 (hit area only) | mult | 3 |
+| ★ **Grow** | passive | `size_mult` 2 + `damage_mult` 1.25 (two effects) | mult | 3 |
 | ★ **Poison** | on_hit | apply Poison (1 stack) | add | 3 |
 | ★ **Pierce** | passive | +2 pierce | add | 3 |
 | ★ **Quickdraw** | passive | fire rate ×1.25 | mult | 4 |
@@ -124,14 +132,14 @@ Baseline pistol: 10 damage, 3.5 shots/s, 12-round magazine (about 35 damage/s). 
 | **Chill** | on_hit | apply Chill | count | 2 |
 | **Bloodshot** | passive | +1 bullet per 25 current HP | none | 1 |
 | **Field Medic** | every_n_fired (N=6) | heal 4 HP | reduce_n | 3 |
-| **Blast Ring** | every_n_fired (N=5) | explosion around you, radius 90, 120% damage; **it also hurts you (8 HP)**, as the `hurts_player` flag of one action | reduce_n | 2 |
+| **Blast Ring** | every_n_fired (N=5) | `explode` radius 90, 120% damage + `self_damage` 8 HP (two effects) | reduce_n | 2 |
 | **Shockwave** | every_n_fired (N=4) | shove all enemies within 160 | reduce_n | 3 |
 | **Echo** | every_n_hits (N=4) | spawn 1 bullet in a random direction (counts as a bullet) | reduce_n | 2 |
 | **Zigzag** | passive | bullets weave side to side | none | 1 |
 | **Ricochet** | passive | +1 wall/enemy bounce | add | 3 |
 | **Volatile Core** | on_kill | dead enemies explode (radius 50, 60% of the killed enemy's max HP as damage) | none | 1 |
 
-Deliberate weak links (so bad builds exist): Zigzag does nothing for damage by itself, it just makes aim less precise; Blast Ring hurts you; Shockwave with a slow fire rate rarely triggers; Chill without a payoff does little. Field Medic needs a high bullet count to matter. The pistol's slow rate makes every_n_fired upgrades feel bad until multipliers arrive, which is intended.
+Deliberate weak links (so bad builds exist): Zigzag (just `pattern_zigzag`) does nothing for damage by itself and makes aim less precise; Blast Ring hurts you; Shockwave with a slow fire rate rarely triggers; Chill without a payoff does little. Field Medic needs a high bullet count to matter. The pistol's slow rate makes every_n_fired upgrades feel bad until multipliers arrive, which is intended.
 
 **Sanity check for a great build** (the loop the design should reward): Split ×2, Grow ×2, Poison ×2, Exploit, Echo. Bullets per pull: ×4, each at full damage. Each poisoned; Exploit multiplies damage on poisoned enemies; Echo bullets count toward the next Echo. With no Split penalty this is already ×4 raw damage from Split alone, so the real ceiling needs checking with the balance tool. That is the ceiling I'm aiming for. See section 10.
 
@@ -217,12 +225,13 @@ Each step ends playable.
 
 Answered:
 1. **Picks:** level clears only (11 per run). XP level-ups dropped.
-3. **Split penalty:** none. Split only creates a second bullet. The owner may add a separate debuff later. **All upgrades and debuffs are single-term** (see section 3).
+3. **Split penalty:** none. Split is the single effect `bullets_mult` ×2. The owner may add a separate debuff effect later.
 4. **Self-damage upgrades:** keep rare.
+5. **Effects model:** single-effect building blocks in code, combined into upgrades in the spreadsheet (see section 3).
 
 Still open:
 2. **Ammo:** a "multi-bullet pull" is one click that fires several bullets (because of Split). Does it spend 1 round or 1 per bullet? (Recommended: 1 per pull.)
-5. **Scenario count:** ~24 authored + generated?
-6. **Win bonus:** pick 1 of 3 unlocks plus a heat level?
+6. **Scenario count:** ~24 authored + generated?
+7. **Win bonus:** pick 1 of 3 unlocks plus a heat level?
 
-New consequence to watch: with no Split penalty, Split at 4 stacks is ×16 bullets. Cap lowered to 3 stacks (×8) for now; the balance tool decides.
+Consequence to watch: with no Split penalty, Split at 4 stacks would be ×16 bullets. Cap is 3 stacks (×8) for now; the balance tool decides.

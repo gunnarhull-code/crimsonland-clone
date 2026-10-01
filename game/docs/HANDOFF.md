@@ -46,13 +46,14 @@ The owner chose **set 3**. Sets 1 and 2 are parked, not rejected.
 
 Answered by the owner:
 1. Upgrades only at level clears (11 per run). No XP level-ups.
-3. No Split damage penalty: Split just adds a second bullet. **Every upgrade and debuff is a single term** (one effect each, no bundled bonus/penalty) for easier balancing and programming.
+3. No Split damage penalty: Split just adds a second bullet.
+5. **Effects model:** code implements single-effect building blocks; upgrades are *combinations* of those effects defined in the spreadsheet (`upgrades.csv` + `upgrade_effects.csv`). An upgrade may have several effects, each effect does one thing.
 4. Self-damaging upgrades stay rare.
 
 Still open (ask the owner):
 2. Ammo: one round per pull (recommended) or one per bullet. A "pull" is one click that may fire several bullets because of Split. Explain it in those words.
-5. Scenario count (~24 authored + generated).
-6. Win reward (pick 1 of 3 unlocks + a "heat" level).
+6. Scenario count (~24 authored + generated).
+7. Win reward (pick 1 of 3 unlocks + a "heat" level).
 
 If the owner says "use your recommendations", use the recommended option for each.
 
