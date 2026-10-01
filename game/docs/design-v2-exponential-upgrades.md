@@ -306,6 +306,10 @@ The earlier decision "no weapon pickups" stands for swapping weapons. **Addendum
 - Source: enemy drops on a small chance per kill. Collecting a second one adds more charges.
 - Slice one: two or three pickups.
 
+**Ground pickups (owner addition):** pickups also appear **randomly on the ground** during a level, in the way of Crimsonland's bonus pickups. They are one-off, quick abilities. Their charm is that **your current upgrades modify them**. Example: a *burst* pickup fires one plain pistol bullet in each of 20 directions and does nothing else. Because those are ordinary pistol bullets, they go through the normal firing pipeline (4.1), so Split doubles each of them, Poison tags them, Pierce passes them through enemies, Shrapnel explodes them, and so on. A simple pickup becomes a different effect in every build.
+- **Rule:** a pickup should be as simple as possible and make bullets or effects that the upgrade pipeline already understands. Do not give pickups their own special damage numbers. The upgrades do the work.
+- **To decide later:** do bullets from a pickup count toward the fired and hit counters (my recommendation: yes, so they feed every-N triggers), does a pickup burst count as a pull, and how often pickups spawn. The list of pickups is for later.
+
 ### 13.5 Later (bigger version, not the MVP)
 
 - **Visual changes:** each upgrade visibly changes the weapon or character. Weapon has 4 to 6 attachment slots, each upgrade names a slot and a sprite, shared pieces are recolored. Bullet color, size and trail follow the upgrade. Reserve `slot` and `visual_id` columns in `upgrades.csv` now.
