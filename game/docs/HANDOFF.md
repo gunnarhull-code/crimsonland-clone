@@ -36,7 +36,7 @@ The owner chose **set 3**. Sets 1 and 2 are parked, not rejected.
 - Upgrades are **exponential and interacting**: e.g. Split doubles bullets (2 stacks = 4 bullets), so a Poison-on-hit upgrade then poisons all 4. Not just +damage.
 - Triggers count *all* bullets, including ones spawned by other upgrades ("every 4th bullet spawns another bullet, and that one counts too"). Needs caps to stay stable.
 - States on enemies (poison, chill), and payoffs that read them ("debuffed enemies take ×2").
-- Enemy behaviors should be **antitheses of builds** (armor vs Split spam, regeneration vs slow poison). No ranged shooters. At most web/slow traps, shields.
+- Enemy behaviors should be **antitheses of builds** (armor punishes weak bullets, regeneration punishes slow poison). No ranged shooters. At most web/slow traps, shields.
 - Spiders lunge; rats bite from behind.
 - **Never a dead run:** every run, win or lose, unlocks something. A win gives an extra reward.
 - A run is 10 levels drawn from a large scenario pool, with a two-portal choice after each level (each portal shows only the dominant enemy icon).
@@ -45,15 +45,15 @@ The owner chose **set 3**. Sets 1 and 2 are parked, not rejected.
 ## Decisions (updated)
 
 Answered by the owner:
-1. Upgrades only at level clears (11 per run). No XP level-ups.
-3. No Split damage penalty: Split just adds a second bullet.
-5. **Effects model:** code implements single-effect building blocks; upgrades are *combinations* of those effects defined in the spreadsheet (`upgrades.csv` + `upgrade_effects.csv`). An upgrade may have several effects, each effect does one thing.
-4. Self-damaging upgrades stay rare.
+- Upgrades only at level clears (11 per run). No XP level-ups.
+- **Effects model:** code implements single-effect building blocks; upgrades are *combinations* of those effects defined in the spreadsheet (`upgrades.csv` + `upgrade_effects.csv`). An upgrade may have several effects, each effect does one thing.
+- No Split damage penalty: Split just adds a second bullet (a separate debuff effect may be added later).
+- Self-damaging upgrades stay rare.
 
 Still open (ask the owner):
-2. Ammo: one round per pull (recommended) or one per bullet. A "pull" is one click that may fire several bullets because of Split. Explain it in those words.
-6. Scenario count (~24 authored + generated).
-7. Win reward (pick 1 of 3 unlocks + a "heat" level).
+1. Ammo: one round per pull (recommended) or one per bullet. A "pull" is one click that may fire several bullets because of Split. Explain it in those words.
+2. Scenario count (~24 authored + generated).
+3. Win reward (pick 1 of 3 unlocks + a "heat" level).
 
 If the owner says "use your recommendations", use the recommended option for each.
 
