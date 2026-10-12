@@ -412,7 +412,7 @@ Bullets spawned by **Split** are not weaker in base damage. They keep **full bas
 - **Which upgrades are tested:** anything that belongs to the bullet: size, damage, pierce, ricochet, Spread, states applied on hit, Shrapnel and so on. (Spread on a child fans it into several bullets only when it passes its test.)
 - **Chain size:** because Split is guaranteed and does not fade, a chain only stops at the **generation limit** (4.3, currently 3). With Split ×N, one hit makes N children, each hit makes N more, and so on to the limit: Split ×1 gives 3 extra bullets per hit, ×2 gives 14, ×3 gives 39. The generation limit is now a main balance control, not only a crash guard.
 - **Data-driven:** each spawn source has an `inherit_mode` on its effect row (`chance_per_generation` for Split and Echo, `full` for ground pickups, which stay plain bullets that all your upgrades modify, see 13.4).
-- *Open:* does "consecutive hit" mean the generation of the spawned bullet (our reading), or also count a piercing bullet's second and third enemy hits? We assumed generation only.
+- **Confirmed (owner):** the chance drops per **split generation**. A piercing bullet's extra enemy hits do not count as a new generation.
 ### 13.9 Rubric
 
 `upgrade-rubric.md` and `upgrade-rubric.csv` score each upgrade against ten pillars: Synergy, Risk, Counterplay, Readable, Run arc, Alien and unusual, Player skill, Power fantasy, Felt immediately and Draft tension. Every pick should be felt in the next level and be a real choice, not an obvious one. The pillar list is a brainstorm and may change. Fill a row before building any upgrade.
