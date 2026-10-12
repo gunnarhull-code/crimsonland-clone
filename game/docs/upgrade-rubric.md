@@ -103,6 +103,7 @@ Ideas from a card-draft arena shooter where players pick upgrade cards between r
 - `pairs_with`: the synergy partners. Any upgrade with none is an orphan.
 - `deliberate_weakness`: the designed-in reason it can be a bad pick.
 - `engine_cost`: low, med or high, for the stability caps (bullets, generation, explosions).
+- `weight`: 0 (tutorial upgrade, early and common) to 1 (rarest and latest). Sets both the pick it unlocks at and how often it is offered. See spec section 13.15.
 
 ## How to use it
 

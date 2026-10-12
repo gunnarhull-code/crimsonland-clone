@@ -413,6 +413,22 @@ Bullets spawned by **Split** are not weaker in base damage. They keep **full bas
 - **Chain size:** because Split is guaranteed and does not fade, a chain only stops at the **generation limit** (4.3, currently 3). With Split ×N, one hit makes N children, each hit makes N more, and so on to the limit: Split ×1 gives 3 extra bullets per hit, ×2 gives 14, ×3 gives 39. The generation limit is now a main balance control, not only a crash guard.
 - **Data-driven:** each spawn source has an `inherit_mode` on its effect row (`chance_per_generation` for Split and Echo, `full` for ground pickups, which stay plain bullets that all your upgrades modify, see 13.4).
 - **Confirmed (owner):** the chance drops per **split generation**. A piercing bullet's extra enemy hits do not count as a new generation.
+### 13.15 Upgrade weight: when it unlocks and how common it is (owner idea)
+
+Each upgrade has one shared number, its **weight `w`**, from **0** (tutorial upgrade: available at once and common) to **1** (the most expensive and rarest). One number sets both when it can first appear and how often. All weights are data (`weight` column in `upgrade-rubric.csv`), so they can be re-tuned for balance later.
+
+**Recommended model** (starter upgrades never get rarer; advanced ones get more common):
+- **Unlock pick** = 1 + round(8 × w). Picks run 1 to 10 (pick N is made before level N). w=0 is available at pick 1, w=1 at pick 9.
+- **Base draw weight** = 0.1 ^ w. A w=0 upgrade has weight 1.0, w=0.5 about 0.32, w=1 has 0.1 (10 times rarer).
+- **Late-run boost** = 1 + w × ((pick − 1) / 9) × 4. Starters (w=0) never change. A w=1 upgrade reaches ×5 by pick 10, so advanced upgrades become more common as the run goes on.
+- **Offer chance** per card = its weight divided by the total weight of everything unlocked. The three cards are drawn from that pool, so starters naturally become less likely as the pool grows, without being penalized directly. This is the "starters equalize with advanced ones" effect.
+- Chained upgrades also need their prerequisite (13.2). The chart assumes it is owned.
+- Parameters (the base 0.1, the boost of 4, the 8 in the unlock formula) are constants to tune.
+
+**First weights** are in `upgrade-rubric.csv`. The pool grows by about 3 per pick: 5, 8, 11, 14, 17, 20, 23, 27, 30. At pick 1 only 5 upgrades are available, and each one has about a 50% chance to be offered. By pick 10 a starter has about 11% and the rarest upgrades about 6%. The **timeline** tab of the phone page is the Gantt chart: a grid of upgrade by pick, shaded by offer chance (the odds are approximate).
+
+*Open:* this applies within a run. Whether the same weight also sets which upgrades unlock between runs (the unlocks table in section 9) is not decided.
+
 ### 13.9 Rubric
 
 `upgrade-rubric.md` and `upgrade-rubric.csv` score each upgrade against ten pillars: Synergy, Risk, Counterplay, Readable, Run arc, Alien and unusual, Player skill, Power fantasy, Felt immediately and Draft tension. Every pick should be felt in the next level and be a real choice, not an obvious one. The pillar list is a brainstorm and may change. Fill a row before building any upgrade.
