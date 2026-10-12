@@ -74,7 +74,7 @@ func max_enemy_hits() -> int:
 	var k := n("pierce")
 	if k == 0:
 		return 1
-	return 1 + int(Up.p("pierce", "pass") * pow(Up.p("pierce", "pass_stack"), k - 1))
+	return 1 + int(Up.p("pierce", "pass") + Up.p("pierce", "pass_add") * (k - 1))
 
 
 func extra_bullets() -> int:
