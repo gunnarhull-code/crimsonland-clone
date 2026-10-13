@@ -16,8 +16,6 @@ var falloff := 0.2
 var st := {}                 # this bullet's (possibly chance-tested) upgrade stacks
 var gen := 0                 # 0 = fired by the gun, +1 per Split/Echo generation
 var orbit := false
-var held := false            # frozen inside a Still Field
-var still_released := false
 
 var max_cross := 1
 var bounces_left := 0
@@ -75,10 +73,6 @@ func _physics_process(delta: float) -> void:
 	if orbit:
 		_orbit_step(delta)
 		return
-	if not still_released and sb.rules.still_holds(self):
-		held = true
-		return
-	held = false
 	_age += delta
 	if _age >= sb.BULLET_LIFETIME:
 		queue_free()
@@ -174,13 +168,6 @@ func try_ricochet_off(e) -> bool:
 	return true
 
 
-func release_from_still(boost: float) -> void:
-	held = false
-	still_released = true
-	velocity *= boost
-	damage *= boost
-
-
 func _orbit_step(delta: float) -> void:
 	_orbit_t -= delta
 	if _orbit_t <= 0.0:
@@ -209,8 +196,6 @@ func _draw() -> void:
 		c = Color(0.55, 0.9, 1.0)
 	if orbit:
 		c = Color(1.0, 0.6, 0.25)
-	if held:
-		c = Color(0.8, 0.8, 1.0, 0.7)
 	draw_line(Vector2(-half, 0), Vector2(half, 0), c, radius * 2.0)
 	draw_circle(Vector2(half, 0), radius, c)
 	draw_circle(Vector2(-half, 0), radius, c)

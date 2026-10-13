@@ -277,14 +277,6 @@ func _add_zone(kind: String, pos: Vector2, r: float, dur: float) -> void:
 	zones.append({"kind": kind, "pos": pos, "r": r, "t": dur, "max": dur})
 
 
-## True if a Still Field is holding this bullet in place.
-func still_holds(b) -> bool:
-	for z in zones:
-		if z["kind"] == "still" and z["pos"].distance_to(b.global_position) <= z["r"]:
-			return true
-	return false
-
-
 func add_crack(pts: PackedVector2Array, bullet_damage: float, k: int) -> void:
 	if cracks.size() >= MAX_CRACKS:
 		return
@@ -365,10 +357,6 @@ func _tick_zones(delta: float) -> void:
 				e.global_position += off.normalized() * minf(Up.p("gravity_seed", "pull") * delta, off.length())
 			else:
 				e.held_t = 0.1
-		if z["t"] <= 0.0 and z["kind"] == "still":
-			for b in sb.bullets.get_children():
-				if b.held and b.global_position.distance_to(z["pos"]) <= z["r"]:
-					b.release_from_still(Up.p("still_field", "boost"))
 	zones = zones.filter(func(z): return z["t"] > 0.0)
 
 
@@ -512,7 +500,7 @@ func describe(id: String, k: int) -> String:
 		"twin_gate":
 			return "%d portal pair(s) from the first walls hit" % int(p2.call(P.call("pairs"), P.call("stack")))
 		"still_field":
-			return "zone radius %d holds things for %ds, bullets released x%.1f" % [int(P.call("radius")), int(p2.call(P.call("duration"), P.call("stack"))), P.call("boost")]
+			return "zone radius %d holds enemies still for %ds" % [int(P.call("radius")), int(p2.call(P.call("duration"), P.call("stack")))]
 		"brood_seed":
 			return "%d%% chance per kill, %d drone(s), %s" % [roundi(P.call("chance") * 100), int(p2.call(P.call("drones"), P.call("stack"))), ("%ds" % int(P.call("life"))) if P.call("life") > 0.0 else "permanent (max 60)"]
 		"orbit_shard":
