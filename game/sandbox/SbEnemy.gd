@@ -27,6 +27,14 @@ var poison_t := 0.0
 var poison_dps := 0.0
 var chill_t := 0.0
 var chill_speed := 1.0
+var armor := 0.0
+var shards := 0
+var strike_times: Array = []
+var stun_t := 0.0
+var held_t := 0.0
+var portal_cd := 0.0
+var link = null
+var _knock := Vector2.ZERO
 
 var _vel := Vector2.ZERO
 var _body: Node2D
@@ -68,6 +76,10 @@ func apply_poison(dps: float, duration: float) -> void:
 	poison_t = maxf(poison_t, duration)
 
 
+func knock(impulse: Vector2) -> void:
+	_knock += impulse
+
+
 func apply_chill(speed_mult: float, duration: float) -> void:
 	chill_speed = speed_mult
 	chill_t = maxf(chill_t, duration)
@@ -91,6 +103,7 @@ func _fmt(a: float) -> String:
 func _die() -> void:
 	dead = true
 	sb.kills += 1
+	sb.rules.enemy_died(self)
 	queue_free()
 
 
@@ -124,16 +137,22 @@ func _physics_process(delta: float) -> void:
 		_body.modulate *= Color(0.65, 0.8, 1.2)
 
 	var player = sb.player
+	stun_t = maxf(0.0, stun_t - delta)
+	held_t = maxf(0.0, held_t - delta)
+	var immobile := stun_t > 0.0 or held_t > 0.0
 	var desired := Vector2.ZERO
-	if sb.enemies_chase and player.hp > 0.0:
+	if sb.enemies_chase and player.hp > 0.0 and not immobile:
 		desired = _chase_velocity(player, delta)
+	if immobile:
+		_vel = Vector2.ZERO
 	_vel = _vel.move_toward(desired, ACCEL * delta)
-	global_position += _vel * delta
+	global_position += (_vel + _knock) * delta
+	_knock = _knock.move_toward(Vector2.ZERO, 1500.0 * delta)
 	global_position = global_position.clamp(Vector2.ZERO, sb.ARENA)
 	if _vel.length() > 1.0:
 		_body.rotation = _vel.angle()
 
-	if sb.enemies_chase:
+	if sb.enemies_chase and not immobile:
 		_attack_t -= delta
 		var touch: float = radius + player.RADIUS + TOUCH_BUFFER
 		if player.hp > 0.0 and _attack_t <= 0.0 and global_position.distance_to(player.global_position) <= touch:
@@ -161,6 +180,10 @@ func _chase_velocity(player, delta: float) -> Vector2:
 
 
 func _draw() -> void:
+	for i in shards:
+		draw_circle(Vector2.RIGHT.rotated(i * 1.1) * (radius + 3.0), 2.0, Color(0.85, 0.95, 1.0))
+	if stun_t > 0.0:
+		draw_arc(Vector2.ZERO, radius + 4.0, 0.0, TAU, 20, Color(1, 1, 0.4), 2.0)
 	if hp < max_hp:
 		var w := radius * 2.0 + 10.0
 		draw_rect(Rect2(-w / 2.0, -radius - 9.0, w, 4.0), Color(0, 0, 0, 0.6))

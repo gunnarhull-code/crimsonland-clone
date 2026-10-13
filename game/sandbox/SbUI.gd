@@ -1,18 +1,23 @@
 extends CanvasLayer
-## Sandbox panels, built in code: upgrades on the left, spawn + tuning on the
-## right, live stats along the bottom.
+## Sandbox panels, built in code: upgrades on the left, spawn + wave test +
+## tuning on the right, live stats along the bottom.
 
 const Up := preload("res://sandbox/SbUpgrades.gd")
 
-const PANEL_W := 250.0
+const PANEL_W := 270.0
 
 var sb
 var _panels: Array = []
-var _count_labels := {}
+var _rows := {}              # id -> {box, name, count}
 var _stats: Label
 var _level_label: Label
+var _level_slider: HSlider
 var _charge_label: Label
+var _wave_status: Label
+var _wave_history: Label
+var _start_btn: Button
 var _refresh_t := 0.0
+var _tip_t := 0.0
 
 
 func _ready() -> void:
@@ -22,12 +27,11 @@ func _ready() -> void:
 	_stats.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_stats.add_theme_font_size_override("font_size", 13)
 	_stats.add_theme_color_override("font_shadow_color", Color.BLACK)
-	_stats.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	_stats.position = Vector2(PANEL_W + 20.0, 720.0 - 150.0)
 	add_child(_stats)
 	var help := Label.new()
 	help.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	help.text = "WASD move   Mouse aim/fire   R reload   H heal   C clear   1-3 spawn 5 at cursor   4-6 spawn boss at cursor   Tab hide panels"
+	help.text = "WASD move   Mouse aim/fire   R reload   H heal   C clear   1-3 spawn 5 at cursor   4-6 boss at cursor   Tab hide panels"
 	help.add_theme_font_size_override("font_size", 12)
 	help.add_theme_color_override("font_color", Color(1, 1, 1, 0.55))
 	help.position = Vector2(PANEL_W + 20.0, 4.0)
@@ -40,32 +44,56 @@ func toggle_panels() -> void:
 
 
 func _process(delta: float) -> void:
+	_tip_t -= delta
+	if _tip_t <= 0.0:
+		_tip_t = 0.3
+		_refresh_tooltips()
 	_refresh_t -= delta
 	if _refresh_t > 0.0:
 		return
 	_refresh_t = 0.1
-	for id in _count_labels:
-		_count_labels[id].text = str(sb.stack(id))
+	for id in _rows:
+		var row: Dictionary = _rows[id]
+		var raw: int = sb.raw_stack(id)
+		row["count"].text = str(raw)
+		var active: bool = sb.stack(id) > 0
+		var col := Color(1.0, 0.85, 0.4) if active else (Color(1.0, 0.45, 0.4) if raw > 0 else Color.WHITE)
+		row["name"].add_theme_color_override("font_color", col)
 	_stats.text = _stats_text()
+	_wave_status.text = sb.waves.status
+	_wave_history.text = "\n".join(sb.waves.history)
+	if sb.waves.running and int(_level_slider.value) != sb.level:
+		_level_slider.value = sb.level
+
+
+func _refresh_tooltips() -> void:
+	for id in _rows:
+		var row: Dictionary = _rows[id]
+		var k: int = sb.raw_stack(id)
+		var text: String = row["summary"]
+		var req: String = Up.get_row(id).get("requires", "")
+		if req != "" and sb.raw_stack(req) <= 0:
+			text += "\n\nINACTIVE: needs %s first." % Up.get_row(req).get("name", req)
+		text += "\n\nNow (%d stack%s): %s" % [k, "" if k == 1 else "s", sb.rules.describe(id, k) if k > 0 else "not held"]
+		text += "\nNext stack (%d): %s" % [k + 1, sb.rules.describe(id, k + 1)]
+		row["box"].tooltip_text = text
+		row["name"].tooltip_text = text
 
 
 func _stats_text() -> String:
 	var p = sb.player
-	var rate: float = p.fire_rate()
-	var ct: float = p.charge_time()
 	var state := ""
 	if p.reloading:
 		state = "  (reloading)"
 	elif p.charging:
 		state = "  (charging)"
+	var props: Dictionary = p.pull_props()
 	var lines: Array[String] = []
-	lines.append("HP %d/%d    Ammo %d/%d%s" % [int(p.hp), int(p.MAX_HP), p.ammo, p.MAGAZINE, state])
-	lines.append("Fire rate %.2f/s    Charge %.2fs    Bullets per pull %d" % [rate, ct, p.bullets_per_pull()])
-	lines.append("Damage per bullet %.1f (before Exploit)    Size x%.1f    Hits per bullet up to %d" % [p.bullet_damage(), p.size_mult(), p.max_enemy_hits()])
-	var every: int = p.reclaim_every()
-	lines.append("Reclaimer: %s    Bloodshot extra bullets: %d" % [("every %d bullets" % every) if every > 0 else "off", p.extra_bullets()])
-	lines.append("Fired %d    Hits %d    Kills %d    Total damage %d" % [sb.fired, sb.hits, sb.kills, int(sb.total_damage)])
-	lines.append("DPS (last 5 s) %.0f    Enemies %d    Bullets %d" % [sb.recent_dps(), sb.enemies.get_child_count(), sb.bullets.get_child_count()])
+	lines.append("HP %d/%d    Ammo %d/%d%s" % [int(p.hp), int(p.max_hp), p.ammo, p.MAGAZINE, state])
+	lines.append("Fire rate %.2f/s    Charge %.2fs    Bullets per pull %d    Heat %d/%d" % [p.fire_rate(), p.charge_time(), p.bullets_per_pull(), p.heat, p.heat_needed()])
+	lines.append("Damage per bullet %.1f (before target bonuses)    Size x%.1f    Hits per bullet up to %d" % [props["damage"], props["size"], props["hits"]])
+	lines.append("Fired %d    Hits %d    Kills %d    Total damage %d    Most-hit species: %s" % [sb.fired, sb.hits, sb.kills, int(sb.total_damage), sb.leading_species()])
+	lines.append("DPS (last 5 s) %.0f    Enemies %d    Bullets %d    Drones %d" % [sb.recent_dps(), sb.enemies.get_child_count(), sb.bullets.get_child_count(), sb.drones.get_child_count()])
 	return "\n".join(lines)
 
 
@@ -92,7 +120,7 @@ func _make_panel(left: bool) -> VBoxContainer:
 	panel.add_child(scroll)
 	var box := VBoxContainer.new()
 	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	box.add_theme_constant_override("separation", 4)
+	box.add_theme_constant_override("separation", 3)
 	scroll.add_child(box)
 	return box
 
@@ -103,6 +131,16 @@ func _header(box: Control, text: String) -> void:
 	l.add_theme_font_size_override("font_size", 14)
 	l.add_theme_color_override("font_color", Color(1.0, 0.85, 0.4))
 	box.add_child(l)
+
+
+func _note(box: Control, text: String) -> Label:
+	var l := Label.new()
+	l.text = text
+	l.add_theme_font_size_override("font_size", 11)
+	l.add_theme_color_override("font_color", Color(1, 1, 1, 0.55))
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(l)
+	return l
 
 
 func _button(text: String, cb: Callable, min_w: float = 0.0) -> Button:
@@ -129,73 +167,74 @@ func _check(box: Control, text: String, value: bool, cb: Callable) -> void:
 func _build_left() -> void:
 	var box := _make_panel(true)
 	_header(box, "UPGRADES  (stacks)")
+	_note(box, "Hover a row for what it does and its numbers.")
 	for row in Up.all():
 		var id: String = row["id"]
 		var h := HBoxContainer.new()
-		h.tooltip_text = row["summary"]
+		h.mouse_filter = Control.MOUSE_FILTER_PASS
 		var name_l := Label.new()
 		name_l.text = row["name"]
-		name_l.custom_minimum_size.x = 100
-		name_l.tooltip_text = row["summary"]
+		name_l.custom_minimum_size.x = 112
+		name_l.add_theme_font_size_override("font_size", 13)
 		name_l.mouse_filter = Control.MOUSE_FILTER_PASS
 		h.add_child(name_l)
-		h.add_child(_button("-", func(): sb.set_stack(id, sb.stack(id) - 1), 28))
+		h.add_child(_button("-", func(): sb.set_stack(id, sb.raw_stack(id) - 1), 28))
 		var cnt := Label.new()
 		cnt.text = "0"
 		cnt.custom_minimum_size.x = 26
 		cnt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		_count_labels[id] = cnt
 		h.add_child(cnt)
-		h.add_child(_button("+", func(): sb.set_stack(id, sb.stack(id) + 1), 28))
+		h.add_child(_button("+", func(): sb.set_stack(id, sb.raw_stack(id) + 1), 28))
 		box.add_child(h)
+		_rows[id] = {"box": h, "name": name_l, "count": cnt, "summary": row["summary"]}
 	box.add_child(HSeparator.new())
 	box.add_child(_button("Clear all upgrades", func(): sb.stacks.clear()))
-	var tip := Label.new()
-	tip.text = "Hover a name for what it does."
-	tip.add_theme_font_size_override("font_size", 11)
-	tip.add_theme_color_override("font_color", Color(1, 1, 1, 0.5))
-	box.add_child(tip)
 
 
 func _build_right() -> void:
 	var box := _make_panel(false)
+	_header(box, "WAVE TEST  (level 1-10)")
+	_level_label = Label.new()
+	_level_label.add_theme_font_size_override("font_size", 12)
+	box.add_child(_level_label)
+	_level_slider = HSlider.new()
+	_level_slider.min_value = 1
+	_level_slider.max_value = 10
+	_level_slider.step = 1
+	_level_slider.value = sb.level
+	_level_slider.focus_mode = Control.FOCUS_NONE
+	_level_slider.value_changed.connect(_on_level_changed)
+	box.add_child(_level_slider)
+	var wh := HBoxContainer.new()
+	_start_btn = _button("Start level", func(): sb.waves.start(int(_level_slider.value)))
+	wh.add_child(_start_btn)
+	wh.add_child(_button("Stop", func(): sb.waves.stop()))
+	box.add_child(wh)
+	_wave_status = _note(box, "")
+	_wave_history = _note(box, "")
+	_note(box, "Level sets enemy HP (x20 by level 10), enemies per wave and wave count. Levels 5 and 10 are the Rat King and Gate Warden (armored, adds at 75/50/25% HP). See levels.csv.")
+	_on_level_changed(sb.level)
+
+	box.add_child(HSeparator.new())
 	_header(box, "SPAWN  (ring around you)")
 	for sp in ["rat", "spider", "alien"]:
 		for variant in ["base", "boss"]:
 			var h := HBoxContainer.new()
 			var l := Label.new()
 			l.text = ("%s%s" % [sp.capitalize(), " boss" if variant == "boss" else ""])
-			l.custom_minimum_size.x = 80
+			l.custom_minimum_size.x = 84
+			l.add_theme_font_size_override("font_size", 12)
 			h.add_child(l)
 			var counts := [1, 5, 20] if variant == "base" else [1, 2]
 			for c in counts:
 				h.add_child(_button("x%d" % c, func(): sb.spawn_enemies(sp, variant, c), 40))
 			box.add_child(h)
-	var h2 := HBoxContainer.new()
-	h2.add_child(_button("Clear enemies", func(): sb.clear_enemies()))
-	box.add_child(h2)
+	box.add_child(_button("Clear enemies", func(): sb.clear_enemies()))
 
 	box.add_child(HSeparator.new())
 	_header(box, "ENEMIES")
 	_check(box, "Enemies chase and attack", sb.enemies_chase, func(v): sb.enemies_chase = v)
-	_level_label = Label.new()
-	_level_label.add_theme_font_size_override("font_size", 12)
-	box.add_child(_level_label)
-	var level_slider := HSlider.new()
-	level_slider.min_value = 1
-	level_slider.max_value = 10
-	level_slider.step = 1
-	level_slider.value = sb.level
-	level_slider.focus_mode = Control.FOCUS_NONE
-	level_slider.value_changed.connect(_on_level_changed)
-	box.add_child(level_slider)
-	_on_level_changed(sb.level)
-	var tip := Label.new()
-	tip.text = "Level sets HP of NEW spawns (x20 by level 10)."
-	tip.add_theme_font_size_override("font_size", 11)
-	tip.add_theme_color_override("font_color", Color(1, 1, 1, 0.5))
-	tip.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	box.add_child(tip)
+	_note(box, "The level slider also sets the HP of manually spawned enemies.")
 
 	box.add_child(HSeparator.new())
 	_header(box, "PLAYER")

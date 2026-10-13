@@ -1,11 +1,31 @@
-id,name,summary,params
-spread,Spread,"Each stack doubles the bullets per pull (1, 2, 4, 8). They fan out. Still one round of ammo per pull.",bullet_mult=2;fan_deg=7
-grow,Grow,"Adds a charge time before each shot. Bullets are twice as big and do 1.5x damage. Each stack: x2 size, x1.5 damage, x1.25 charge time.",size_mult=2;damage_mult=1.5;charge_mult=1.25
-poison,Poison,"Hits poison the enemy: 3 damage/s for 4 s. Bullets do 20% less direct damage. Each stack doubles the damage/s.",dps=3;duration=4;direct_mult=0.8;dps_stack=2
-pierce,Pierce,"Bullets pass through 2 enemies (so can hit 3). Each enemy passed takes 20% off the bullet's damage. Each stack passes through one more enemy.",pass=2;pass_add=1;falloff=0.2
-quickdraw,Quickdraw,"Fire faster: each stack multiplies fire rate by 1.5. Does not shorten Grow's charge time.",rate_mult=1.5
-exploit,Exploit,"+15% damage to everything and +75% to poisoned or chilled enemies. Each stack doubles the bonus.",all_bonus=0.15;debuff_bonus=0.75;stack=2
-shrapnel,Shrapnel,"Every hit explodes (radius 40) for 40% of the damage dealt. Each stack doubles blast damage and widens it 50%.",radius=40;radius_stack=1.5;damage_frac=0.4;damage_stack=2
-chill,Chill,"Hits slow the enemy to 60% speed for 3 s. Each stack doubles the duration.",speed=0.6;duration=3;duration_stack=2
-bloodshot,Bloodshot,"Fire 1 extra bullet per 25 HP you have. Each stack halves the HP needed (25, 12, 6). Use 'Hurt me' to test.",hp_per=25;stack_div=2
-reclaimer,Reclaimer,"Every 6th bullet fired refunds one round of ammo. Each stack halves the count (6, 3, 2 minimum).",every=6;stack_div=2;min=2
+id,name,summary,requires,params
+spread,Spread,"Each stack doubles the bullets per pull (1, 2, 4, 8). They fan out. Still one round of ammo per pull.",,bullet_mult=2;fan_deg=7
+grow,Grow,"Adds a charge time before each shot. Bullets are twice as big and do 1.5x damage. Each stack: x2 size, x1.5 damage, x1.25 charge time.",,size_mult=2;damage_mult=1.5;charge_mult=1.25
+poison,Poison,"Hits poison the enemy: 3 damage/s for 4 s. Bullets do 20% less direct damage. Each stack doubles the damage/s.",,dps=3;duration=4;direct_mult=0.8;dps_stack=2
+pierce,Pierce,"Bullets pass through 2 enemies (so can hit 3). Each enemy passed takes 20% off the bullet's damage. Each stack passes through one more enemy.",,pass=2;pass_add=1;falloff=0.2
+quickdraw,Quickdraw,"Fire faster: each stack multiplies fire rate by 1.5. Does not shorten Grow's charge time.",,rate_mult=1.5
+exploit,Exploit,"+15% damage to everything and +75% to poisoned or chilled enemies. Each stack doubles the bonus.",,all_bonus=0.15;debuff_bonus=0.75;stack=2
+shrapnel,Shrapnel,"Every hit explodes (radius 40) for 40% of the damage dealt. Each stack doubles blast damage and widens it 50%.",,radius=40;radius_stack=1.5;damage_frac=0.4;damage_stack=2
+chill,Chill,"Hits slow the enemy to 60% speed for 3 s. Each stack doubles the duration.",,speed=0.6;duration=3;duration_stack=2
+bloodshot,Bloodshot,"Fire 1 extra bullet for every 25 HP you have. Each stack halves the HP needed (25, 12, 6). Use 'Hurt me' to test.",,hp_per=25;stack_div=2
+reclaimer,Reclaimer,"Every 6th bullet fired refunds one round of ammo. Each stack halves the count (6, 3, 2 minimum).",,every=6;stack_div=2;min=2
+blast_ring,Blast Ring,"Every 5th bullet explodes around you (radius 90) for 120% damage to enemies and 8 damage to you. Each stack halves the count (5, 3, 2) and doubles the blast damage.",,every=5;stack_div=2;min=2;radius=90;damage_frac=1.2;damage_stack=2;self_damage=8
+shockwave,Shockwave,"Every 4th bullet shoves all enemies within 160 away from you. Each stack halves the count (4, 2 minimum) and widens the shove 50%.",,every=4;stack_div=2;min=2;radius=160;radius_stack=1.5;impulse=700
+echo,Echo,"Every 4th hit spawns one extra bullet in a random direction from the impact. It counts as fired and goes through your upgrades (each has a chance to apply). Limited to generation 2. Each stack halves the count (4, 2 minimum).",,every=4;stack_div=2;min=2;gen_limit=2
+zigzag,Zigzag,"Bullets weave side to side and cross the same enemy twice. On-hit effects trigger on each crossing. Each stack doubles the crossings per enemy (2, 4).",,crossings=2;stack=2;amp=22;wavelength=90
+ricochet,Ricochet,"Bullets bounce off walls and enemies and lose 15% damage per bounce. Each stack doubles the bounces (1, 2, 4).",,bounces=1;stack=2;loss=0.15
+volatile_core,Volatile Core,"Dead enemies explode in a fixed blast (radius 50) for 60% of their max HP. Each stack doubles the blast damage.",,radius=50;hp_frac=0.6;stack=2
+soul_snatcher,Soul Snatcher,"+5% damage when picked, then +0.1% damage for every enemy killed. Each stack adds +5% at pick and doubles the per-kill rate. Resets with 'Reset counters'.",,pick_bonus=0.05;per_kill=0.001;stack=2
+reaper,Reaper,"Needs Soul Snatcher. +10 max HP when picked, then +0.1% max HP per kill (current HP rises with it). Capped at +150%. Each stack adds +10 and doubles the per-kill rate.",soul_snatcher,pick_hp=10;per_kill=0.001;stack=2;cap=1.5
+gravity_seed,Gravity Seed,"Hits pull nearby enemies toward the impact for about 2 seconds so they pack together. Each stack doubles the pull time.",,radius=140;duration=2;stack=2;pull=240
+shard_bloom,Shard Bloom,"Hits embed shards in the enemy. At 6 shards they all detonate together (50% of the bullet's damage per shard, radius 60). Each stack halves the shards needed (6, 3, 2).",,need=6;stack_div=2;min=2;radius=60;shard_frac=0.5
+third_strike,Third Strike,"Hit an enemy twice within 3 seconds and it is stunned for 2 s. A third hit disintegrates it (bosses lose 20% max HP instead). Each stack doubles the window.",,window=3;stack=2;stun=2;boss_frac=0.2
+bond_arc,Bond Arc,"A hit links the enemy to the nearest others with a beam for 4 s. Damage and poison/chill are shared along the link. Each stack doubles the number linked (2, 4, 8).",,count=2;stack=2;duration=4;range=350
+twin_gate,Twin Gate,"The first two walls your bullets hit become a linked portal pair. Bullets and enemies that enter one come out of the other. Each stack doubles the pairs.",,pairs=1;stack=2;radius=32
+still_field,Still Field,"A hit creates a freezing zone (radius 70) for 2 s. Enemies and bullets inside are held still. Bullets released from it gain 1.5x speed and damage. Each stack doubles the freeze time.",,radius=70;duration=2;stack=2;boost=1.5
+brood_seed,Brood Seed,"Each kill has a 30% chance to hatch a drone that chases and bites enemies for 6 s. Bites carry your on-hit effects. Each stack doubles the drones per proc.",,chance=0.3;drones=1;stack=2;life=6;bite=5;bite_interval=0.5;speed=280
+orbit_shard,Orbit Shard,"Every 5th bullet orbits you for 5 s as a shield that damages enemies on contact. Each stack halves the count (5, 3, 2 minimum).",,every=5;stack_div=2;min=2;life=5;radius=50;spin=4
+fault_line,Fault Line,"A bullet's path cracks the ground. After 1.5 s the crack erupts and damages everything on it (100% of the bullet's damage). Each stack doubles the eruption damage.",,delay=1.5;damage_frac=1;stack=2;width=22
+heat_coil,Heat Coil,"Each pull builds heat. At full heat (10 pulls) the next pull fires one huge piercing beam (5x damage) instead of bullets, then heat resets. Each stack halves the pulls (10, 5, 3).",,pulls=10;stack_div=2;min=2;beam_mult=5;beam_width=16
+adaptive_round,Adaptive Round,"Bullets do bonus damage to the species you have hit most. +0.5% per hit on that species. Each stack doubles the gain per hit. Resets with 'Reset counters'.",,per_hit=0.005;stack=2
+split,Split,"When a bullet hits an enemy it fires another bullet in a random direction. Each stack adds one guaranteed split per hit. New bullets keep full base damage but each of their other upgrades only has a 50% chance to apply, halving again each generation. Chain stops at generation 3.",,per_stack=1;gen_limit=3
