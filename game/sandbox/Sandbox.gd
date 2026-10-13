@@ -14,6 +14,7 @@ const EnemyS := preload("res://sandbox/SbEnemy.gd")
 const FxS := preload("res://sandbox/SbFx.gd")
 const RulesS := preload("res://sandbox/SbRules.gd")
 const WavesS := preload("res://sandbox/SbWaves.gd")
+const AudioS := preload("res://sandbox/SbAudio.gd")
 const UiS := preload("res://sandbox/SbUI.gd")
 
 const ARENA := Vector2(1600, 900)
@@ -57,6 +58,7 @@ var bullets: Node2D
 var drones: Node2D
 var fx: Node2D
 var rules
+var audio
 var waves
 var ui
 var _damage_log: Array = []     # [time_sec, amount]
@@ -70,6 +72,8 @@ func _ready() -> void:
 	cam.zoom = Vector2(z, z)
 	add_child(cam)
 
+	audio = AudioS.new()
+	add_child(audio)
 	rules = RulesS.new()
 	rules.sb = self
 	add_child(rules)
@@ -295,6 +299,7 @@ func explode(pos: Vector2, radius: float, damage: float, color: Color = Color(1.
 	if explosions_this_frame >= EXPLOSIONS_PER_FRAME:
 		return
 	explosions_this_frame += 1
+	audio.play("explosion", clampf(radius / 90.0 - 1.0, -6.0, 0.0) * 4.0)
 	fx_ring(pos, radius, color)
 	for e in enemies.get_children():
 		if not e.dead and e.global_position.distance_to(pos) <= radius + e.radius:

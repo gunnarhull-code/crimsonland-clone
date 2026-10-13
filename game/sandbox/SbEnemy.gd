@@ -92,6 +92,8 @@ func take_damage(amount: float, color: Color = Color.WHITE) -> void:
 	_flash = 0.08
 	sb.record_damage(amount)
 	sb.fx_text(global_position + Vector2(randf_range(-8, 8), -radius), _fmt(amount), color)
+	if hp > 0.0:
+		sb.audio.play("hit")
 	if hp <= 0.0:
 		_die()
 
@@ -103,6 +105,7 @@ func _fmt(a: float) -> String:
 func _die() -> void:
 	dead = true
 	sb.kills += 1
+	sb.audio.play("kill")
 	sb.rules.enemy_died(self)
 	queue_free()
 

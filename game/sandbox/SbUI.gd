@@ -240,6 +240,16 @@ func _build_right() -> void:
 	_header(box, "PLAYER")
 	_check(box, "God mode", sb.god_mode, func(v): sb.god_mode = v)
 	_check(box, "Damage numbers", sb.show_numbers, func(v): sb.show_numbers = v)
+	_check(box, "Sound effects", sb.audio.enabled, func(v): sb.audio.enabled = v)
+	var vol := HSlider.new()
+	vol.min_value = -24.0
+	vol.max_value = 6.0
+	vol.step = 1.0
+	vol.value = sb.audio.master_db
+	vol.focus_mode = Control.FOCUS_NONE
+	vol.value_changed.connect(func(v): sb.audio.master_db = v)
+	box.add_child(vol)
+	_note(box, "Volume (slider above)")
 	var h3 := HBoxContainer.new()
 	h3.add_child(_button("Heal", func(): sb.heal()))
 	h3.add_child(_button("Hurt me 25", func(): sb.hurt_player(25.0)))

@@ -143,6 +143,7 @@ func _physics_process(delta: float) -> void:
 		if _reload_t <= 0.0:
 			reloading = false
 			ammo = MAGAZINE
+			sb.audio.play("click")
 	elif charging:
 		_charge_t -= delta
 		if _charge_t <= 0.0:
@@ -177,6 +178,7 @@ func _pull() -> void:
 	if ct > 0.0:
 		charging = true
 		_charge_t = ct
+		sb.audio.play("charge")
 		_charge_total = ct
 	else:
 		_fire()
@@ -204,6 +206,7 @@ func _fire() -> void:
 			if ammo <= 0:
 				start_reload()
 			return
+	sb.audio.play("shot")
 	fire_pipeline(global_position + dir * 18.0, dir, 0, extra_bullets())
 	if ammo <= 0:
 		start_reload()
@@ -228,6 +231,7 @@ func fire_pipeline(origin: Vector2, dir: Vector2, gen: int, extra: int = 0) -> v
 func _fire_beam(dir: Vector2) -> void:
 	var st: Dictionary = sb.bullet_stacks(0)
 	var props := make_props(st, 0)
+	sb.audio.play("beam")
 	sb.rules.on_fired(props)
 	var dmg: float = props["damage"] * Up.p("heat_coil", "beam_mult")
 	var from := global_position
@@ -246,6 +250,7 @@ func take_damage(amount: float) -> void:
 		return
 	hp = maxf(0.0, hp - amount)
 	damage_taken += amount
+	sb.audio.play("hurt")
 	sb.fx_text(global_position + Vector2(0, -26), "-%d" % int(amount), Color(1.0, 0.4, 0.4))
 	if hp <= 0.0:
 		_dead_t = 1.5

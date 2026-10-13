@@ -53,6 +53,7 @@ func on_fired(props: Dictionary) -> bool:
 	if n > 0 and f % n == 0 and player.ammo < player.MAGAZINE:
 		player.ammo += 1
 		sb.fx_text(player.global_position + Vector2(0, -22), "+1 ammo", Color(0.5, 1.0, 0.6))
+		sb.audio.play("refund")
 
 	n = every_n("blast_ring")
 	if n > 0 and f % n == 0:
@@ -66,6 +67,7 @@ func on_fired(props: Dictionary) -> bool:
 		var k: int = sb.stack("shockwave")
 		var r := _scaled("shockwave", "radius", "radius_stack", k)
 		sb.fx_ring(player.global_position, r, Color(0.7, 0.85, 1.0))
+		sb.audio.play("whoosh")
 		for e in sb.enemies.get_children():
 			var off: Vector2 = e.global_position - player.global_position
 			if not e.dead and off.length() <= r + e.radius:
@@ -233,6 +235,7 @@ func _third_strike(e, k: int) -> void:
 	elif times.size() >= 3:
 		e.strike_times = []
 		sb.fx_text(e.global_position + Vector2(0, -e.radius - 14), "DISINTEGRATE", Color(0.9, 0.5, 1.0))
+		sb.audio.play("zap")
 		if e.variant == "boss":
 			e.take_damage(e.max_hp * Up.p("third_strike", "boss_frac"), Color(0.9, 0.5, 1.0))
 		else:
@@ -255,6 +258,7 @@ func enemy_died(e) -> void:
 			var d := DroneS.new()
 			d.setup(sb, e.global_position)
 			sb.drones.add_child(d)
+			sb.audio.play("hatch")
 
 
 # ------------------------------------------------------------ world objects --
