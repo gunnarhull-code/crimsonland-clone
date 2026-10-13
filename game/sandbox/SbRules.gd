@@ -514,7 +514,7 @@ func describe(id: String, k: int) -> String:
 		"still_field":
 			return "zone radius %d holds things for %ds, bullets released x%.1f" % [int(P.call("radius")), int(p2.call(P.call("duration"), P.call("stack"))), P.call("boost")]
 		"brood_seed":
-			return "%d%% chance per kill, %d drone(s), %ds" % [roundi(P.call("chance") * 100), int(p2.call(P.call("drones"), P.call("stack"))), int(P.call("life"))]
+			return "%d%% chance per kill, %d drone(s), %s" % [roundi(P.call("chance") * 100), int(p2.call(P.call("drones"), P.call("stack"))), ("%ds" % int(P.call("life"))) if P.call("life") > 0.0 else "permanent (max 60)"]
 		"orbit_shard":
 			return "every %d bullets orbits you for %ds" % [every_n(id, k), int(P.call("life"))]
 		"fault_line":

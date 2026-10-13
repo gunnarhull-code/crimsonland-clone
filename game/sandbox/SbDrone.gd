@@ -17,10 +17,11 @@ func setup(p_sb, pos: Vector2) -> void:
 
 
 func _physics_process(delta: float) -> void:
-	_life -= delta
-	if _life <= 0.0:
-		queue_free()
-		return
+	if Up.p("brood_seed", "life") > 0.0:
+		_life -= delta
+		if _life <= 0.0:
+			queue_free()
+			return
 	_retarget_t -= delta
 	if _retarget_t <= 0.0 or _target == null or not is_instance_valid(_target) or _target.dead:
 		_retarget_t = 0.3
