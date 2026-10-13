@@ -81,7 +81,7 @@ func on_fired(props: Dictionary) -> bool:
 
 ## A flying bullet touched an enemy. `first` is false for a Zigzag re-crossing.
 func bullet_hit(b, e, first: bool) -> void:
-	deal_hit(e, b.damage, {"st": b.st, "gen": b.gen, "base": b.damage, "pos": b.global_position})
+	deal_hit(e, b.damage, {"st": b.st, "gen": b.gen, "base": b.damage, "pos": b.global_position, "victims": b.victims})
 	if first:
 		b.hits_left -= 1
 		if b.hits_left <= 0:
@@ -151,14 +151,16 @@ func deal_hit(e, dmg: float, ctx: Dictionary) -> void:
 	var split_n: int = sb.stack("split") * int(Up.p("split", "per_stack"))
 	if split_n > 0 and gen < int(Up.p("split", "gen_limit")):
 		for i in split_n:
-			_stray(at, gen + 1)
+			_stray(at, gen + 1, ctx.get("victims", {}), e)
 	var en := every_n("echo")
 	if en > 0 and gen < int(Up.p("echo", "gen_limit")) and sb.hits % en == 0:
-		_stray(at, gen + 1)
+		_stray(at, gen + 1, ctx.get("victims", {}), e)
 
 
-func _stray(at: Vector2, gen: int) -> void:
-	sb.player.fire_pipeline(at, Vector2.RIGHT.rotated(randf() * TAU), gen)
+func _stray(at: Vector2, gen: int, parent_victims: Dictionary, hit_enemy) -> void:
+	var v := parent_victims.duplicate()
+	v[hit_enemy.get_instance_id()] = true
+	sb.player.fire_pipeline(at, Vector2.RIGHT.rotated(randf() * TAU), gen, 0, v)
 
 
 # ------------------------------------------------------- bond arc / strikes --
@@ -303,7 +305,11 @@ func wall_portal(b, p: Vector2, _normal: Vector2) -> bool:
 		return false
 	var out: Dictionary = portals[i ^ 1]
 	b.global_position = out["pos"] + out["normal"] * (Up.p("twin_gate", "radius") + 8.0)
-	b.velocity = out["normal"] * b.velocity.length()
+	# Keep the angle to the wall: rotate the heading from "into the entry wall" to "out of the exit wall".
+	var turn: float = out["normal"].angle() - (-_normal).angle()
+	b.velocity = b.velocity.rotated(turn)
+	b.rotation = b.velocity.angle()
+	b._contact.clear()
 	b._base = b.global_position
 	return true
 

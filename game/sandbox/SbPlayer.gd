@@ -214,13 +214,14 @@ func _fire() -> void:
 
 ## The firing pipeline: bullet count, fan, per-bullet stats. gen 0 is a normal
 ## pull; gen > 0 is a Split/Echo bullet, whose upgrades are chance-tested.
-func fire_pipeline(origin: Vector2, dir: Vector2, gen: int, extra: int = 0) -> void:
+func fire_pipeline(origin: Vector2, dir: Vector2, gen: int, extra: int = 0, victims: Dictionary = {}) -> void:
 	var st: Dictionary = sb.bullet_stacks(gen)
 	var count := _count(st, extra)
 	var spacing := 0.0
 	if count > 1:
 		spacing = minf(Up.p("spread", "fan_deg"), MAX_FAN_DEG / (count - 1))
 	var props := make_props(st, gen)
+	props["victims"] = victims
 	for i in count:
 		var ang := (i - (count - 1) * 0.5) * deg_to_rad(spacing)
 		var orbit: bool = sb.rules.on_fired(props)

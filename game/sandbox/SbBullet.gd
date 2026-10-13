@@ -24,6 +24,8 @@ var bounces_left := 0
 var zig := false
 
 var _len := 14.0
+var victims := {}             # enemy ids this bullet or its ancestors already hit
+var _age := 0.0
 var _contact := {}
 var _cross := {}
 var _base := Vector2.ZERO    # zigzag: the un-weaved path
@@ -46,6 +48,7 @@ func setup(p_sb, pos: Vector2, dir: Vector2, props: Dictionary, p_orbit: bool) -
 	hits_left = props["hits"]
 	falloff = props["falloff"]
 	st = props["st"]
+	victims = props.get("victims", {}).duplicate()
 	gen = props["gen"]
 	zig = st.get("zigzag", 0) > 0
 	if zig:
@@ -76,6 +79,11 @@ func _physics_process(delta: float) -> void:
 		held = true
 		return
 	held = false
+	_age += delta
+	if _age >= sb.BULLET_LIFETIME:
+		queue_free()
+		return
+	modulate.a = clampf(sb.BULLET_LIFETIME - _age, 0.0, 1.0)
 
 	var from := global_position
 	var to: Vector2
@@ -107,9 +115,12 @@ func _physics_process(delta: float) -> void:
 		if _contact.has(id):
 			continue
 		var c: int = _cross.get(id, 0)
+		if c == 0 and victims.has(id):
+			continue   # already hit by this bullet or an ancestor: no ping-pong
 		if c >= max_cross:
 			continue
 		_cross[id] = c + 1
+		victims[id] = true
 		sb.rules.bullet_hit(self, e, c == 0)
 		if is_queued_for_deletion():
 			return
@@ -159,7 +170,6 @@ func try_ricochet_off(e) -> bool:
 		n = -velocity.normalized()
 	_bounce(n)
 	hits_left = 1
-	_cross.clear()
 	_cross[e.get_instance_id()] = max_cross
 	return true
 

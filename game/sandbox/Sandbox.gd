@@ -34,6 +34,8 @@ const BULLET_LEVEL := ["spread", "grow", "poison", "pierce", "exploit", "shrapne
 # Spec 13.10: enemy HP scales geometrically to 20x by level 10.
 const HP_AT_LEVEL_10 := 20.0
 const DPS_WINDOW_SEC := 5.0
+# Every flying bullet is removed after this long (stops Twin Gate loops); fades over the last second.
+const BULLET_LIFETIME := 20.0
 
 var stacks := {}
 var fired := 0
