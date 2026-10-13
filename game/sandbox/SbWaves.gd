@@ -55,6 +55,7 @@ func start(lvl: int) -> void:
 		return
 	sb.heal()
 	sb.species_hits.clear()     # Adaptive Round resets each level
+	sb.adaptive_extra = 0.0
 	_t = 0.0
 	_wave = 0
 	_wave_timer = -1.0

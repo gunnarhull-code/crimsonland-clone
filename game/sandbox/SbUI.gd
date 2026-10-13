@@ -97,6 +97,9 @@ func _stats_text() -> String:
 	lines.append("Fire rate %.2f/s    Charge %.2fs    Bullets per pull %d    Heat %d/%d" % [p.fire_rate(), p.charge_time(), p.bullets_per_pull(), p.heat, p.heat_needed()])
 	lines.append("Damage per bullet %.1f (before target bonuses)    Size x%.1f    Hits per bullet up to %d" % [props["damage"], props["size"], props["hits"]])
 	lines.append("Fired %d    Hits %d    Kills %d    Total damage %d    Most-hit species: %s" % [sb.fired, sb.hits, sb.kills, int(sb.total_damage), sb.leading_species()])
+	if sb.stack("adaptive_round") > 0:
+		var sh: Dictionary = sb.species_hits
+		lines.append("Adaptive Round: +%.1f%% vs %s    extra damage dealt %d    hits  rat %d  spider %d  alien %d" % [sb.adaptive_bonus() * 100.0, sb.leading_species() if sb.leading_species() != "" else "nothing yet", int(sb.adaptive_extra), sh.get("rat", 0), sh.get("spider", 0), sh.get("alien", 0)])
 	lines.append("DPS (last 5 s) %.0f    Enemies %d    Bullets %d    Drones %d" % [sb.recent_dps(), sb.enemies.get_child_count(), sb.bullets.get_child_count(), sb.drones.get_child_count()])
 	return "\n".join(lines)
 

@@ -109,8 +109,10 @@ func deal_hit(e, dmg: float, ctx: Dictionary) -> void:
 		final *= 1.0 + bonus * pow(Up.p("exploit", "stack"), xk - 1)
 	var ak: int = st.get("adaptive_round", 0)
 	if ak > 0 and sb.leading_species() == e.species:
+		var before := final
 		final *= 1.0 + sb.species_hits.get(e.species, 0) * Up.p("adaptive_round", "per_hit") \
 			* pow(Up.p("adaptive_round", "stack"), ak - 1)
+		sb.adaptive_extra += final - before
 	sb.species_hits[e.species] = sb.species_hits.get(e.species, 0) + 1
 	if e.armor > 0.0:
 		final = maxf(1.0, final - e.armor)

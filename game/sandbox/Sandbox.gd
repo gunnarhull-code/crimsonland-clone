@@ -43,6 +43,7 @@ var hits := 0
 var kills := 0
 var total_damage := 0.0
 var species_hits := {}
+var adaptive_extra := 0.0     # total extra damage Adaptive Round has added since the last reset
 var orbit_count := 0
 var explosions_this_frame := 0
 
@@ -162,6 +163,14 @@ func bullet_stacks(gen: int) -> Dictionary:
 	return st
 
 
+## Current Adaptive Round bonus (as a fraction, 0.12 = +12%) against the leading species.
+func adaptive_bonus() -> float:
+	var k := stack("adaptive_round")
+	if k == 0:
+		return 0.0
+	return species_hits.get(leading_species(), 0) * Up.p("adaptive_round", "per_hit") * pow(Up.p("adaptive_round", "stack"), k - 1)
+
+
 func leading_species() -> String:
 	var best := ""
 	var best_n := 0
@@ -210,6 +219,7 @@ func reset_counters() -> void:
 	kills = 0
 	total_damage = 0.0
 	species_hits.clear()
+	adaptive_extra = 0.0
 	player.heat = 0
 	player.damage_taken = 0.0
 	_damage_log.clear()
