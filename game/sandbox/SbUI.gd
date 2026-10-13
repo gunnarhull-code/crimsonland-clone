@@ -18,6 +18,9 @@ var _wave_history: Label
 var _start_btn: Button
 var _refresh_t := 0.0
 var _tip_t := 0.0
+var _tip_panel: PanelContainer
+var _tip_label: Label
+var _row_by_box := {}       # row HBox instance id -> upgrade id
 
 
 func _ready() -> void:
@@ -36,6 +39,7 @@ func _ready() -> void:
 	help.add_theme_color_override("font_color", Color(1, 1, 1, 0.55))
 	help.position = Vector2(PANEL_W + 20.0, 4.0)
 	add_child(help)
+	_build_tip()
 
 
 func toggle_panels() -> void:
@@ -44,6 +48,7 @@ func toggle_panels() -> void:
 
 
 func _process(delta: float) -> void:
+	_update_tip()
 	_tip_t -= delta
 	if _tip_t <= 0.0:
 		_tip_t = 0.3
@@ -76,8 +81,7 @@ func _refresh_tooltips() -> void:
 			text += "\n\nINACTIVE: needs %s first." % Up.get_row(req).get("name", req)
 		text += "\n\nNow (%d stack%s): %s" % [k, "" if k == 1 else "s", sb.rules.describe(id, k) if k > 0 else "not held"]
 		text += "\nNext stack (%d): %s" % [k + 1, sb.rules.describe(id, k + 1)]
-		row["box"].tooltip_text = text
-		row["name"].tooltip_text = text
+		row["tip"] = text
 
 
 func _stats_text() -> String:
@@ -187,6 +191,7 @@ func _build_left() -> void:
 		h.add_child(_button("+", func(): sb.set_stack(id, sb.raw_stack(id) + 1), 28))
 		box.add_child(h)
 		_rows[id] = {"box": h, "name": name_l, "count": cnt, "summary": row["summary"]}
+		_row_by_box[h.get_instance_id()] = id
 	box.add_child(HSeparator.new())
 	box.add_child(_button("Clear all upgrades", func(): sb.stacks.clear()))
 
@@ -281,3 +286,48 @@ func _on_level_changed(v: float) -> void:
 func _on_charge_changed(v: float) -> void:
 	sb.grow_charge_base = v
 	_charge_label.text = "Base charge time %.2fs (before x1.25 per stack)" % v
+
+
+# ------------------------------------------------------------------- tooltip --
+# Godot's built-in tooltip popup did not show in this window, so the upgrade
+# tooltip is drawn here: find the upgrade row under the cursor and show its text
+# in a panel beside the left column.
+
+func _build_tip() -> void:
+	_tip_panel = PanelContainer.new()
+	_tip_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_tip_panel.visible = false
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.08, 0.09, 0.13, 0.96)
+	style.border_color = Color(1.0, 0.85, 0.4, 0.8)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(4)
+	style.set_content_margin_all(10)
+	_tip_panel.add_theme_stylebox_override("panel", style)
+	_tip_label = Label.new()
+	_tip_label.custom_minimum_size.x = 340
+	_tip_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_tip_label.add_theme_font_size_override("font_size", 13)
+	_tip_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_tip_panel.add_child(_tip_label)
+	add_child(_tip_panel)
+
+
+func _update_tip() -> void:
+	var c: Control = get_viewport().gui_get_hovered_control()
+	var id := ""
+	while c != null:
+		if _row_by_box.has(c.get_instance_id()):
+			id = _row_by_box[c.get_instance_id()]
+			break
+		c = c.get_parent() as Control
+	if id == "" or not _panels[0].visible:
+		_tip_panel.visible = false
+		return
+	var text: String = _rows[id].get("tip", _rows[id]["summary"])
+	_tip_label.text = "%s\n\n%s" % [Up.get_row(id).get("name", id).to_upper(), text]
+	_tip_panel.reset_size()
+	var vp := get_viewport().get_visible_rect().size
+	var y := clampf(get_viewport().get_mouse_position().y - 20.0, 4.0, maxf(4.0, vp.y - _tip_panel.size.y - 4.0))
+	_tip_panel.position = Vector2(PANEL_W + 8.0, y)
+	_tip_panel.visible = true
