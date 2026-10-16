@@ -52,3 +52,9 @@ static func _parse_params(s: String) -> Dictionary:
 		if kv.size() == 2:
 			d[kv[0].strip_edges()] = float(kv[1])
 	return d
+
+
+## Rubric weight 0 (common, early) to 1 (rare, late). See spec 13.15.
+static func weight(id: String) -> float:
+	all()
+	return float(_by_id.get(id, {}).get("weight", 0.0))

@@ -117,6 +117,7 @@ func deal_hit(e, dmg: float, ctx: Dictionary) -> void:
 	if e.armor > 0.0:
 		final = maxf(1.0, final - e.armor)
 
+	final *= sb.cheat_damage_mult
 	e.take_damage(final)
 	_share_damage(e, final)
 

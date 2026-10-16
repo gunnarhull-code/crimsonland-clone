@@ -120,8 +120,9 @@ func _physics_process(delta: float) -> void:
 	_update_max_hp()
 	if hp <= 0.0:
 		_dead_t -= delta
-		if _dead_t <= 0.0:
+		if sb.revive_on_death and _dead_t <= 0.0:
 			revive()
+
 		queue_redraw()
 		return
 
@@ -130,7 +131,7 @@ func _physics_process(delta: float) -> void:
 	if Input.is_physical_key_pressed(KEY_S): v.y += 1.0
 	if Input.is_physical_key_pressed(KEY_A): v.x -= 1.0
 	if Input.is_physical_key_pressed(KEY_D): v.x += 1.0
-	global_position += v.normalized() * MOVE_SPEED * delta
+	global_position += v.normalized() * MOVE_SPEED * sb.move_speed_mult * delta
 	global_position = global_position.clamp(Vector2(RADIUS, RADIUS), sb.ARENA - Vector2(RADIUS, RADIUS))
 
 	var aim := aim_pos()
@@ -194,6 +195,8 @@ func start_reload() -> void:
 
 func _fire() -> void:
 	ammo -= 1  # one round per pull, however many bullets
+	if sb.infinite_ammo:
+		ammo = MAGAZINE
 	var aim := aim_pos() - global_position
 	var dir := (aim.normalized() if aim.length() > 1.0 else Vector2.RIGHT)
 	dir = dir.rotated(deg_to_rad(randf_range(-AIM_SPREAD_DEG, AIM_SPREAD_DEG)))

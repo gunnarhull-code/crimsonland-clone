@@ -6,6 +6,8 @@ extends Node
 ## level ends when the boss and everything spawned is dead.
 
 const PATH := "res://sandbox/levels.csv"
+signal finished(cleared: bool)
+
 const WAVE_DELAY := 2.0
 const HP_MARKS := [0.75, 0.5, 0.25]
 
@@ -53,7 +55,8 @@ func start(lvl: int) -> void:
 	if _row.is_empty():
 		status = "No data for level %d" % lvl
 		return
-	sb.heal()
+	if sb.heal_on_level_start:
+		sb.heal()
 	sb.species_hits.clear()     # Adaptive Round resets each level
 	sb.adaptive_extra = 0.0
 	_t = 0.0
@@ -84,6 +87,7 @@ func player_down() -> void:
 	running = false
 	var left: int = sb.enemies.get_child_count()
 	_finish("Level %d FAILED: you died after %.1fs with %d enemies left (%d kills)" % [level, _t, left, sb.kills - _kills0])
+	finished.emit(false)
 
 
 func _finish(text: String) -> void:
@@ -159,3 +163,14 @@ func _complete() -> void:
 	running = false
 	_finish("Level %d CLEARED in %.1fs  (kills %d, damage dealt %d, damage taken %d)" % [
 		level, _t, sb.kills - _kills0, int(sb.total_damage - _dealt0), int(sb.player.damage_taken - _taken0)])
+	finished.emit(true)
+
+
+## Cheat: wipe the level and count it as cleared.
+func force_clear() -> void:
+	if not running:
+		return
+	sb.clear_enemies()
+	running = false
+	_finish("Level %d skipped (cheat)" % level)
+	finished.emit(true)

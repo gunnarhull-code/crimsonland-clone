@@ -64,10 +64,23 @@ var rules
 var audio
 var waves
 var ui
+
+# Switches the prototype run flips (the sandbox keeps the defaults).
+var revive_on_death := true       # false: dying ends the run
+var heal_on_level_start := true   # full heal when a wave-test level starts
+var cheat_damage_mult := 1.0      # cheat: multiplies all damage you deal
+var infinite_ammo := false        # cheat
+var move_speed_mult := 1.0        # cheat
 var _damage_log: Array = []     # [time_sec, amount]
 
 
 func _ready() -> void:
+	_build_world()
+	_build_ui()
+	_after_ready()
+
+
+func _build_world() -> void:
 	var cam := Camera2D.new()
 	cam.position = ARENA / 2.0
 	var vp := get_viewport_rect().size
@@ -96,9 +109,16 @@ func _ready() -> void:
 	waves.sb = self
 	add_child(waves)
 
+
+## The sandbox panels. The prototype (proto/Run.gd) overrides this with its own UI.
+func _build_ui() -> void:
 	ui = UiS.new()
 	ui.sb = self
 	add_child(ui)
+
+
+func _after_ready() -> void:
+	pass
 
 
 func _draw() -> void:
