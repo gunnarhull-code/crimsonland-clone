@@ -1,0 +1,240 @@
+<title>Upgrade Rubric</title>
+<style>
+/* Layout: spreadsheet grid with grey header row, pill-tag cells, status-style score column and sheet tabs along the bottom. */
+:root{
+  --bg:#ffffff; --fg:#202124; --muted:#5f6368; --grid:#e1e3e6; --head:#e8eaed; --rownum:#f1f3f4; --sel:#d3e3fd;
+  --font:Arial,"Helvetica Neue",system-ui,sans-serif;
+  --pg-bg:#d9f2e0; --pg-fg:#1e6b35;
+  --pr-bg:#fbd5d8; --pr-fg:#a3202e;
+  --pp-bg:#e6d9f7; --pp-fg:#5a2ea6;
+  --pb-bg:#d4e5fb; --pb-fg:#1a56a8;
+  --po-bg:#fde6c7; --po-fg:#9a5600;
+  --pt-bg:#c9eee9; --pt-fg:#0d6b60; --pk-bg:#fbd3ea; --pk-fg:#9b1d6a; --py-bg:#fbeeb0; --py-fg:#6f5400; --pf-bg:#e3f0b8; --pf-fg:#4a6000; --pd-bg:#dbdcf8; --pd-fg:#343a9c;
+  --done-bg:#d9f2e0; --done-fg:#1e6b35; --warn-bg:#fff0c2; --warn-fg:#7a5b00; --low-bg:#fbd5d8; --low-fg:#a3202e;
+  --heat:#1e8a4a;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#1f2023; --fg:#e8eaed; --muted:#9aa0a6; --grid:#3a3d42; --head:#2d2f33; --rownum:#26282b; --sel:#2c4670;
+  --pg-bg:#1f4a2c; --pg-fg:#a8e3b9; --pr-bg:#5a2128; --pr-fg:#f6b1b8; --pp-bg:#40305f; --pp-fg:#d3bdf5;
+  --pb-bg:#1f3d63; --pb-fg:#a9cbf5; --po-bg:#5d4018; --po-fg:#f5d19a; --pt-bg:#17504a; --pt-fg:#a0e3da;
+  --pk-bg:#5a1f43; --pk-fg:#f5b3dc; --py-bg:#5a4a10; --py-fg:#f3dc8d; --pf-bg:#3f4d12; --pf-fg:#d3e68f; --pd-bg:#2f3162; --pd-fg:#b9bcf0;
+  --done-bg:#1f4a2c; --done-fg:#a8e3b9; --warn-bg:#5a4a10; --warn-fg:#f3dc8d; --low-bg:#5a2128; --low-fg:#f6b1b8; --heat:#4fd18a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#1f2023; --fg:#e8eaed; --muted:#9aa0a6; --grid:#3a3d42; --head:#2d2f33; --rownum:#26282b; --sel:#2c4670;
+  --pg-bg:#1f4a2c; --pg-fg:#a8e3b9; --pr-bg:#5a2128; --pr-fg:#f6b1b8; --pp-bg:#40305f; --pp-fg:#d3bdf5;
+  --pb-bg:#1f3d63; --pb-fg:#a9cbf5; --po-bg:#5d4018; --po-fg:#f5d19a; --pt-bg:#17504a; --pt-fg:#a0e3da;
+  --pk-bg:#5a1f43; --pk-fg:#f5b3dc; --py-bg:#5a4a10; --py-fg:#f3dc8d; --pf-bg:#3f4d12; --pf-fg:#d3e68f; --pd-bg:#2f3162; --pd-fg:#b9bcf0;
+  --done-bg:#1f4a2c; --done-fg:#a8e3b9; --warn-bg:#5a4a10; --warn-fg:#f3dc8d; --low-bg:#5a2128; --low-fg:#f6b1b8; --heat:#4fd18a; color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:13px;line-height:1.35;margin:0;padding:0;display:flex;flex-direction:column}
+.title{padding:10px 16px;border-bottom:1px solid var(--grid);font-size:16px;flex:none}
+.title small{color:var(--muted);font-size:12px;margin-left:8px}
+.pane{flex:1;min-height:0;overflow:auto}
+.tools{flex:none;padding:6px 12px;border-bottom:1px solid var(--grid);display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.tools .lab{color:var(--muted);margin-right:4px}
+.tools button{font:inherit;border:1px solid transparent;cursor:pointer;border-radius:10px;padding:1px 9px;margin:0 2px 2px 0}
+.tools button.clear{background:var(--head);color:var(--fg);border-color:var(--grid)}
+.tools button[aria-pressed="true"]{outline:2px solid var(--fg);font-weight:700}
+.tools button:focus-visible{outline:2px solid var(--fg)}
+table{border-collapse:separate;border-spacing:0;min-width:100%}
+th,td{border-right:1px solid var(--grid);border-bottom:1px solid var(--grid);padding:6px 8px;vertical-align:top;text-align:left;background:var(--bg)}
+thead th{position:sticky;top:0;background:var(--head);font-weight:700;z-index:2;white-space:nowrap}
+thead th.sortable{cursor:pointer}
+thead th:focus-visible{outline:2px solid var(--fg);outline-offset:-2px}
+th.rn,td.rn{background:var(--rownum);color:var(--muted);text-align:center;min-width:34px;position:sticky;left:0;z-index:1}
+thead th.rn{z-index:3}
+td.nm{font-weight:600;min-width:130px;position:sticky;left:35px;z-index:1}
+thead th.nm{position:sticky;left:35px;z-index:3}
+td.txt{min-width:190px}
+td.pills{min-width:200px}
+.pill{display:inline-block;border-radius:10px;padding:1px 9px;margin:0 4px 4px 0;white-space:nowrap}
+.c-Synergy{background:var(--pb-bg);color:var(--pb-fg)}
+.c-Risk{background:var(--pr-bg);color:var(--pr-fg)}
+.c-Counterplay{background:var(--pg-bg);color:var(--pg-fg)}
+.c-Readable{background:var(--pp-bg);color:var(--pp-fg)}
+.c-Runarc{background:var(--po-bg);color:var(--po-fg)}
+.c-Alienandunusual{background:var(--pt-bg);color:var(--pt-fg)}
+.c-Playerskill{background:var(--pk-bg);color:var(--pk-fg)}
+.c-Powerfantasy{background:var(--py-bg);color:var(--py-fg)}
+.c-Feltimmediately{background:var(--pf-bg);color:var(--pf-fg)}
+.c-Drafttension{background:var(--pd-bg);color:var(--pd-fg)}
+td.score{text-align:center;font-weight:700;min-width:60px}
+td.s-hi{background:var(--done-bg);color:var(--done-fg)}
+td.s-mid{background:var(--warn-bg);color:var(--warn-fg)}
+td.s-lo{background:var(--low-bg);color:var(--low-fg)}
+td.cost,td.cat{min-width:70px}
+td.tlc{text-align:center;min-width:46px;font-variant-numeric:tabular-nums;color:var(--fg)}
+td.tlc.off{color:var(--muted);background:var(--rownum)}
+td.tlsum{font-weight:700;background:var(--head)}
+.note{padding:10px 12px;color:var(--muted);border-bottom:1px solid var(--grid);max-width:760px;position:sticky;left:0}
+.note b{color:var(--fg)}
+.tabs{flex:none;display:flex;gap:2px;border-top:1px solid var(--grid);background:var(--rownum);padding:4px 8px 4px;padding-bottom:calc(4px + env(safe-area-inset-bottom,0px));overflow-x:auto}
+.tabs button{font:inherit;border:0;background:none;color:var(--muted);padding:6px 14px;border-radius:4px;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{background:var(--sel);color:var(--fg);font-weight:700}
+.tabs button:focus-visible{outline:2px solid var(--fg)}
+.defs td.nm{min-width:150px}
+td.ed{cursor:text}
+td.ed:focus{outline:2px solid var(--fg);outline-offset:-2px}
+input.wi{font:inherit;width:60px;background:var(--bg);color:var(--fg);border:1px solid var(--grid);border-radius:4px;padding:2px 4px}
+td.cost select{font:inherit;background:var(--bg);color:var(--fg);border:1px solid var(--grid);border-radius:4px;padding:2px}
+button.pt{border:1px solid transparent;cursor:pointer;font:inherit}
+button.pt.dim{opacity:.35}
+.tools .chk{display:inline-flex;align-items:center;gap:2px;margin-left:8px}
+.params{display:flex;flex-wrap:wrap;gap:14px}
+.pbox{display:inline-flex;align-items:center;gap:6px;color:var(--fg)}
+.expta{display:block;width:min(700px,90vw);margin:6px 0;font:12px ui-monospace,Consolas,monospace;background:var(--bg);color:var(--fg);border:1px solid var(--grid)}</style>
+<div class="title">Upgrade Rubric<small>draft</small></div>
+<div class="tools" id="tools"></div>
+<div class="pane" id="pane"></div>
+<div class="tabs" role="tablist">
+  <button role="tab" id="t-up" aria-selected="true">upgrades</button>
+  <button role="tab" id="t-tl" aria-selected="false">timeline</button>
+  <button role="tab" id="t-pi" aria-selected="false">pillars</button>
+  <button role="tab" id="t-ro" aria-selected="false">roster-100</button>
+</div>
+<script>
+var CSV = `__CSV__`;
+var ROSTER = `__ROSTER__`;
+var roster=ROSTER.trim().split("\n").slice(1).map(function(l){var f=l.split(",");return{slot:+f[0],group:f[1],name:f[2],status:f[3],summary:f[4],req:f[5]||""}});
+var DEFS=[
+["Synergy","Stronger or new when combined with specific other upgrades. The \"I feel clever\" pillar.","Can you name at least two upgrades it pairs with and what the pairing does?","Multiplies or reads another upgrade's effect, state or tag.","Being good alone; a plain stat bump."],
+["Risk","Has a real cost or dependency, so picking it can be a mistake and strong builds feel earned.","Is there a realistic build where this is a bad pick?","Self-damage, useless without a partner, a trade-off, a hard condition.","Just being weak."],
+["Counterplay","Answers an enemy behavior, or is answered by one.","Can you name an enemy behavior it is good or bad against?","Beating armor, covering your back, slowing lungers, clearing swarms.","Damage that works the same against everything."],
+["Readable","The player can tell what it did from the screen without a tooltip.","Watching a recording with no UI, could you tell it is active?","Visible bullet changes, explosions, status colors, a clear effect on each proc.","Hidden numeric changes."],
+["Run arc","Plays differently early (one stack) than late (built up).","Do the early and late columns say meaningfully different things?","A trigger rare at first and constant later; a payoff that needs a source.","The same effect, just bigger."],
+["Alien and unusual","Changes what the weapon is or how it works, like salvage from another reality.","Would a player call it strange, not just stronger?","Bending space or gravity, linking enemies, odd bullets, new rules for ammo or health.","Stat increases of any size. No pop-culture references."],
+["Player skill","Still rewards aiming, movement and positioning, so the build doesn't play itself.","Does a good player get noticeably more out of it than a poor one?","Shots that need lining up, timing windows, positioning for portals or zones, focus fire.","Automatic effects, homing, a flat stat bump."],
+["Power fantasy","Built up, it makes a screen-filling, satisfying moment that feels overpowered.","Would a player want to clip the moment it goes off?","Chain explosions, crowd-wide effects, a visible late-level snowball.","A quiet numeric gain that never shows on screen."],
+["Felt immediately","With one stack, the effect is noticeable in the very next level. No pick is too slight to feel.","Would a player notice it in the first 30 seconds of the next level, without being told?","A visible or audible change at stack 1: a new bullet, explosion, status or shot feel.","Slow-building payoffs, upgrades dead without a partner, small percentage bonuses."],
+["Draft tension","Competes with other strong options when offered, so the pick is a real strategic decision.","Would a thoughtful player sometimes pick something else, and sometimes pick this over the best alternative?","Strong in some builds and weak in others, commits a direction, has a real downside, starts a chain.","Always the best pick, or never worth taking."]
+];
+var PILLARS=DEFS.map(function(d){return d[0]});
+/* Weight model (editable on the timeline tab). Unlock pick = 1 + round(span * w). Draw weight = (1/rare)^w, times a late boost of up to 1+boost for w=1. */
+var OFFERS=10,P={boost:4,rare:10,span:8};
+var STORE="rubric-edits-v1",PSTORE="rubric-params-v1";
+function loadJSON(k){try{var v=localStorage.getItem(k);return v?JSON.parse(v):null}catch(e){return null}}
+function saveJSON(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function unlockOffer(w){return 1+Math.round(P.span*w)}
+function weightAt(w,L){return Math.pow(1/P.rare,w)*(1+w*((L-1)/(OFFERS-1))*P.boost)}
+var CR={low:0,med:1,high:2};
+var rows=CSV.trim().split("\n").slice(1).map(function(l){var f=l.split(",");return{id:f[0],name:f[1],cat:f[2],pillars:f[3].split(";"),what:f[4],stacks:f[5],early:f[6],late:f[7],pairs:f[8],weak:f[9],cost:f[10],req:f[12]||"",weight:+f[13]}});
+var edits=loadJSON(STORE)||{};var savedP=loadJSON(PSTORE);if(savedP){P.boost=+savedP.boost||P.boost;P.rare=+savedP.rare||P.rare;P.span=+savedP.span||P.span}
+rows.forEach(function(r){var e=edits[r.id];if(e)Object.keys(e).forEach(function(k){r[k]=e[k]})});
+function derive(){rows.forEach(function(r){r.pc=r.pillars.length;r.cr=CR[r.cost];r.score=r.pc-r.cr;r.unlock=unlockOffer(r.weight);r.pairsShow=r.pairs.split(";").join(", ");r.reqShow=r.req.replace("_"," ")})}
+function setEdit(r,k,v){r[k]=v;edits[r.id]=edits[r.id]||{};edits[r.id][k]=v;saveJSON(STORE,edits)}
+function clean(s){return String(s).replace(/[\r\n]+/g," ").replace(/,/g,";").trim()}
+function csvText(){
+  derive();
+  var out=["id,name,category,pillars_supported,what_it_does,how_it_stacks,with_one_stack,built_up,pairs_with,deliberate_weakness,engine_cost,score,requires,weight"];
+  rows.forEach(function(r){out.push([r.id,r.name,r.cat,r.pillars.join(";"),r.what,r.stacks,r.early,r.late,r.pairs,r.weak,r.cost,r.score,r.req,r.weight].join(","))});
+  return out.join("\n")+"\n"}
+var pane=document.getElementById("pane"),tools=document.getElementById("tools"),tab="up",sortKey="score",sortDir=-1,fil=[],editPil=false,exp=null;
+function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+function cls(p){return "c-"+p.replace(/ /g,"")}
+function headRow(cols){var tr=el("tr");var rn=el("th","rn","");tr.appendChild(rn);cols.forEach(function(c){var th=el("th",c.cls||"",c.label+(c.key&&sortKey===c.key?(sortDir>0?" ▲":" ▼"):""));if(c.key){th.className+=" sortable";th.tabIndex=0;th.onclick=function(){if(sortKey===c.key)sortDir=-sortDir;else{sortKey=c.key;sortDir=(c.key==="score"||c.key==="pc")?-1:1}render()};th.onkeydown=function(e){if(e.key==="Enter")th.onclick()}}tr.appendChild(th)});var th=el("thead");th.appendChild(tr);return th}
+function txtCell(r,key,cname){var td=el("td",cname||"txt",r[key]);td.contentEditable="true";td.spellcheck=false;td.className+=" ed";
+  td.onblur=function(){var v=clean(td.textContent);if(v!==r[key]){setEdit(r,key,v);render()}};
+  td.onkeydown=function(e){if(e.key==="Enter"){e.preventDefault();td.blur()}};return td}
+function numCell(r){var td=el("td","cost ed");var i=document.createElement("input");i.type="number";i.min="0";i.max="1";i.step="0.05";i.value=r.weight;i.setAttribute("aria-label","Weight for "+r.name);i.className="wi";
+  i.onchange=function(){var v=Math.max(0,Math.min(1,parseFloat(i.value)||0));setEdit(r,"weight",v);render()};td.appendChild(i);return td}
+function costCell(r){var td=el("td","cost ed");var s=document.createElement("select");s.setAttribute("aria-label","Engine cost for "+r.name);["low","med","high"].forEach(function(o){var op=el("option",null,o);op.value=o;if(o===r.cost)op.selected=true;s.appendChild(op)});
+  s.onchange=function(){setEdit(r,"cost",s.value);render()};td.appendChild(s);return td}
+function pillCell(r){var td=el("td","pills");
+  if(!editPil){r.pillars.forEach(function(p){td.appendChild(el("span","pill "+cls(p),p))});return td}
+  PILLARS.forEach(function(p){var on=r.pillars.indexOf(p)>-1;var b=el("button","pill pt "+cls(p)+(on?"":" dim"),p);b.setAttribute("aria-pressed",on);
+    b.onclick=function(){var a=r.pillars.slice();var i=a.indexOf(p);if(i>-1)a.splice(i,1);else a.push(p);setEdit(r,"pillars",PILLARS.filter(function(x){return a.indexOf(x)>-1}));render()};td.appendChild(b)});return td}
+function renderUp(){
+  derive();
+  var t=el("table");
+  t.appendChild(headRow([{label:"Upgrade",key:"name",cls:"nm"},{label:"Category",key:"cat"},{label:"What It Does",key:"what"},{label:"How It Stacks",key:"stacks"},{label:"Pillars Supported (count)",key:"pc"},{label:"With 1 Stack",key:"early"},{label:"Built Up",key:"late"},{label:"Pairs With",key:"pairsShow"},{label:"Deliberate Weakness",key:"weak"},{label:"Engine Cost",key:"cr"},{label:"Requires",key:"reqShow"},{label:"Weight",key:"weight"},{label:"Unlocks (pick #)",key:"unlock"},{label:"Score",key:"score"}]));
+  var data=rows.filter(function(r){return fil.every(function(p){return r.pillars.indexOf(p)>-1})}).sort(function(a,b){var x=a[sortKey],y=b[sortKey];var r=typeof x==="number"?x-y:String(x).localeCompare(String(y));return (r||a.name.localeCompare(b.name))*sortDir});
+  var tb=el("tbody");
+  data.forEach(function(r,i){
+    var tr=el("tr");tr.appendChild(el("td","rn",i+1));
+    var nm=txtCell(r,"name","nm");tr.appendChild(nm);tr.appendChild(el("td","cat",r.cat));
+    tr.appendChild(txtCell(r,"what"));tr.appendChild(txtCell(r,"stacks"));
+    tr.appendChild(pillCell(r));
+    tr.appendChild(txtCell(r,"early"));tr.appendChild(txtCell(r,"late"));
+    var pc=el("td","txt ed",r.pairsShow);pc.contentEditable="true";pc.spellcheck=false;pc.onblur=function(){var v=clean(pc.textContent).split(/\s*;\s*/).filter(Boolean).join(";");if(v!==r.pairs){setEdit(r,"pairs",v);render()}};pc.onkeydown=function(e){if(e.key==="Enter"){e.preventDefault();pc.blur()}};tr.appendChild(pc);
+    tr.appendChild(txtCell(r,"weak"));
+    tr.appendChild(costCell(r));tr.appendChild(el("td","cat",r.reqShow));
+    tr.appendChild(numCell(r));tr.appendChild(el("td","cost",r.unlock));
+    tr.appendChild(el("td","score "+(r.score>=6?"s-hi":r.score>=4?"s-mid":"s-lo"),r.score));
+    tb.appendChild(tr)});
+  t.appendChild(tb);return t}
+function paramBox(label,key,min,step){var w=el("label","pbox");w.appendChild(el("span",null,label));var i=document.createElement("input");i.type="number";i.min=min;i.step=step;i.value=P[key];i.className="wi";
+  i.onchange=function(){var v=parseFloat(i.value);if(!isNaN(v)&&v>=parseFloat(min)){P[key]=v;saveJSON(PSTORE,P)}render()};w.appendChild(i);return w}
+function renderTL(){
+  derive();
+  var wrap=el("div");
+  var n=el("div","note");
+  n.innerHTML="<b>Gantt: when each upgrade can appear, and how likely it is.</b> Each cell is the chance the upgrade shows up in the 3 cards offered at that pick (pick N is made before level N). A dash means it has not unlocked yet. Shading is the chance. Edit a weight (0 = starter, 1 = rarest) or the model numbers below and the chart updates. Chained upgrades are shown as if their prerequisite is owned. Odds are approximate.";
+  wrap.appendChild(n);
+  var pb=el("div","note params");
+  pb.appendChild(paramBox("Rarest is this many times rarer","rare","1","1"));
+  pb.appendChild(paramBox("Late-run boost for the rarest (x)","boost","0","0.5"));
+  pb.appendChild(paramBox("Unlock spread (picks)","span","1","1"));
+  wrap.appendChild(pb);
+  var t=el("table");
+  var cols=[{label:"Upgrade",key:"name",cls:"nm"},{label:"Weight",key:"weight"},{label:"Unlocks",key:"unlock"}];
+  for(var L=1;L<=OFFERS;L++)cols.push({label:"Pick "+L});
+  t.appendChild(headRow(cols));
+  var chance=rows.map(function(){return []});var pool=[];
+  for(var L=1;L<=OFFERS;L++){
+    var S=0,cnt=0;rows.forEach(function(r){if(r.unlock<=L){S+=weightAt(r.weight,L);cnt++}});pool.push(cnt);
+    rows.forEach(function(r,i){if(r.unlock<=L){var p=weightAt(r.weight,L)/S;chance[i].push(1-Math.pow(1-p,3))}else chance[i].push(null)})}
+  var idx=rows.map(function(r,i){return i}).sort(function(a,b){var x=rows[a][sortKey],y=rows[b][sortKey];if(sortKey==="name")return x.localeCompare(y)*sortDir;if(sortKey!=="weight"&&sortKey!=="unlock")return (rows[a].unlock-rows[b].unlock)||(rows[a].weight-rows[b].weight);var r=x-y;return (r||rows[a].name.localeCompare(rows[b].name))*sortDir});
+  var tb=el("tbody");
+  idx.forEach(function(i,k){var r=rows[i];var tr=el("tr");tr.appendChild(el("td","rn",k+1));tr.appendChild(el("td","nm",r.name));tr.appendChild(numCell(r));tr.appendChild(el("td","cost","pick "+r.unlock));
+    chance[i].forEach(function(c){var td;if(c===null){td=el("td","tlc off","–")}else{td=el("td","tlc",Math.round(c*100)+"%");td.style.background="color-mix(in srgb, var(--heat) "+Math.min(75,Math.round(c*130))+"%, var(--bg))"}tr.appendChild(td)});
+    tb.appendChild(tr)});
+  var tr=el("tr");tr.appendChild(el("td","rn",""));tr.appendChild(el("td","nm tlsum","Upgrades in pool"));tr.appendChild(el("td","tlsum",""));tr.appendChild(el("td","tlsum",""));
+  pool.forEach(function(c){tr.appendChild(el("td","tlc tlsum",c))});tb.appendChild(tr);
+  t.appendChild(tb);wrap.appendChild(t);return wrap}
+function renderPi(){
+  var t=el("table");t.className="defs";
+  t.appendChild(headRow([{label:"Pillar",cls:"nm"},{label:"Meaning"},{label:"Test"},{label:"Counts"},{label:"Does Not Count"}]));
+  var tb=el("tbody");
+  DEFS.forEach(function(d,i){var tr=el("tr");tr.appendChild(el("td","rn",i+1));
+    var n=el("td","nm");n.appendChild(el("span","pill "+cls(d[0]),d[0]));tr.appendChild(n);
+    for(var k=1;k<5;k++)tr.appendChild(el("td","txt",d[k]));tb.appendChild(tr)});
+  t.appendChild(tb);return t}
+function renderRo(){
+  var t=el("table");t.className="defs";
+  t.appendChild(headRow([{label:"Name",key:"name",cls:"nm"},{label:"Group",key:"group"},{label:"Summary",key:"summary"},{label:"Requires / Pair",key:"req"},{label:"Status",key:"status"}]));
+  var tb=el("tbody");
+  roster.slice().sort(function(a,b){var x=a[sortKey],y=b[sortKey];var r=typeof x==="number"?x-y:x.localeCompare(y);return (r||a.slot-b.slot)*sortDir}).forEach(function(r){var tr=el("tr");tr.appendChild(el("td","rn",r.slot));tr.appendChild(el("td","nm",r.name));tr.appendChild(el("td","cat",r.group));
+    tr.appendChild(el("td","txt",r.summary));tr.appendChild(el("td","txt",r.req));
+    tr.appendChild(el("td","score "+(r.status==="rubric"?"s-hi":"s-mid"),r.status==="rubric"?"in rubric":"concept"));tb.appendChild(tr)});
+  t.appendChild(tb);return t}
+function doExport(){exp=csvText();var msg="Select all and copy.";
+  try{navigator.clipboard.writeText(exp).then(function(){exp=exp;expMsg="Copied to the clipboard. Paste it to Claude to save it to the repo.";render()},function(){expMsg=msg;render()})}catch(e){}
+  expMsg=msg;render()}
+var expMsg="";
+function renderTools(){
+  tools.textContent="";tools.hidden=!(tab==="up"||tab==="tl");if(tools.hidden)return;
+  if(tab==="up"){
+    tools.appendChild(el("span","lab","Show upgrades that support:"));
+    PILLARS.forEach(function(p){var b=el("button","pill "+cls(p),p);b.setAttribute("aria-pressed",fil.indexOf(p)>-1);
+      b.onclick=function(){var i=fil.indexOf(p);if(i>-1)fil.splice(i,1);else fil.push(p);render()};tools.appendChild(b)});
+    if(fil.length){var c=el("button","clear","Clear");c.onclick=function(){fil=[];render()};tools.appendChild(c)}
+    var lb=el("label","lab chk");var cb=document.createElement("input");cb.type="checkbox";cb.checked=editPil;cb.onchange=function(){editPil=cb.checked;render()};lb.appendChild(cb);lb.appendChild(el("span",null," Edit pillars"));tools.appendChild(lb);
+    tools.appendChild(el("span","lab","Click a cell to edit text. Sort by tapping a header."))}
+  else tools.appendChild(el("span","lab","Edit any weight in the table or the numbers below."));
+  var ex=el("button","clear","Copy CSV");ex.onclick=doExport;tools.appendChild(ex);
+  var rs=el("button","clear","Reset all edits");rs.onclick=function(){edits={};saveJSON(STORE,{});P.boost=4;P.rare=10;P.span=8;saveJSON(PSTORE,P);location.reload()};tools.appendChild(rs)}
+function render(){
+  renderTools();
+  pane.textContent="";
+  if(exp&&(tab==="up"||tab==="tl")){var box=el("div","note");box.appendChild(el("div",null,expMsg));var ta=document.createElement("textarea");ta.readOnly=true;ta.value=exp;ta.rows=8;ta.className="expta";box.appendChild(ta);var cl=el("button","clear","Close");cl.onclick=function(){exp=null;render()};box.appendChild(cl);pane.appendChild(box)}
+  pane.appendChild(tab==="up"?renderUp():tab==="tl"?renderTL():tab==="pi"?renderPi():renderRo());
+  document.getElementById("t-up").setAttribute("aria-selected",tab==="up");
+  document.getElementById("t-tl").setAttribute("aria-selected",tab==="tl");
+  document.getElementById("t-pi").setAttribute("aria-selected",tab==="pi");
+  document.getElementById("t-ro").setAttribute("aria-selected",tab==="ro")}
+document.getElementById("t-up").onclick=function(){tab="up";sortKey="score";sortDir=-1;render()};
+document.getElementById("t-tl").onclick=function(){tab="tl";sortKey="unlock";sortDir=1;render()};
+document.getElementById("t-pi").onclick=function(){tab="pi";render()};
+document.getElementById("t-ro").onclick=function(){tab="ro";sortKey="slot";sortDir=1;render()};
+render();
+</script>
