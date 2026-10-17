@@ -31,7 +31,7 @@ const EXPLOSIONS_PER_FRAME := 60
 const GEN_HARD_LIMIT := 99
 # Upgrades that belong to a bullet. A Split/Echo bullet tests each of these
 # at 0.5^generation (spec 13.14); gun-level upgrades never inherit.
-const BULLET_LEVEL := ["spread", "grow", "velocity", "poison", "pierce", "exploit", "shrapnel", "chill",
+const BULLET_LEVEL := ["spread", "grow", "velocity", "poison", "pierce", "exploit", "shrapnel", "chill", "shrink",
 	"zigzag", "ricochet", "soul_snatcher", "gravity_seed", "shard_bloom", "third_strike",
 	"bond_arc", "still_field", "fault_line", "adaptive_round"]
 # Spec 13.10: enemy HP scales geometrically to 20x by level 10.
@@ -57,6 +57,7 @@ var god_mode := false
 var show_numbers := true
 var grow_charge_base := 0.3     # open question 1 in the handoff
 var charge_overlaps := true     # ditto: charge overlaps the fire-rate lockout
+var grow_size_mult := 2.5         # Grow: bullet size multiplier per stack (cheat slider; the CSV value is only a default)
 
 var player
 var enemies: Node2D
@@ -465,3 +466,9 @@ func vfx_explosion(pos: Vector2, radius: float, color: Color) -> void:
 	particles.burst(pos, Vector2.RIGHT, 16, clampf(radius * 4.0, 160.0, 520.0), PI, 0.5, 4.0, color.lightened(0.35), "line", 3.0)
 	particles.burst(pos, Vector2.RIGHT, 8, radius * 2.0, PI, 0.7, 5.0, Color(0.15, 0.13, 0.12, 0.8), "dot", 4.0)
 	decals.scorch(pos, radius * 0.6)
+
+
+## Cheat: shrink every enemy on screen for a few seconds.
+func cheat_shrink_all() -> void:
+	for e in enemies.get_children():
+		e.apply_shrink(Up.p("shrink", "scale"), 6.0, Up.p("shrink", "damage_taken"))

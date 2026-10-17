@@ -105,8 +105,13 @@ func make_props(st: Dictionary, gen: int) -> Dictionary:
 	var pk: int = st.get("pierce", 0)
 	if pk > 0:
 		hits = 1 + int(Up.p("pierce", "pass") + Up.p("pierce", "pass_add") * (pk - 1))
+	var speed := BULLET_SPEED * pow(Up.p("velocity", "speed_mult"), st.get("velocity", 0))
+	for id in st:   # any upgrade can slow bullets with a bullet_speed param (e.g. 0.85 = 15% slower per stack)
+		var slow := Up.p(id, "bullet_speed")
+		if slow > 0.0:
+			speed *= pow(slow, st[id])
 	return {
-		"damage": d, "size": pow(Up.p("grow", "size_mult"), g), "speed": BULLET_SPEED * pow(Up.p("velocity", "speed_mult"), st.get("velocity", 0)),
+		"damage": d, "size": pow(sb.grow_size_mult, g), "speed": speed,
 		"hits": hits, "falloff": Up.p("pierce", "falloff"), "st": st, "gen": gen,
 	}
 

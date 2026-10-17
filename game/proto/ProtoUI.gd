@@ -308,6 +308,31 @@ func _build_cheats() -> void:
 		Engine.time_scale = v
 		ts_label.text = "Game speed x%.2f" % v)
 	box.add_child(ts)
+	var gs_label := _label("Grow bullet size per stack x%.2f" % sb.grow_size_mult, 12)
+	box.add_child(gs_label)
+	var gs := HSlider.new()
+	gs.min_value = 1.0
+	gs.max_value = 6.0
+	gs.step = 0.25
+	gs.value = sb.grow_size_mult
+	gs.focus_mode = Control.FOCUS_NONE
+	gs.value_changed.connect(func(v):
+		sb.grow_size_mult = v
+		gs_label.text = "Grow bullet size per stack x%.2f" % v)
+	box.add_child(gs)
+	var gc_label := _label("Grow base charge time %.2fs" % sb.grow_charge_base, 12)
+	box.add_child(gc_label)
+	var gc := HSlider.new()
+	gc.min_value = 0.0
+	gc.max_value = 1.5
+	gc.step = 0.05
+	gc.value = sb.grow_charge_base
+	gc.focus_mode = Control.FOCUS_NONE
+	gc.value_changed.connect(func(v):
+		sb.grow_charge_base = v
+		gc_label.text = "Grow base charge time %.2fs" % v)
+	box.add_child(gc)
+	box.add_child(_button("Shrink all enemies (6 s)", func(): sb.cheat_shrink_all()))
 	var h := HBoxContainer.new()
 	h.add_child(_button("Heal", func(): sb.heal()))
 	h.add_child(_button("Hurt 25", func(): sb.hurt_player(25.0)))

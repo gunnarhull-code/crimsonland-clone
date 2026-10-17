@@ -29,6 +29,11 @@ var poison_t := 0.0
 var poison_dps := 0.0
 var chill_t := 0.0
 var chill_speed := 1.0
+var shrink_t := 0.0
+var shrink_scale := 1.0           # target size while shrunk
+var shrink_dmg_mult := 1.0        # damage multiplier while shrunk
+var base_radius := 12.0
+var _size := 1.0
 var armor := 0.0
 var plate_arc_deg := 0.0         # frontal bullet plate width, 0 = none
 var shards := 0
@@ -84,6 +89,7 @@ func setup(p_sb, sp: String, p_variant: String, pos: Vector2) -> void:
 	max_hp = stats.get("hp", 10.0) * sb.hp_mult()
 	hp = max_hp
 	radius = stats.get("hitbox_radius_px", 12.0)
+	base_radius = radius
 	armor = mp.get("armor", 0.0)
 	plate_arc_deg = mp.get("plate_arc", 0.0)
 	_attack_t = stats.get("attack_cooldown_sec", 1.0)
@@ -99,12 +105,19 @@ func setup(p_sb, sp: String, p_variant: String, pos: Vector2) -> void:
 
 
 func is_debuffed() -> bool:
-	return poison_t > 0.0 or chill_t > 0.0
+	return poison_t > 0.0 or chill_t > 0.0 or shrink_t > 0.0
 
 
 func apply_poison(dps: float, duration: float) -> void:
 	poison_dps = maxf(poison_dps if poison_t > 0.0 else 0.0, dps)
 	poison_t = maxf(poison_t, duration)
+
+
+## Shrunk: smaller (so harder to hit) but takes extra damage. Bosses shrink only partway.
+func apply_shrink(scale: float, duration: float, dmg_mult: float) -> void:
+	shrink_scale = lerpf(scale, 1.0, 0.5) if variant == "boss" else scale
+	shrink_dmg_mult = dmg_mult
+	shrink_t = maxf(shrink_t, duration)
 
 
 func apply_chill(speed_mult: float, duration: float) -> void:
@@ -135,6 +148,8 @@ func scare(from: Vector2, seconds: float) -> void:
 func take_damage(amount: float, color: Color = Color.WHITE, from_dir: Vector2 = Vector2.ZERO) -> void:
 	if dead:
 		return
+	if shrink_t > 0.0:
+		amount *= shrink_dmg_mult
 	hp -= amount
 	_flash = 0.09
 	_regen_idle = 0.0
@@ -201,6 +216,8 @@ func _physics_process(delta: float) -> void:
 	if poison_t > 0.0:
 		poison_t -= delta
 		var d := poison_dps * delta
+		if shrink_t > 0.0:
+			d *= shrink_dmg_mult
 		hp -= d
 		sb.record_damage(d)
 		_poison_acc += d
@@ -222,6 +239,9 @@ func _physics_process(delta: float) -> void:
 	if chill_t > 0.0:
 		chill_t -= delta
 	_update_regen(delta)
+	shrink_t = maxf(0.0, shrink_t - delta)
+	_size = move_toward(_size, shrink_scale if shrink_t > 0.0 else 1.0, 2.5 * delta)
+	radius = base_radius * _size
 
 	var player = sb.player
 	stun_t = maxf(0.0, stun_t - delta)

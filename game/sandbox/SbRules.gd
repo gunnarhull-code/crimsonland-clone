@@ -135,6 +135,10 @@ func deal_hit(e, dmg: float, ctx: Dictionary) -> void:
 			var dur := _scaled("chill", "duration", "duration_stack", ck)
 			e.apply_chill(Up.p("chill", "speed"), dur)
 			_share_state(e, "chill", Up.p("chill", "speed"), dur)
+		var shk: int = st.get("shrink", 0)
+		if shk > 0:
+			var sd := _scaled("shrink", "duration", "duration_stack", shk)
+			e.apply_shrink(Up.p("shrink", "scale"), sd, Up.p("shrink", "damage_taken"))
 		if st.get("bond_arc", 0) > 0:
 			_bond(e, st["bond_arc"])
 		if st.get("shard_bloom", 0) > 0:
@@ -453,7 +457,7 @@ func describe(id: String, k: int) -> String:
 		"spread":
 			return "x%d bullets per pull" % int(pow(P.call("bullet_mult"), k))
 		"grow":
-			return "bullets x%.1f size, x%.2f damage, charge %.2fs" % [pow(P.call("size_mult"), k), pow(P.call("damage_mult"), k), sb.grow_charge_base * pow(P.call("charge_mult"), k)]
+			return "bullets x%.1f size, x%.2f damage, charge %.2fs" % [pow(sb.grow_size_mult, k), pow(P.call("damage_mult"), k), sb.grow_charge_base * pow(P.call("charge_mult"), k)]
 		"poison":
 			return "%d damage/s for %ds, direct damage x0.8" % [int(p2.call(P.call("dps"), P.call("dps_stack"))), int(P.call("duration"))]
 		"pierce":
@@ -468,6 +472,8 @@ func describe(id: String, k: int) -> String:
 			return "+%d%% damage to all, +%d%% to poisoned/chilled" % [roundi(P.call("all_bonus") * s * 100), roundi(P.call("debuff_bonus") * s * 100)]
 		"shrapnel":
 			return "blast radius %d, %d%% of damage dealt" % [int(p2.call(P.call("radius"), P.call("radius_stack"))), roundi(p2.call(P.call("damage_frac"), P.call("damage_stack")) * 100)]
+		"shrink":
+			return "enemies shrink to %d%% size for %ds: smaller hitbox, take x%.1f damage" % [roundi(P.call("scale") * 100), int(p2.call(P.call("duration"), P.call("duration_stack"))), P.call("damage_taken")]
 		"chill":
 			return "slow to %d%% speed for %ds" % [roundi(P.call("speed") * 100), int(p2.call(P.call("duration"), P.call("duration_stack")))]
 		"bloodshot":

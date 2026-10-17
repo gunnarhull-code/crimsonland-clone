@@ -284,6 +284,21 @@ func _build_right() -> void:
 	box.add_child(cs)
 	_on_charge_changed(sb.grow_charge_base)
 	_check(box, "Charge overlaps fire-rate lockout", sb.charge_overlaps, func(v): sb.charge_overlaps = v)
+	var gs_label := Label.new()
+	gs_label.add_theme_font_size_override("font_size", 12)
+	box.add_child(gs_label)
+	var gs := HSlider.new()
+	gs.min_value = 1.0
+	gs.max_value = 6.0
+	gs.step = 0.25
+	gs.value = sb.grow_size_mult
+	gs.focus_mode = Control.FOCUS_NONE
+	gs.value_changed.connect(func(v):
+		sb.grow_size_mult = v
+		gs_label.text = "Grow bullet size per stack x%.2f" % v)
+	gs_label.text = "Grow bullet size per stack x%.2f" % sb.grow_size_mult
+	box.add_child(gs)
+	box.add_child(_button("Shrink all enemies (6 s)", func(): sb.cheat_shrink_all()))
 
 
 func _on_level_changed(v: float) -> void:
