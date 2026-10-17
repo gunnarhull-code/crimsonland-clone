@@ -465,6 +465,8 @@ func describe(id: String, k: int) -> String:
 			return "passes %d enemies (hits up to %d), -20%% damage each" % [passes, passes + 1]
 		"quickdraw":
 			return "%.2f shots/s" % (3.5 * pow(P.call("rate_mult"), k))
+		"homing":
+			return "curves toward the closest enemy: %d deg/s turn, %d deg cone, %d px range" % [int(p2.call(P.call("turn"), P.call("turn_stack"))), int(minf(180.0, p2.call(P.call("cone"), P.call("cone_stack")))), int(P.call("range"))]
 		"velocity":
 			return "bullets fly at %d px/s (x%d)" % [int(475.0 * pow(P.call("speed_mult"), k)), int(pow(P.call("speed_mult"), k))]
 		"exploit":

@@ -61,6 +61,10 @@ var _skip_dt := 0.0
 var _heading := 0.0                # slow-turning monsters (Scrapper) move along this
 var _lift := 0.0                   # visual height of a tick mid-hop
 var _hop_total := 0.2
+var _grow_t := 0.0               # maggots: time alive, they pupate into a fly if you leave them
+var _flit_t := 0.0
+var _flit_dir := Vector2.RIGHT
+var _flit_mult := 1.0
 var _web_acc := 0.0
 var _vel := Vector2.ZERO
 var _face := 0.0
@@ -296,7 +300,11 @@ func _physics_process(delta: float) -> void:
 			queue_redraw()
 			return
 
-	var immobile := stun_t > 0.0 or held_t > 0.0
+	if species == "maggot":
+		_grow(delta)
+		if dead:
+			return
+	var immobile := stun_t > 0.0 or held_t > 0.0 or _state == "pupate"
 	var desired := Vector2.ZERO
 	if sb.enemies_chase and player.hp > 0.0 and not immobile:
 		if _sidestep > 0.0:
@@ -382,6 +390,8 @@ func _brain(player, delta: float) -> Vector2:
 			return _brain_tick(player, delta)
 		"wriggle":
 			return _brain_wriggle(player, delta)
+		"flit":
+			return _brain_flit(player, delta)
 	return _brain_plod(player, delta)
 
 
@@ -640,6 +650,9 @@ func _draw() -> void:
 		Art.draw_status(self, radius, _life_t, poison_t > 0.0, chill_t > 0.0, stun_t > 0.0, shards)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
+	if _state == "pupate":
+		var sh2 := Vector2(sin(_life_t * 40.0), cos(_life_t * 37.0)) * 1.2
+		Art.draw_cocoon(self, radius, sh2)
 	if hp < max_hp:
 		var w := radius * 2.0 + 10.0
 		draw_rect(Rect2(-w / 2.0, -radius - 12.0, w, 4.0), Color(0, 0, 0, 0.6))
@@ -708,3 +721,37 @@ func _lay_web() -> void:
 func _lunge_velocity() -> Vector2:
 	_vel = _dash_dir * mp.get("lunge_speed", 540.0) * (chill_speed if chill_t > 0.0 else 1.0)
 	return _vel
+
+
+## Flies: fast and erratic. Every fraction of a second they pick a new dart
+## (aimed roughly at you, with a wild angle and speed), so they are hard to hit.
+func _brain_flit(player, delta: float) -> Vector2:
+	_flit_t -= delta
+	if _flit_t <= 0.0:
+		_flit_t = randf_range(mp.get("dart_min", 0.18), mp.get("dart_max", 0.45))
+		var to_p: Vector2 = player.global_position - global_position
+		_flit_dir = to_p.normalized().rotated(randf_range(-1.3, 1.3))
+		_flit_mult = randf_range(0.45, 1.7)
+	_vel = _flit_dir * _speed() * _flit_mult      # darts change direction instantly
+	return _vel
+
+
+## Maggots left alive too long stop, wrap in a cocoon for a moment, then hatch
+## into a Fly. The maggot does not count as a kill.
+func _grow(delta: float) -> void:
+	var total: float = mp.get("grow_time", 0.0)
+	if total <= 0.0 or not sb.enemies_chase:
+		return
+	_grow_t += delta
+	var pupate: float = mp.get("pupate", 1.4)
+	if _grow_t >= total:
+		var at := global_position
+		dead = true
+		sb.particles.burst(at, Vector2.RIGHT, 14, 220.0, PI, 0.5, 3.0, Color(0.9, 0.9, 0.55, 0.9), "dot", 4.0)
+		sb.fx_ring(at, 26.0, Color(0.7, 0.9, 0.4))
+		sb.audio.play("hatch")
+		sb.spawn_one("fly", "base", at, 0.25)
+		queue_free()
+	elif _grow_t >= total - pupate and _state != "pupate":
+		_state = "pupate"
+		_vel = Vector2.ZERO

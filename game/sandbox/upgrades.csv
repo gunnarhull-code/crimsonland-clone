@@ -5,6 +5,7 @@ poison,Poison,"Hits poison the enemy: 3 damage/s for 4 s. Bullets do 20% less di
 pierce,Pierce,"Bullets pass through 2 enemies (so can hit 3). Each enemy passed takes 20% off the bullet's damage. Each stack passes through one more enemy.",,pass=2;pass_add=1;falloff=0.2,0
 quickdraw,Quickdraw,"Fire faster: each stack multiplies fire rate by 1.5. Does not shorten Grow's charge time.",,rate_mult=1.5,0
 velocity,Velocity,"Bullets fly much faster: x2 speed per stack. The default bullet speed is slow (475 px/s), so this also helps you hit moving targets.",,speed_mult=2,0.05
+homing,Homing,"Bullets curve softly toward the closest enemy ahead of them (no sharp turns). Each stack doubles the turn rate and widens the cone they look in.",,turn=70;turn_stack=2;range=450;cone=50;cone_stack=2,0.1
 exploit,Exploit,"+15% damage to everything and +75% to poisoned or chilled enemies. Each stack doubles the bonus.",,all_bonus=0.15;debuff_bonus=0.75;stack=2,0.18
 shrapnel,Shrapnel,"Every hit explodes (radius 40) for 40% of the damage dealt. Each stack doubles blast damage and widens it 50%.",,radius=40;radius_stack=1.5;damage_frac=0.4;damage_stack=2,0.2
 chill,Chill,"Hits slow the enemy to 60% speed for 3 s. Each stack doubles the duration.",,speed=0.6;duration=3;duration_stack=2,0.15

@@ -114,3 +114,16 @@ Later levels stack several themed spawning sequences at once. The point is to ra
 - **Matriarch webs:** the boss lays a web where it launches and every ~70 px along the dash. Stepping on a web holds the player for 1 s (shooting still works) and uses the web up. A dodge breaks free instantly; a dash in progress ignores webs; blasts burn them. Webs last 12 s, at most 16 at once. Numbers on the boss row of `monsters.csv` (`web_*`).
 - **Tick lunge (replaces the hops):** inside 130 px the tick crouches (0.08 s), then pounces at 540 px/s with a visible leap and lands latched if it reaches you, with a 0.16 s recovery otherwise. Crawl speed is 225 (up from 215).
 - **Scrapper:** turn rate raised from 26 to 55 degrees per second.
+
+## Maggot rework (owner, 2026-10-17)
+
+Owner: maggots were harmless. Rework:
+- **Slightly faster and harder:** 100 px/s (was 78), bite 4 every 0.6 s.
+- **Early levels: a trap.** `maggot_trap`: a ring of maggots (about 125 px out) springs up around the player after a 0.25 s warning (dirt mounds heave). Levels 2-4.
+- **Later levels: spawn further out.** `maggot_ring`: ring at about 330 px with a 0.8 s warning, plus pit streams. Levels 6-9.
+- **Leave them and they hatch.** A maggot alive for 16 s stops, wraps in a cocoon for 1.4 s, then becomes a **Fly** (not counted as a kill). Fly: 24 HP, 185 px/s, tiny, darts erratically (new direction every 0.2-0.45 s), sidesteps aimed shots, bites for 4. The level does not end until the flies are dead too.
+- Still open: destructible nest, burrow-up maggots, webs snaring monsters.
+
+## Upgrade added: Homing (owner idea)
+
+Bullets curve softly toward the closest enemy ahead (turn 70 deg/s, 50 degree cone, 450 px range at stack 1, so no hard turns). Each stack doubles the turn rate and the cone (cone capped at 180). Skips enemies the bullet already hit. Weight 0.1 (early, common).

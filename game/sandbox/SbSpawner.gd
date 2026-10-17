@@ -79,12 +79,19 @@ func _plan(s: Dictionary) -> void:
 			for i in count:
 				var off := (i - (count - 1) * 0.5) * 62.0
 				entries.append({"at": i * 0.12, "pos": (gate3 + along * off).clamp(Vector2(20, 20), sb.ARENA - Vector2(20, 20)), "done": false})
+		"around":
+			var center: Vector2 = sb.player.global_position
+			points = []
+			for i in count:
+				var ang := TAU * i / count + randf_range(-0.2, 0.2)
+				var pos := (center + Vector2.from_angle(ang) * spread * randf_range(0.85, 1.15)).clamp(Vector2(30, 30), sb.ARENA - Vector2(30, 30))
+				entries.append({"at": i * 0.02, "pos": pos, "done": false})
 		"scatter":
 			for g in int(f["gates"]):
 				points.append(_anchor(f, entrance))
 			for i in count:
 				entries.append({"at": i * f["interval"], "pos": _near(points[i % points.size()], maxf(spread, 20.0), entrance), "done": false})
-	if entrance == "burrow":
+	if entrance == "burrow" and f["pattern"] != "around":
 		# every monster gets its own mound, so the warning shows exactly where they will rise
 		points = []
 		for e in entries:

@@ -33,6 +33,9 @@ var _orbit_angle := 0.0
 var _orbit_cd := {}
 var _crack: PackedVector2Array = PackedVector2Array()
 var _crack_acc := 0.0
+var _home_target = null
+var _home_scan := 0.0
+var _homing := 0
 
 
 func setup(p_sb, pos: Vector2, dir: Vector2, props: Dictionary, p_orbit: bool) -> void:
@@ -49,6 +52,7 @@ func setup(p_sb, pos: Vector2, dir: Vector2, props: Dictionary, p_orbit: bool) -
 	victims = props.get("victims", {}).duplicate()
 	gen = props["gen"]
 	zig = st.get("zigzag", 0) > 0
+	_homing = st.get("homing", 0)
 	if zig:
 		max_cross = int(Up.p("zigzag", "crossings") * pow(Up.p("zigzag", "stack"), st["zigzag"] - 1))
 	var rk: int = st.get("ricochet", 0)
@@ -79,6 +83,8 @@ func _physics_process(delta: float) -> void:
 		return
 	modulate.a = clampf(sb.BULLET_LIFETIME - _age, 0.0, 1.0)
 
+	if _homing > 0:
+		_steer_home(delta)
 	var from := global_position
 	var to: Vector2
 	if zig:
@@ -205,3 +211,41 @@ func _draw() -> void:
 	draw_line(Vector2(-half, 0), Vector2(half, 0), c, radius * 2.0)
 	draw_circle(Vector2(half, 0), radius, c)
 	draw_circle(Vector2(-half, 0), radius, c)
+
+
+## Homing: gently curve toward the closest enemy ahead. Soft on purpose: the turn
+## rate is limited (so no hard corners) and the target must be inside a forward
+## cone, which widens with each stack. Skips enemies this bullet already hit.
+func _steer_home(delta: float) -> void:
+	var turn := deg_to_rad(Up.p("homing", "turn") * pow(Up.p("homing", "turn_stack"), _homing - 1))
+	_home_scan -= delta
+	if _home_scan <= 0.0 or _home_target == null or not is_instance_valid(_home_target) or _home_target.dead:
+		_home_scan = 0.08
+		_home_target = _find_home_target()
+	if _home_target == null or not is_instance_valid(_home_target):
+		return
+	var want: float = (_home_target.global_position - global_position).angle()
+	var cur := velocity.angle()
+	var step := clampf(wrapf(want - cur, -PI, PI), -turn * delta, turn * delta)
+	velocity = velocity.rotated(step)
+	rotation = velocity.angle()
+
+
+func _find_home_target():
+	var rng: float = Up.p("homing", "range")
+	var cone := minf(180.0, Up.p("homing", "cone") * pow(Up.p("homing", "cone_stack"), _homing - 1))
+	var fwd := velocity.angle()
+	var best = null
+	var best_d := rng
+	for e in sb.enemies_near(global_position, global_position, rng):
+		if e.dead or victims.has(e.get_instance_id()):
+			continue
+		var off: Vector2 = e.global_position - global_position
+		var d := off.length()
+		if d >= best_d or d < 1.0:
+			continue
+		if absf(wrapf(off.angle() - fwd, -PI, PI)) > deg_to_rad(cone):
+			continue
+		best_d = d
+		best = e
+	return best

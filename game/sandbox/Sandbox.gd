@@ -33,7 +33,7 @@ const EXPLOSIONS_PER_FRAME := 60
 const GEN_HARD_LIMIT := 99
 # Upgrades that belong to a bullet. A Split/Echo bullet tests each of these
 # at 0.5^generation (spec 13.14); gun-level upgrades never inherit.
-const BULLET_LEVEL := ["spread", "grow", "velocity", "poison", "pierce", "exploit", "shrapnel", "chill", "shrink",
+const BULLET_LEVEL := ["spread", "grow", "velocity", "homing", "poison", "pierce", "exploit", "shrapnel", "chill", "shrink",
 	"zigzag", "ricochet", "soul_snatcher", "gravity_seed", "shard_bloom", "third_strike",
 	"bond_arc", "still_field", "fault_line", "adaptive_round"]
 # Spec 13.10: enemy HP scales geometrically to 20x by level 10.

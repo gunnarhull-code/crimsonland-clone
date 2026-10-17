@@ -238,9 +238,9 @@ func _build_right() -> void:
 
 	box.add_child(HSeparator.new())
 	_header(box, "SPAWN  (ring around you)")
-	for sp in ["rat", "spider", "alien", "tick", "scrapper", "maggot"]:
+	for sp in ["rat", "spider", "alien", "tick", "scrapper", "maggot", "fly"]:
 		for variant in ["base", "boss"]:
-			if variant == "boss" and (sp == "tick" or sp == "scrapper" or sp == "maggot"):
+			if variant == "boss" and (sp == "tick" or sp == "scrapper" or sp == "maggot" or sp == "fly"):
 				continue
 			var h := HBoxContainer.new()
 			var l := Label.new()

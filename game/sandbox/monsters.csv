@@ -7,4 +7,5 @@ alien,base,Alien Brute,60,15,1.5,72,22,plod,armor=4;regen=3;regen_delay=2;stomp_
 alien,boss,Gate Warden,300,30,1.5,43,35,plod,armor=4;regen=0;regen_delay=2;stomp_range=170;stomp_windup=1.0;stomp_radius=190;stomp_damage=30;stomp_cooldown=4
 tick,base,Tick,12,0,0,225,7,crawl_latch,latch_dps=3;stack_max=6;shake_stun=1.0;wiggle=0.45;lunge_range=130;lunge_speed=540;crouch=0.08;recover=0.16
 scrapper,base,Scrapper,120,12,1.2,52,24,plod,plate_arc=150;turn_rate=55
-maggot,base,Maggot,8,3,0.7,78,6,wriggle,wiggle=0.7
+maggot,base,Maggot,8,4,0.6,100,6,wriggle,wiggle=0.7;grow_time=16;pupate=1.4
+fly,base,Fly,24,4,0.5,185,7,flit,dart_min=0.18;dart_max=0.45;sidestep_chance=0.35;sidestep_dist=60;sidestep_cd=1.2

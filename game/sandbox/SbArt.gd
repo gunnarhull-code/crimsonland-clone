@@ -10,6 +10,7 @@ const ICHOR := {
 	"tick": Color(0.55, 0.06, 0.22),
 	"scrapper": Color(0.85, 0.55, 0.2),
 	"maggot": Color(0.88, 0.86, 0.45),
+	"fly": Color(0.45, 0.85, 0.4),
 }
 
 
@@ -63,6 +64,8 @@ static func draw_enemy(ci: CanvasItem, species: String, boss: bool, r: float, an
 			_tick(ci, r, phase, tint, extra)
 		"maggot":
 			_maggot(ci, r, phase, tint)
+		"fly":
+			_fly(ci, r, phase, tint)
 		"scrapper":
 			_scrapper(ci, r, phase, tint, extra)
 		_:
@@ -323,3 +326,32 @@ static func _maggot(ci: CanvasItem, r: float, phase: float, tint: Color) -> void
 		ci.draw_circle(Vector2(x, y) + Vector2(0.5, 1.0), rad, shade)
 		ci.draw_circle(Vector2(x, y), rad * 0.9, body)
 	ci.draw_circle(Vector2(r * 0.35, sin(phase * 1.4) * r * 0.45), r * 0.18, Color(0.15, 0.1, 0.05))
+
+
+## Fly: small, dark, glossy, with blurred buzzing wings.
+static func _fly(ci: CanvasItem, r: float, phase: float, tint: Color) -> void:
+	var body := _t(Color(0.13, 0.17, 0.2), tint)
+	var sheen := _t(Color(0.25, 0.7, 0.55), tint)
+	var buzz := 0.5 + 0.5 * sin(phase * 6.0)
+	for side in [-1.0, 1.0]:
+		var ang: float = side * (0.9 + 0.35 * buzz)
+		var wing := PackedVector2Array()
+		var u := _unit(10)
+		for i in 10:
+			var v := Vector2(u[i].x * r * 1.5, u[i].y * r * 0.55)
+			wing.append((v + Vector2(r * 0.9, 0)).rotated(ang) + Vector2(-r * 0.2, 0))
+		ci.draw_colored_polygon(wing, Color(0.85, 0.92, 1.0, 0.30 + 0.25 * buzz))
+	_ellipse(ci, Vector2(-r * 0.35, 0), r * 0.95, r * 0.6, body, 10)
+	_ellipse(ci, Vector2(-r * 0.4, 0), r * 0.5, r * 0.28, sheen, 8)
+	ci.draw_circle(Vector2(r * 0.7, 0), r * 0.5, body)
+	ci.draw_circle(Vector2(r * 0.85, r * 0.25), r * 0.22, Color(1.0, 0.25, 0.2))
+	ci.draw_circle(Vector2(r * 0.85, -r * 0.25), r * 0.22, Color(1.0, 0.25, 0.2))
+
+
+## Cocoon wrapped round a pupating maggot (drawn in world orientation).
+static func draw_cocoon(ci: CanvasItem, r: float, shake: Vector2) -> void:
+	_ellipse(ci, shake, r * 2.0, r * 1.4, Color(0.95, 0.93, 0.8, 0.9), 12)
+	for i in 3:
+		var y := (i - 1) * r * 0.6
+		ci.draw_line(shake + Vector2(-r * 1.5, y), shake + Vector2(r * 1.5, y), Color(0.7, 0.68, 0.55, 0.9), 1.2)
+	ci.draw_circle(shake + Vector2(r * 0.4, -r * 0.1), r * 0.3, Color(0.5, 0.65, 0.3, 0.7))
