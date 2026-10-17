@@ -14,12 +14,17 @@ const RADIUS := 14.0
 const FIRE_RATE := 3.5
 const MAGAZINE := 12
 const RELOAD_SEC := 1.0
-const BULLET_SPEED := 950.0
+const BULLET_SPEED := 475.0
 const AIM_SPREAD_DEG := 2.0
 const BASE_DAMAGE := 10.0
 # Safety valve from spec 4.3.
 const MAX_BULLETS_PER_PULL := 256
 const MAX_FAN_DEG := 150.0
+# Dodge: a short dash with a brief invulnerable window (shakes off latched ticks).
+const DODGE_COOLDOWN := 1.5
+const DASH_TIME := 0.18
+const DASH_SPEED := 900.0
+const INVULN_TIME := 0.25
 
 var sb
 var max_hp := BASE_MAX_HP
@@ -31,6 +36,14 @@ var cooldown := 0.0
 var heat := 0
 var aim_override = null      # tests can force the aim point
 var damage_taken := 0.0
+var latch_count := 0          # ticks currently attached to you
+var dodge_cd := 0.0
+var _dash_t := 0.0
+var _dash_dir := Vector2.RIGHT
+var _invuln_t := 0.0
+var _space_prev := false
+var _dot_acc := 0.0
+var _dot_fx_t := 0.5
 var _reload_t := 0.0
 var _charge_t := 0.0
 var _charge_total := 0.0
@@ -93,7 +106,7 @@ func make_props(st: Dictionary, gen: int) -> Dictionary:
 	if pk > 0:
 		hits = 1 + int(Up.p("pierce", "pass") + Up.p("pierce", "pass_add") * (pk - 1))
 	return {
-		"damage": d, "size": pow(Up.p("grow", "size_mult"), g), "speed": BULLET_SPEED,
+		"damage": d, "size": pow(Up.p("grow", "size_mult"), g), "speed": BULLET_SPEED * pow(Up.p("velocity", "speed_mult"), st.get("velocity", 0)),
 		"hits": hits, "falloff": Up.p("pierce", "falloff"), "st": st, "gen": gen,
 	}
 
@@ -117,6 +130,8 @@ func _physics_process(delta: float) -> void:
 	_t += delta
 	_flash_t = maxf(0.0, _flash_t - delta)
 	_recoil = move_toward(_recoil, 0.0, 60.0 * delta)
+	_invuln_t = maxf(0.0, _invuln_t - delta)
+	dodge_cd = maxf(0.0, dodge_cd - delta)
 	_update_max_hp()
 	if hp <= 0.0:
 		_dead_t -= delta
@@ -131,7 +146,16 @@ func _physics_process(delta: float) -> void:
 	if Input.is_physical_key_pressed(KEY_S): v.y += 1.0
 	if Input.is_physical_key_pressed(KEY_A): v.x -= 1.0
 	if Input.is_physical_key_pressed(KEY_D): v.x += 1.0
-	global_position += v.normalized() * MOVE_SPEED * sb.move_speed_mult * delta
+	var space := Input.is_physical_key_pressed(KEY_SPACE)
+	if space and not _space_prev and dodge_cd <= 0.0:
+		_start_dodge(v)
+	_space_prev = space
+	if _dash_t > 0.0:
+		_dash_t -= delta
+		global_position += _dash_dir * DASH_SPEED * delta
+		sb.particles.add(global_position, Vector2.ZERO, 0.3, RADIUS * 0.9, Color(0.4, 0.6, 1.0, 0.35), "dot", 0.0)
+	else:
+		global_position += v.normalized() * MOVE_SPEED * sb.move_speed_mult * delta
 	global_position = global_position.clamp(Vector2(RADIUS, RADIUS), sb.ARENA - Vector2(RADIUS, RADIUS))
 
 	var aim := aim_pos()
@@ -252,6 +276,8 @@ func _fire_beam(dir: Vector2) -> void:
 
 
 func take_damage(amount: float) -> void:
+	if _invuln_t > 0.0:
+		return
 	if sb.god_mode or hp <= 0.0:
 		return
 	hp = maxf(0.0, hp - amount)
@@ -266,6 +292,10 @@ func take_damage(amount: float) -> void:
 
 
 func revive() -> void:
+	for e in sb.enemies.get_children():
+		if e.latched:
+			e.unlatch(0.0)
+	latch_count = 0
 	hp = max_hp
 	ammo = MAGAZINE
 	reloading = false
@@ -290,6 +320,13 @@ func _draw() -> void:
 	elif reloading:
 		var k := 1.0 - _reload_t / RELOAD_SEC
 		draw_arc(Vector2.ZERO, RADIUS + 8.0, -PI / 2.0, -PI / 2.0 + TAU * k, 32, Color(0.7, 0.7, 0.7), 3.0)
+	if latch_count > 0:
+		for i in 4:
+			var k := fmod(_t * 0.9 + i * 0.25, 1.0)
+			draw_circle(Vector2(sin(i * 2.3 + _t * 2.0) * RADIUS * 0.8, RADIUS * 0.6 - k * RADIUS * 1.8), 3.0 * (1.0 - k) + 1.0, Color(0.7, 0.35, 1.0, 0.85 * (1.0 - k)))
+		draw_string(ThemeDB.fallback_font, Vector2(-34, -RADIUS - 18), "POISONED x%d" % latch_count, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.8, 0.5, 1.0))
+	if dodge_cd > 0.0:
+		draw_arc(Vector2.ZERO, RADIUS + 12.0, -PI / 2.0, -PI / 2.0 + TAU * (1.0 - dodge_cd / DODGE_COOLDOWN), 24, Color(0.5, 0.7, 1.0, 0.35), 2.0)
 	var w := 44.0
 	draw_rect(Rect2(-w / 2.0, RADIUS + 8.0, w, 5.0), Color(0, 0, 0, 0.6))
 	draw_rect(Rect2(-w / 2.0, RADIUS + 8.0, w * hp / max_hp, 5.0), Color(0.4, 0.9, 0.4))
@@ -302,3 +339,43 @@ func _muzzle(dir: Vector2) -> void:
 	if sb.juice_on:
 		sb.particles.add(global_position + dir.rotated(1.4) * 10.0, dir.rotated(1.5 + randf_range(-0.4, 0.4)) * randf_range(90.0, 160.0),
 			0.5, 2.2, Color(0.95, 0.78, 0.3), "dot", 3.0)
+
+
+func facing_angle() -> float:
+	return _aim_angle
+
+
+func is_invulnerable() -> bool:
+	return _invuln_t > 0.0
+
+
+## Dash toward the way you are moving (or where you aim if standing still).
+## Grants a short invulnerable window and shakes every tick off you.
+func _start_dodge(move_dir: Vector2) -> void:
+	_dash_dir = move_dir.normalized() if move_dir != Vector2.ZERO else Vector2.from_angle(_aim_angle)
+	_dash_t = DASH_TIME
+	_invuln_t = INVULN_TIME
+	dodge_cd = DODGE_COOLDOWN
+	charging = false
+	sb.audio.play("whoosh")
+	for e in sb.enemies.get_children():
+		if e.latched:
+			e.unlatch(e.mp.get("shake_stun", 1.0))
+			sb.fx_text(e.global_position + Vector2(0, -16), "SHAKEN OFF", Color(1.0, 1.0, 0.5))
+
+
+## Damage over time (latched ticks). Quiet: floating numbers every half second.
+func apply_dot(amount: float) -> void:
+	if sb.god_mode or hp <= 0.0:
+		return
+	hp = maxf(0.0, hp - amount)
+	damage_taken += amount
+	_dot_acc += amount
+	_dot_fx_t -= get_physics_process_delta_time()
+	if _dot_fx_t <= 0.0:
+		sb.fx_text(global_position + Vector2(randf_range(-8, 8), -26), "-%.1f" % _dot_acc, Color(0.75, 0.4, 1.0))
+		_dot_acc = 0.0
+		_dot_fx_t = 0.5
+	if hp <= 0.0:
+		_dead_t = 1.5
+		sb.waves.player_down()

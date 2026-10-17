@@ -52,6 +52,7 @@ func _process(delta: float) -> void:
 		lines.append("LEVEL %d / %d      Kills %d" % [run.run_level, run.RUN_LEVELS, sb.kills])
 		lines.append(sb.waves.status)
 		lines.append("HP %d/%d     Ammo %d/%d%s" % [int(p.hp), int(p.max_hp), p.ammo, p.MAGAZINE, "  (reloading)" if p.reloading else ""])
+		lines.append("Dodge: %s" % ("READY (Space)" if p.dodge_cd <= 0.0 else "%.1fs" % p.dodge_cd))
 		if sb.stack("adaptive_round") > 0:
 			lines.append("Adaptive Round +%.1f%% vs %s   extra damage %d" % [sb.adaptive_bonus() * 100.0, sb.leading_species(), int(sb.adaptive_extra)])
 	_hud.text = "\n".join(lines)
@@ -97,7 +98,7 @@ func _build_hud() -> void:
 	_owned.add_theme_color_override("font_shadow_color", Color.BLACK)
 	_owned.position = Vector2(14, 120)
 	add_child(_owned)
-	var hint := _label("F1 cheats   R reload   WASD move   click fire", 12, Color(1, 1, 1, 0.45))
+	var hint := _label("F1 cheats   Space dodge   R reload   WASD move   click fire", 12, Color(1, 1, 1, 0.45))
 	hint.position = Vector2(14, 700)
 	add_child(hint)
 
@@ -357,8 +358,10 @@ func _build_cheats() -> void:
 
 	box.add_child(HSeparator.new())
 	box.add_child(_label("SPAWN  (ring around you)", 13, Color(1.0, 0.85, 0.4)))
-	for sp in ["rat", "spider", "alien"]:
+	for sp in ["rat", "spider", "alien", "tick", "scrapper"]:
 		for variant in ["base", "boss"]:
+			if variant == "boss" and (sp == "tick" or sp == "scrapper"):
+				continue
 			var r := HBoxContainer.new()
 			var l := _label("%s%s" % [sp.capitalize(), " boss" if variant == "boss" else ""], 12)
 			l.custom_minimum_size.x = 84

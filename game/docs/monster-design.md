@@ -1,6 +1,6 @@
 # Monster design (draft, for review)
 
-Status: **design only, nothing built.** Theme is temporary (owner: "themes are temp"). Builds on spec section 7 and 13.10 of `design-v2-exponential-upgrades.md`.
+Status: **first batch built** (Rat flank + morale, Tick latch, Spider stalk/lunge/sidestep, Alien Brute armor/regen/stomp, Scrapper front plate, player dodge). Numbers live in `game/sandbox/monsters.csv`. Later batches (Can Bomb, Mender, Blinker, bosses) are not built. Theme is temporary (owner: "themes are temp"). Builds on spec section 7 and 13.10 of `design-v2-exponential-upgrades.md`.
 
 ## Design pillars
 
@@ -58,3 +58,17 @@ Marked **(1)** are proposed for the first build batch.
 3. Dodge numbers: cooldown, distance, invulnerability length.
 4. Should monsters respond to the draft (for example, more flankers when the player owns Blast Ring), or stay fixed per level? Spec 13.10 says scenario draws vary the enemy mix.
 5. Level mapping: which monsters appear on which levels (a simple intro curve)?
+
+## Built so far (batch 1)
+
+- **Dodge:** Space, 1.5 s cooldown, 0.18 s dash, 0.25 s invulnerable. Shakes off every latched tick (stunned 1 s).
+- **Tick:** latches on touch, 3 damage/s each to you, up to 6 at once. Shockwave also shoves it off (0.6 s stun). Blast Ring and any blast can kill it while it is on you. Swells while attached.
+- **Spider:** circles at ~250 px, then a 0.55 s red wind-up (ring plus a line showing the dash), then a straight dash for 1.5x bite damage, then 0.7 s recovery. Sidesteps ~45% of shots that are aimed at it, so Velocity (faster bullets), Spread and Zigzag beat it.
+- **Rat:** about a third are flankers: orbit to behind you, then commit to the bite (gives up flanking after 3-4.5 s). When a rat dies, nearby rats scatter for about a second.
+- **Alien Brute:** armor 4, regenerates 3 HP/s (scaled with level HP) after 2 s unhit, and stomps (0.85 s red ring wind-up, 18 damage in the ring).
+- **Scrapper:** frontal plate (150 degrees) blocks bullets entirely, Ricochet bounces off it; blasts, poison and Heat Coil beams ignore it.
+- **Level curve:** `levels.csv` introduces ticks at level 2 and scrappers at level 3.
+
+## Later ideas (owner)
+
+- **Pick your stages:** let the player choose which levels or scenarios to play, to tailor their own experience (stage selection before or between levels). Not designed yet. Ties into the portal choice in spec section 8.

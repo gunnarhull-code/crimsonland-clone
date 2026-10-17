@@ -60,7 +60,6 @@ func on_fired(props: Dictionary) -> bool:
 		var k: int = sb.stack("blast_ring")
 		sb.explode(player.global_position, Up.p("blast_ring", "radius"),
 			props["damage"] * _scaled("blast_ring", "damage_frac", "damage_stack", k), Color(1.0, 0.45, 0.2))
-		player.take_damage(Up.p("blast_ring", "self_damage"))
 
 	n = every_n("shockwave")
 	if n > 0 and f % n == 0:
@@ -81,6 +80,9 @@ func on_fired(props: Dictionary) -> bool:
 
 ## A flying bullet touched an enemy. `first` is false for a Zigzag re-crossing.
 func bullet_hit(b, e, first: bool) -> void:
+	if e.blocks(b.velocity):
+		_plate_block(b, e)
+		return
 	deal_hit(e, b.damage, {"st": b.st, "gen": b.gen, "base": b.damage, "pos": b.global_position, "victims": b.victims, "dir": b.velocity.normalized()})
 	if first:
 		b.hits_left -= 1
@@ -459,6 +461,8 @@ func describe(id: String, k: int) -> String:
 			return "passes %d enemies (hits up to %d), -20%% damage each" % [passes, passes + 1]
 		"quickdraw":
 			return "%.2f shots/s" % (3.5 * pow(P.call("rate_mult"), k))
+		"velocity":
+			return "bullets fly at %d px/s (x%d)" % [int(475.0 * pow(P.call("speed_mult"), k)), int(pow(P.call("speed_mult"), k))]
 		"exploit":
 			var s := pow(P.call("stack"), k - 1)
 			return "+%d%% damage to all, +%d%% to poisoned/chilled" % [roundi(P.call("all_bonus") * s * 100), roundi(P.call("debuff_bonus") * s * 100)]
@@ -472,7 +476,7 @@ func describe(id: String, k: int) -> String:
 		"reclaimer":
 			return "every %d bullets refunds a round" % every_n(id, k)
 		"blast_ring":
-			return "every %d bullets: radius %d, %d%% damage, costs you %d HP" % [every_n(id, k), int(P.call("radius")), roundi(p2.call(P.call("damage_frac"), P.call("damage_stack")) * 100), int(P.call("self_damage"))]
+			return "every %d bullets: radius %d, %d%% damage (does not hurt you)" % [every_n(id, k), int(P.call("radius")), roundi(p2.call(P.call("damage_frac"), P.call("damage_stack")) * 100)]
 		"shockwave":
 			return "every %d bullets shoves enemies within %d" % [every_n(id, k), int(p2.call(P.call("radius"), P.call("radius_stack")))]
 		"echo":
@@ -516,3 +520,18 @@ func describe(id: String, k: int) -> String:
 		"split":
 			return "%d guaranteed split(s) per hit, children keep each other upgrade 50%% (halving per generation)" % (k * int(P.call("per_stack")))
 	return ""
+
+
+## A bullet struck a front plate (Scrapper): no damage. Ricochet bullets bounce
+## off; everything else is stopped. Blasts, poison and beams ignore the plate.
+func _plate_block(b, e) -> void:
+	sb.audio.play("clang")
+	sb.fx_text(b.global_position + Vector2(0, -10), "BLOCKED", Color(0.8, 0.85, 0.95), 12)
+	sb.particles.burst(b.global_position, -b.velocity.normalized(), 5, 320.0, 0.9, 0.2, 3.5, Color(1.0, 0.95, 0.7), "line", 4.0)
+	if b.bounces_left > 0:
+		var n: Vector2 = (b.global_position - e.global_position).normalized()
+		b._bounce(n)
+		b._contact[e.get_instance_id()] = true
+		b._cross[e.get_instance_id()] = b.max_cross
+	else:
+		b.queue_free()

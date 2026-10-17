@@ -31,7 +31,7 @@ const EXPLOSIONS_PER_FRAME := 60
 const GEN_HARD_LIMIT := 99
 # Upgrades that belong to a bullet. A Split/Echo bullet tests each of these
 # at 0.5^generation (spec 13.14); gun-level upgrades never inherit.
-const BULLET_LEVEL := ["spread", "grow", "poison", "pierce", "exploit", "shrapnel", "chill",
+const BULLET_LEVEL := ["spread", "grow", "velocity", "poison", "pierce", "exploit", "shrapnel", "chill",
 	"zigzag", "ricochet", "soul_snatcher", "gravity_seed", "shard_bloom", "third_strike",
 	"bond_arc", "still_field", "fault_line", "adaptive_round"]
 # Spec 13.10: enemy HP scales geometrically to 20x by level 10.
@@ -203,6 +203,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_4: spawn_enemies("rat", "boss", 1, cursor)
 		KEY_5: spawn_enemies("spider", "boss", 1, cursor)
 		KEY_6: spawn_enemies("alien", "boss", 1, cursor)
+		KEY_7: spawn_enemies("tick", "base", 4, cursor)
+		KEY_8: spawn_enemies("scrapper", "base", 2, cursor)
 		KEY_C: clear_enemies()
 		KEY_R: player.start_reload()
 		KEY_H: heal()
@@ -284,6 +286,7 @@ func hurt_player(amount: float) -> void:
 
 
 func clear_enemies() -> void:
+	player.latch_count = 0
 	for e in enemies.get_children():
 		e.queue_free()
 	for b in bullets.get_children():

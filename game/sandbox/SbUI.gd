@@ -34,7 +34,7 @@ func _ready() -> void:
 	add_child(_stats)
 	var help := Label.new()
 	help.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	help.text = "WASD move   Mouse aim/fire   R reload   H heal   C clear   1-3 spawn 5 at cursor   4-6 boss at cursor   Tab hide panels"
+	help.text = "WASD move   Space dodge   Mouse aim/fire   R reload   H heal   C clear   1-3 spawn at cursor   4-6 boss   7 ticks   8 scrappers   Tab hide panels"
 	help.add_theme_font_size_override("font_size", 12)
 	help.add_theme_color_override("font_color", Color(1, 1, 1, 0.55))
 	help.position = Vector2(PANEL_W + 20.0, 4.0)
@@ -95,6 +95,7 @@ func _stats_text() -> String:
 	var lines: Array[String] = []
 	lines.append("HP %d/%d    Ammo %d/%d%s" % [int(p.hp), int(p.max_hp), p.ammo, p.MAGAZINE, state])
 	lines.append("Fire rate %.2f/s    Charge %.2fs    Bullets per pull %d    Heat %d/%d" % [p.fire_rate(), p.charge_time(), p.bullets_per_pull(), p.heat, p.heat_needed()])
+	lines.append("Dodge: %s    Latched ticks: %d" % ["ready" if p.dodge_cd <= 0.0 else "%.1fs" % p.dodge_cd, p.latch_count])
 	lines.append("Damage per bullet %.1f (before target bonuses)    Size x%.1f    Hits per bullet up to %d" % [props["damage"], props["size"], props["hits"]])
 	lines.append("Fired %d    Hits %d    Kills %d    Total damage %d    Most-hit species: %s" % [sb.fired, sb.hits, sb.kills, int(sb.total_damage), sb.leading_species()])
 	if sb.stack("adaptive_round") > 0:
@@ -225,8 +226,10 @@ func _build_right() -> void:
 
 	box.add_child(HSeparator.new())
 	_header(box, "SPAWN  (ring around you)")
-	for sp in ["rat", "spider", "alien"]:
+	for sp in ["rat", "spider", "alien", "tick", "scrapper"]:
 		for variant in ["base", "boss"]:
+			if variant == "boss" and (sp == "tick" or sp == "scrapper"):
+				continue
 			var h := HBoxContainer.new()
 			var l := Label.new()
 			l.text = ("%s%s" % [sp.capitalize(), " boss" if variant == "boss" else ""])

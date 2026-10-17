@@ -7,6 +7,8 @@ const ICHOR := {
 	"rat": Color(0.62, 0.07, 0.10),
 	"spider": Color(0.74, 0.88, 0.16),
 	"alien": Color(0.25, 0.95, 0.70),
+	"tick": Color(0.55, 0.06, 0.22),
+	"scrapper": Color(0.85, 0.55, 0.2),
 }
 
 
@@ -32,7 +34,7 @@ static func _t(col: Color, tint: Color) -> Color:
 ## cycle, tint multiplies every colour (hit flash, poison, chill), pop > 0 puffs
 ## the body up briefly when hit.
 static func draw_enemy(ci: CanvasItem, species: String, boss: bool, r: float, angle: float,
-		phase: float, tint: Color, pop: float, armored: bool, offset: Vector2 = Vector2.ZERO) -> void:
+		phase: float, tint: Color, pop: float, armored: bool, offset: Vector2 = Vector2.ZERO, extra: float = 0.0) -> void:
 	var s := 1.0 + pop
 	ci.draw_set_transform(offset, angle, Vector2(s, s))
 	match species:
@@ -40,6 +42,10 @@ static func draw_enemy(ci: CanvasItem, species: String, boss: bool, r: float, an
 			_rat(ci, r, phase, tint, boss)
 		"spider":
 			_spider(ci, r, phase, tint, boss)
+		"tick":
+			_tick(ci, r, phase, tint, extra)
+		"scrapper":
+			_scrapper(ci, r, phase, tint, extra)
 		_:
 			_alien(ci, r, phase, tint, boss, armored)
 	ci.draw_set_transform(offset, 0.0, Vector2.ONE)
@@ -218,3 +224,48 @@ static func draw_player(ci: CanvasItem, r: float, angle: float, flash: float, re
 		ci.draw_colored_polygon(star, Color(1.0, 0.85, 0.35, 0.9))
 		ci.draw_circle(m, r * 0.3 * k, Color(1.0, 1.0, 0.85))
 	ci.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+
+## Tick: small armoured parasite. `engorge` 0..1 swells the abdomen while latched.
+static func _tick(ci: CanvasItem, r: float, phase: float, tint: Color, engorge: float) -> void:
+	var body := _t(Color(0.50, 0.17, 0.15), tint)
+	var plate := _t(Color(0.22, 0.12, 0.10), tint)
+	var lw := maxf(1.5, r * 0.18)
+	for side in [-1.0, 1.0]:
+		for i in 4:
+			var root := Vector2(r * (0.5 - i * 0.35), side * r * 0.4)
+			var swing := sin(phase * 1.6 + i * 1.3 + (0.0 if side > 0.0 else PI)) * 0.35
+			var ang: float = (0.7 + i * 0.28) * side + swing * side
+			ci.draw_line(root, root + Vector2.from_angle(ang) * r * 1.15, plate, lw)
+	var swell := 1.0 + engorge * 0.9
+	_ellipse(ci, Vector2(-r * 0.45, 0), r * 1.05 * swell, r * 0.85 * swell, body)
+	_ellipse(ci, Vector2(-r * 0.5, 0), r * 0.55 * swell, r * 0.4 * swell, _t(Color(0.78, 0.35, 0.28), tint))
+	_ellipse(ci, Vector2(r * 0.55, 0), r * 0.5, r * 0.42, plate)
+	ci.draw_line(Vector2(r * 0.95, 0), Vector2(r * 1.5, 0), Color(0.85, 0.8, 0.7), maxf(1.0, r * 0.12))
+
+
+## Scrapper: junk golem. `plate_rad` is the width of the frontal bullet plate in radians.
+static func _scrapper(ci: CanvasItem, r: float, phase: float, tint: Color, plate_rad: float) -> void:
+	var rust := _t(Color(0.42, 0.26, 0.17), tint)
+	var rust_dark := _t(Color(0.26, 0.16, 0.11), tint)
+	var steel := _t(Color(0.60, 0.62, 0.66), tint)
+	for side in [-1.0, 1.0]:   # stubby legs
+		var sw := sin(phase + (0.0 if side > 0.0 else PI)) * r * 0.25
+		_ellipse(ci, Vector2(-r * 0.3 + sw, side * r * 0.75), r * 0.38, r * 0.24, rust_dark, 8)
+	var body := PackedVector2Array()
+	for i in 10:
+		var a := TAU * i / 10.0
+		var rad := r * (0.95 if i % 2 == 0 else 0.8)
+		body.append(Vector2(cos(a) * rad, sin(a) * rad))
+	ci.draw_colored_polygon(body, rust)
+	for k in 4:   # bolts and scrap patches
+		var a := TAU * k / 4.0 + 0.5
+		ci.draw_circle(Vector2.from_angle(a) * r * 0.55, r * 0.07, steel)
+	ci.draw_rect(Rect2(-r * 0.7, -r * 0.2, r * 0.5, r * 0.4), rust_dark)
+	# glowing lantern eye
+	ci.draw_circle(Vector2(r * 0.35, 0), r * 0.2, Color(1.0, 0.55, 0.15))
+	ci.draw_circle(Vector2(r * 0.4, 0), r * 0.09, Color(1.0, 0.95, 0.7))
+	# frontal plate: a thick steel arc across the front
+	if plate_rad > 0.0:
+		ci.draw_arc(Vector2.ZERO, r * 1.08, -plate_rad * 0.5, plate_rad * 0.5, 20, steel, r * 0.34)
+		ci.draw_arc(Vector2.ZERO, r * 1.22, -plate_rad * 0.5, plate_rad * 0.5, 20, _t(Color(0.78, 0.8, 0.84), tint), maxf(1.5, r * 0.08))

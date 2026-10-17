@@ -4,12 +4,13 @@ grow,Grow,"Adds a charge time before each shot. Bullets are twice as big and do 
 poison,Poison,"Hits poison the enemy: 3 damage/s for 4 s. Bullets do 20% less direct damage. Each stack doubles the damage/s.",,dps=3;duration=4;direct_mult=0.8;dps_stack=2,0
 pierce,Pierce,"Bullets pass through 2 enemies (so can hit 3). Each enemy passed takes 20% off the bullet's damage. Each stack passes through one more enemy.",,pass=2;pass_add=1;falloff=0.2,0
 quickdraw,Quickdraw,"Fire faster: each stack multiplies fire rate by 1.5. Does not shorten Grow's charge time.",,rate_mult=1.5,0
+velocity,Velocity,"Bullets fly much faster: x2 speed per stack. The default bullet speed is slow (475 px/s), so this also helps you hit moving targets.",,speed_mult=2,0.05
 exploit,Exploit,"+15% damage to everything and +75% to poisoned or chilled enemies. Each stack doubles the bonus.",,all_bonus=0.15;debuff_bonus=0.75;stack=2,0.18
 shrapnel,Shrapnel,"Every hit explodes (radius 40) for 40% of the damage dealt. Each stack doubles blast damage and widens it 50%.",,radius=40;radius_stack=1.5;damage_frac=0.4;damage_stack=2,0.2
 chill,Chill,"Hits slow the enemy to 60% speed for 3 s. Each stack doubles the duration.",,speed=0.6;duration=3;duration_stack=2,0.15
 bloodshot,Bloodshot,"Fire 1 extra bullet for every 25 HP you have. Each stack halves the HP needed (25, 12, 6). Use 'Hurt me' to test.",,hp_per=25;stack_div=2,0.3
 reclaimer,Reclaimer,"Every 6th bullet fired refunds one round of ammo. Each stack halves the count (6, 3, 2 minimum).",,every=6;stack_div=2;min=2,0.33
-blast_ring,Blast Ring,"Every 5th bullet explodes around you (radius 90) for 120% damage to enemies and 8 damage to you. Each stack halves the count (5, 3, 2) and doubles the blast damage.",,every=5;stack_div=2;min=2;radius=90;damage_frac=1.2;damage_stack=2;self_damage=8,0.4
+blast_ring,Blast Ring,"Every 5th bullet explodes around you (radius 90) for 120% damage to enemies. It does not hurt you. Each stack halves the count (5, 3, 2) and doubles the blast damage.",,every=5;stack_div=2;min=2;radius=90;damage_frac=1.2;damage_stack=2,0.4
 shockwave,Shockwave,"Every 4th bullet shoves all enemies within 160 away from you. Each stack halves the count (4, 2 minimum) and widens the shove 50%.",,every=4;stack_div=2;min=2;radius=160;radius_stack=1.5;impulse=700,0.36
 echo,Echo,"Every 4th hit spawns one extra bullet in a random direction from the impact. It counts as fired and goes through your upgrades (each has a chance to apply). Limited to generation 2. Each stack halves the count (4, 2 minimum).",,every=4;stack_div=2;min=2;gen_limit=2,0.45
 zigzag,Zigzag,"Bullets weave side to side and cross the same enemy twice. On-hit effects trigger on each crossing. Each stack doubles the crossings per enemy (2, 4).",,crossings=2;stack=2;amp=22;wavelength=90,0.1

@@ -99,7 +99,7 @@ func _finish(text: String) -> void:
 
 func _spawn_wave() -> void:
 	_wave += 1
-	for sp in ["rat", "spider", "alien"]:
+	for sp in ["rat", "spider", "alien", "tick", "scrapper"]:
 		var n := int(_row[sp + "s"])
 		if n > 0:
 			sb.spawn_enemies(sp, "base", n)
@@ -113,7 +113,7 @@ func _spawn_boss() -> void:
 	var mult := float(_row["boss_hp_mult"])
 	_boss.max_hp *= mult
 	_boss.hp = _boss.max_hp
-	_boss.armor = float(_row["armor"])
+	_boss.armor = maxf(_boss.armor, float(_row["armor"]))
 	_add_t = float(_row["add_interval_sec"])
 
 
@@ -121,7 +121,7 @@ func _spawn_adds() -> void:
 	var made: Array = sb.spawn_enemies(_row["add_species"], "base", int(_row["add_batch"]),
 		_boss.global_position if is_instance_valid(_boss) else null)
 	for e in made:
-		e.armor = float(_row["armor"])
+		e.armor = maxf(e.armor, float(_row["armor"]))
 
 
 func _physics_process(delta: float) -> void:
