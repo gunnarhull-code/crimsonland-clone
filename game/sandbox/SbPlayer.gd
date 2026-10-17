@@ -5,7 +5,7 @@ extends Node2D
 ## UI can show it. Trigger/hit effects live in SbRules.gd.
 
 const Up := preload("res://sandbox/SbUpgrades.gd")
-const Visual := preload("res://scenes/EntityVisual.gd")
+const Art := preload("res://sandbox/SbArt.gd")
 
 const MOVE_SPEED := 210.0
 const BASE_MAX_HP := 100.0
@@ -35,13 +35,10 @@ var _reload_t := 0.0
 var _charge_t := 0.0
 var _charge_total := 0.0
 var _dead_t := 0.0
-var _body: Node2D
-
-
-func _ready() -> void:
-	_body = Visual.new()
-	add_child(_body)
-	_body.configure(RADIUS, Color(0.45, 0.72, 1.0), Color(0.1, 0.1, 0.08), "triangle")
+var _aim_angle := 0.0
+var _flash_t := 0.0
+var _recoil := 0.0
+var _t := 0.0
 
 
 # ----------------------------------------------------------- effective stats --
@@ -117,6 +114,9 @@ func _count(st: Dictionary, extra: int) -> int:
 # -------------------------------------------------------------------- update --
 
 func _physics_process(delta: float) -> void:
+	_t += delta
+	_flash_t = maxf(0.0, _flash_t - delta)
+	_recoil = move_toward(_recoil, 0.0, 60.0 * delta)
 	_update_max_hp()
 	if hp <= 0.0:
 		_dead_t -= delta
@@ -136,7 +136,7 @@ func _physics_process(delta: float) -> void:
 
 	var aim := aim_pos()
 	if aim.distance_to(global_position) > 1.0:
-		_body.rotation = (aim - global_position).angle()
+		_aim_angle = (aim - global_position).angle()
 
 	cooldown = maxf(0.0, cooldown - delta)
 	if reloading:
@@ -211,6 +211,7 @@ func _fire() -> void:
 			return
 	sb.audio.play("shot")
 	fire_pipeline(global_position + dir * 18.0, dir, 0, extra_bullets())
+	_muzzle(dir)
 	if ammo <= 0:
 		start_reload()
 
@@ -236,6 +237,7 @@ func _fire_beam(dir: Vector2) -> void:
 	var st: Dictionary = sb.bullet_stacks(0)
 	var props := make_props(st, 0)
 	sb.audio.play("beam")
+	sb.shake(0.25)
 	sb.rules.on_fired(props)
 	var dmg: float = props["damage"] * Up.p("heat_coil", "beam_mult")
 	var from := global_position
@@ -255,6 +257,8 @@ func take_damage(amount: float) -> void:
 	hp = maxf(0.0, hp - amount)
 	damage_taken += amount
 	sb.audio.play("hurt")
+	sb.shake(0.3)
+	sb.screen_flash(Color(1.0, 0.1, 0.1), 0.3)
 	sb.fx_text(global_position + Vector2(0, -26), "-%d" % int(amount), Color(1.0, 0.4, 0.4))
 	if hp <= 0.0:
 		_dead_t = 1.5
@@ -269,6 +273,13 @@ func revive() -> void:
 
 
 func _draw() -> void:
+	var sh := PackedVector2Array()
+	for i in 14:
+		var a := TAU * i / 14.0
+		sh.append(Vector2(cos(a) * RADIUS * 1.4 + 3.0, sin(a) * RADIUS * 1.1 + 5.0))
+	draw_colored_polygon(sh, Color(0, 0, 0, 0.3))
+	if hp > 0.0:
+		Art.draw_player(self, RADIUS, _aim_angle, _flash_t, _recoil, _t)
 	if hp <= 0.0:
 		draw_string(ThemeDB.fallback_font, Vector2(-30, -24), "DOWN - reviving",
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(1, 0.5, 0.5))
@@ -282,3 +293,12 @@ func _draw() -> void:
 	var w := 44.0
 	draw_rect(Rect2(-w / 2.0, RADIUS + 8.0, w, 5.0), Color(0, 0, 0, 0.6))
 	draw_rect(Rect2(-w / 2.0, RADIUS + 8.0, w * hp / max_hp, 5.0), Color(0.4, 0.9, 0.4))
+
+
+## Visual-only kick when a pull fires: muzzle flash, recoil, a spent casing.
+func _muzzle(dir: Vector2) -> void:
+	_flash_t = 0.06
+	_recoil = 4.0
+	if sb.juice_on:
+		sb.particles.add(global_position + dir.rotated(1.4) * 10.0, dir.rotated(1.5 + randf_range(-0.4, 0.4)) * randf_range(90.0, 160.0),
+			0.5, 2.2, Color(0.95, 0.78, 0.3), "dot", 3.0)

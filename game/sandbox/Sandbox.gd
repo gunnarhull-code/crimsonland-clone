@@ -14,6 +14,9 @@ const EnemyS := preload("res://sandbox/SbEnemy.gd")
 const FxS := preload("res://sandbox/SbFx.gd")
 const RulesS := preload("res://sandbox/SbRules.gd")
 const WavesS := preload("res://sandbox/SbWaves.gd")
+const ParticlesS := preload("res://sandbox/SbParticles.gd")
+const DecalsS := preload("res://sandbox/SbDecals.gd")
+const Art := preload("res://sandbox/SbArt.gd")
 const AudioS := preload("res://sandbox/SbAudio.gd")
 const UiS := preload("res://sandbox/SbUI.gd")
 
@@ -62,6 +65,10 @@ var drones: Node2D
 var fx: Node2D
 var rules
 var audio
+var particles
+var decals
+var cam: Camera2D
+var flash_rect: ColorRect
 var waves
 var ui
 
@@ -71,6 +78,9 @@ var heal_on_level_start := true   # full heal when a wave-test level starts
 var cheat_damage_mult := 1.0      # cheat: multiplies all damage you deal
 var infinite_ammo := false        # cheat
 var move_speed_mult := 1.0        # cheat
+var juice_on := true             # particles, splatter, hit sparks
+var shake_on := true             # screen shake
+var _trauma := 0.0
 var _damage_log: Array = []     # [time_sec, amount]
 
 
@@ -81,7 +91,7 @@ func _ready() -> void:
 
 
 func _build_world() -> void:
-	var cam := Camera2D.new()
+	cam = Camera2D.new()
 	cam.position = ARENA / 2.0
 	var vp := get_viewport_rect().size
 	var z := minf(vp.x / ARENA.x, vp.y / ARENA.y)
@@ -93,6 +103,8 @@ func _build_world() -> void:
 	rules = RulesS.new()
 	rules.sb = self
 	add_child(rules)
+	decals = DecalsS.new()
+	add_child(decals)
 	enemies = Node2D.new()
 	drones = Node2D.new()
 	bullets = Node2D.new()
@@ -103,8 +115,18 @@ func _build_world() -> void:
 	player.sb = self
 	player.position = ARENA / 2.0
 	add_child(player)
+	particles = ParticlesS.new()
+	add_child(particles)
 	fx = Node2D.new()
 	add_child(fx)
+	var flash_layer := CanvasLayer.new()
+	flash_layer.layer = 1
+	add_child(flash_layer)
+	flash_rect = ColorRect.new()
+	flash_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	flash_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	flash_rect.color = Color(1, 0.1, 0.1, 0.0)
+	flash_layer.add_child(flash_rect)
 	waves = WavesS.new()
 	waves.sb = self
 	add_child(waves)
@@ -121,14 +143,53 @@ func _after_ready() -> void:
 	pass
 
 
+## The junkyard floor: dirt, oil, scrap and tyres scattered from a fixed seed,
+## drawn once, with a rusty fence around the edge. Dark and low-contrast so
+## monsters, bullets and effects stand out against it.
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, ARENA), Color(0.11, 0.14, 0.11))
-	var grid := Color(1, 1, 1, 0.05)
-	for x in range(0, int(ARENA.x) + 1, 100):
-		draw_line(Vector2(x, 0), Vector2(x, ARENA.y), grid, 1.0)
-	for y in range(0, int(ARENA.y) + 1, 100):
-		draw_line(Vector2(0, y), Vector2(ARENA.x, y), grid, 1.0)
-	draw_rect(Rect2(Vector2.ZERO, ARENA), Color(0.6, 0.6, 0.6), false, 3.0)
+	draw_rect(Rect2(Vector2.ZERO, ARENA), Color(0.17, 0.145, 0.12))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 1337
+	for i in 40:   # lighter and darker dirt patches
+		var c := Vector2(rng.randf() * ARENA.x, rng.randf() * ARENA.y)
+		var shade := rng.randf_range(-0.018, 0.018)
+		draw_circle(c, rng.randf_range(40, 150), Color(0.17 + shade, 0.145 + shade, 0.12 + shade, 0.55))
+	for i in 14:   # oil stains
+		var c := Vector2(rng.randf() * ARENA.x, rng.randf() * ARENA.y)
+		draw_set_transform(c, rng.randf() * PI, Vector2(1.0, rng.randf_range(0.5, 0.9)))
+		draw_circle(Vector2.ZERO, rng.randf_range(18, 55), Color(0.06, 0.06, 0.065, 0.4))
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	for i in 12:   # old tyres and rims
+		var c := Vector2(rng.randf() * ARENA.x, rng.randf() * ARENA.y)
+		var r := rng.randf_range(14, 26)
+		draw_arc(c, r, 0.0, TAU, 24, Color(0.11, 0.1, 0.1), r * 0.5)
+		draw_arc(c, r * 0.4, 0.0, TAU, 16, Color(0.3, 0.28, 0.27, 0.6), 2.0)
+	for i in 90:  # scrap plates, bottles and bolts
+		var c := Vector2(rng.randf() * ARENA.x, rng.randf() * ARENA.y)
+		var ang := rng.randf() * TAU
+		draw_set_transform(c, ang, Vector2.ONE)
+		var kind := rng.randi() % 4
+		if kind == 0:
+			draw_rect(Rect2(-14, -5, rng.randf_range(16, 34), rng.randf_range(7, 14)), Color(0.3, 0.19, 0.13, 0.7))
+		elif kind == 1:
+			draw_rect(Rect2(-10, -3, 20, 6), Color(0.22, 0.28, 0.25, 0.7))
+			draw_circle(Vector2(11, 0), 3.5, Color(0.22, 0.28, 0.25, 0.7))
+		elif kind == 2:
+			draw_circle(Vector2.ZERO, rng.randf_range(2.5, 5), Color(0.34, 0.33, 0.32, 0.7))
+		else:
+			draw_colored_polygon(PackedVector2Array([Vector2(-9, -4), Vector2(10, -2), Vector2(4, 8)]), Color(0.33, 0.25, 0.18, 0.7))
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	# rusty fence
+	var post := Color(0.28, 0.22, 0.18)
+	var rail := Color(0.4, 0.27, 0.18)
+	draw_rect(Rect2(Vector2.ZERO, ARENA), rail, false, 6.0)
+	for x in range(0, int(ARENA.x) + 1, 80):
+		draw_circle(Vector2(x, 0), 7, post)
+		draw_circle(Vector2(x, ARENA.y), 7, post)
+	for y in range(0, int(ARENA.y) + 1, 80):
+		draw_circle(Vector2(0, y), 7, post)
+		draw_circle(Vector2(ARENA.x, y), 7, post)
+
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -260,13 +321,14 @@ func recent_dps() -> float:
 	return sum / DPS_WINDOW_SEC
 
 
-func fx_text(pos: Vector2, text: String, color: Color = Color.WHITE) -> void:
+func fx_text(pos: Vector2, text: String, color: Color = Color.WHITE, size: int = 14) -> void:
 	if not show_numbers or fx.get_child_count() >= MAX_FX:
 		return
 	var f := FxS.new()
 	f.kind = "text"
 	f.text = text
 	f.color = color
+	f.font_size = size
 	f.position = pos
 	fx.add_child(f)
 
@@ -333,6 +395,70 @@ func explode(pos: Vector2, radius: float, damage: float, color: Color = Color(1.
 	explosions_this_frame += 1
 	audio.play("explosion", clampf(radius / 90.0 - 1.0, -6.0, 0.0) * 4.0)
 	fx_ring(pos, radius, color)
+	vfx_explosion(pos, radius, color)
 	for e in enemies.get_children():
 		if not e.dead and e.global_position.distance_to(pos) <= radius + e.radius:
-			e.take_damage(damage, color.lightened(0.3))
+			e.take_damage(damage, color.lightened(0.3), (e.global_position - pos).normalized())
+
+
+# ---------------------------------------------------------------------- juice --
+# Screen shake, hit sparks, gore and scorch marks. All optional (juice_on, shake_on).
+
+func _process(delta: float) -> void:
+	_trauma = maxf(0.0, _trauma - delta * 1.8)
+	var s := _trauma * _trauma * 22.0
+	cam.offset = Vector2(randf_range(-s, s), randf_range(-s, s)) if s > 0.01 else Vector2.ZERO
+	if flash_rect.color.a > 0.0:
+		flash_rect.color.a = maxf(0.0, flash_rect.color.a - delta * 1.6)
+
+
+func shake(amount: float) -> void:
+	if shake_on:
+		_trauma = minf(1.0, _trauma + amount)
+
+
+func screen_flash(color: Color, alpha: float) -> void:
+	if juice_on:
+		flash_rect.color = Color(color.r, color.g, color.b, alpha)
+
+
+func set_juice(on: bool) -> void:
+	juice_on = on
+	particles.enabled = on
+	decals.enabled = on
+	if not on:
+		decals.clear_all()
+
+
+func vfx_hit(pos: Vector2, dir: Vector2, ichor: Color, amount: float, _radius: float) -> void:
+	if not juice_on:
+		return
+	var fwd := dir if dir != Vector2.ZERO else Vector2.RIGHT.rotated(randf() * TAU)
+	var n := 3 + mini(int(amount / 12.0), 5)
+	particles.burst(pos, -fwd, n, 300.0, 1.1, 0.22, 4.0, Color(1.0, 0.92, 0.55), "line", 4.0)
+	particles.burst(pos, fwd, 2 + n / 2, 210.0, 0.7, 0.5, 3.0, ichor, "dot", 5.0)
+
+
+func vfx_kill(pos: Vector2, species: String, radius: float, boss: bool, dir: Vector2) -> void:
+	var ichor := Art.ichor(species)
+	if boss:
+		shake(0.45)
+		screen_flash(ichor, 0.12)
+	else:
+		shake(0.04)
+	if not juice_on:
+		return
+	var n := 14 + (16 if boss else 0)
+	particles.burst(pos, Vector2.RIGHT, n, 240.0 + radius * 6.0, PI, 0.75, 4.0 + radius * 0.1, ichor, "dot", 4.0)
+	particles.burst(pos, dir if dir != Vector2.ZERO else Vector2.RIGHT, 6, 340.0, PI, 0.4, 4.0, Color(ichor.r, ichor.g, ichor.b, 0.9), "line", 3.0)
+	decals.splat(pos, ichor, radius * (1.9 if boss else 1.25))
+	fx_ring(pos, radius * (3.2 if boss else 1.9), ichor)
+
+
+func vfx_explosion(pos: Vector2, radius: float, color: Color) -> void:
+	shake(clampf(radius / 260.0, 0.04, 0.4))
+	if not juice_on:
+		return
+	particles.burst(pos, Vector2.RIGHT, 16, clampf(radius * 4.0, 160.0, 520.0), PI, 0.5, 4.0, color.lightened(0.35), "line", 3.0)
+	particles.burst(pos, Vector2.RIGHT, 8, radius * 2.0, PI, 0.7, 5.0, Color(0.15, 0.13, 0.12, 0.8), "dot", 4.0)
+	decals.scorch(pos, radius * 0.6)

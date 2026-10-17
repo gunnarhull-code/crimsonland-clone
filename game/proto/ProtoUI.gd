@@ -269,6 +269,8 @@ func _build_cheats() -> void:
 	_check(box, "Infinite ammo", sb.infinite_ammo, func(v): sb.infinite_ammo = v)
 	_check(box, "Full heal at each level start", sb.heal_on_level_start, func(v): sb.heal_on_level_start = v)
 	_check(box, "Damage numbers", sb.show_numbers, func(v): sb.show_numbers = v)
+	_check(box, "Particles and splatter", sb.juice_on, func(v): sb.set_juice(v))
+	_check(box, "Screen shake", sb.shake_on, func(v): sb.shake_on = v)
 	_check(box, "Sound effects", sb.audio.enabled, func(v): sb.audio.enabled = v)
 	var dmg_label := _label("Damage dealt x1", 12)
 	box.add_child(dmg_label)

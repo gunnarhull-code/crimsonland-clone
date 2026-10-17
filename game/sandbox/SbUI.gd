@@ -248,6 +248,8 @@ func _build_right() -> void:
 	_header(box, "PLAYER")
 	_check(box, "God mode", sb.god_mode, func(v): sb.god_mode = v)
 	_check(box, "Damage numbers", sb.show_numbers, func(v): sb.show_numbers = v)
+	_check(box, "Particles and splatter", sb.juice_on, func(v): sb.set_juice(v))
+	_check(box, "Screen shake", sb.shake_on, func(v): sb.shake_on = v)
 	_check(box, "Sound effects", sb.audio.enabled, func(v): sb.audio.enabled = v)
 	var vol := HSlider.new()
 	vol.min_value = -24.0

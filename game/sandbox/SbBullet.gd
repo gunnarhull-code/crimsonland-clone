@@ -191,6 +191,12 @@ func _orbit_step(delta: float) -> void:
 
 func _draw() -> void:
 	var half := _len / 2.0
+	var tail_c := Color(1.0, 0.85, 0.4, 0.28)
+	if gen > 0:
+		tail_c = Color(0.5, 0.85, 1.0, 0.28)
+	if not orbit:
+		draw_line(Vector2(-half, 0), Vector2(-half - 34.0, 0), tail_c, radius * 1.4)
+		draw_line(Vector2(-half, 0), Vector2(-half - 16.0, 0), Color(tail_c.r, tail_c.g, tail_c.b, 0.5), radius * 1.8)
 	var c := Color(1.0, 0.92, 0.45)
 	if gen > 0:
 		c = Color(0.55, 0.9, 1.0)

@@ -81,7 +81,7 @@ func on_fired(props: Dictionary) -> bool:
 
 ## A flying bullet touched an enemy. `first` is false for a Zigzag re-crossing.
 func bullet_hit(b, e, first: bool) -> void:
-	deal_hit(e, b.damage, {"st": b.st, "gen": b.gen, "base": b.damage, "pos": b.global_position, "victims": b.victims})
+	deal_hit(e, b.damage, {"st": b.st, "gen": b.gen, "base": b.damage, "pos": b.global_position, "victims": b.victims, "dir": b.velocity.normalized()})
 	if first:
 		b.hits_left -= 1
 		if b.hits_left <= 0:
@@ -118,7 +118,7 @@ func deal_hit(e, dmg: float, ctx: Dictionary) -> void:
 		final = maxf(1.0, final - e.armor)
 
 	final *= sb.cheat_damage_mult
-	e.take_damage(final)
+	e.take_damage(final, Color.WHITE, ctx.get("dir", Vector2.ZERO))
 	_share_damage(e, final)
 
 	var at: Vector2 = e.global_position
