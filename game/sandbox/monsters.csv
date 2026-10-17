@@ -2,8 +2,9 @@ species,variant,name,hp,damage,attack_cooldown_sec,chase_speed_px_s,hitbox_radiu
 rat,base,Rat,15,5,0.6,128,10,swarm,pack_start=10;pack_full=120;pack_speed=0.2;pack_bite=0.3;flank_chance=0.35;flank_ring=230;scatter_time=1.2;scatter_radius=170
 rat,boss,Rat King,75,10,0.6,77,16,swarm,flank_chance=0
 spider,base,Spider,30,8,1.0,176,16,stalk_lunge,lead=1.0;orbit=250;windup=0.55;dash_speed=760;dash_time=0.32;recover=0.7;cd_min=1.4;cd_max=2.6;dash_damage_mult=1.5;sidestep_chance=0.45;sidestep_dist=70;sidestep_cd=1.6
-spider,boss,Spider Matriarch,150,16,1.0,106,26,stalk_lunge,lead=1.0;orbit=320;windup=0.8;dash_speed=640;dash_time=0.4;recover=0.9;cd_min=1.8;cd_max=3.0;dash_damage_mult=1.5;sidestep_chance=0
+spider,boss,Spider Matriarch,150,16,1.0,106,26,stalk_lunge,web=1;web_step=70;web_radius=26;web_hold=1.0;web_life=12;lead=1.0;orbit=320;windup=0.8;dash_speed=640;dash_time=0.4;recover=0.9;cd_min=1.8;cd_max=3.0;dash_damage_mult=1.5;sidestep_chance=0
 alien,base,Alien Brute,60,15,1.5,72,22,plod,armor=4;regen=3;regen_delay=2;stomp_range=115;stomp_windup=0.85;stomp_radius=135;stomp_damage=18;stomp_cooldown=4.5
 alien,boss,Gate Warden,300,30,1.5,43,35,plod,armor=4;regen=0;regen_delay=2;stomp_range=170;stomp_windup=1.0;stomp_radius=190;stomp_damage=30;stomp_cooldown=4
-tick,base,Tick,12,0,0,215,7,crawl_latch,latch_dps=3;stack_max=6;shake_stun=1.0;wiggle=0.45;hop_range=150;hop_dist=46;hop_time=0.17;crouch=0.10;land=0.12
-scrapper,base,Scrapper,120,12,1.2,52,24,plod,plate_arc=150;turn_rate=26
+tick,base,Tick,12,0,0,225,7,crawl_latch,latch_dps=3;stack_max=6;shake_stun=1.0;wiggle=0.45;lunge_range=130;lunge_speed=540;crouch=0.08;recover=0.16
+scrapper,base,Scrapper,120,12,1.2,52,24,plod,plate_arc=150;turn_rate=55
+maggot,base,Maggot,8,3,0.7,78,6,wriggle,wiggle=0.7

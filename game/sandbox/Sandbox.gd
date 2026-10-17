@@ -15,6 +15,7 @@ const FxS := preload("res://sandbox/SbFx.gd")
 const RulesS := preload("res://sandbox/SbRules.gd")
 const WavesS := preload("res://sandbox/SbWaves.gd")
 const SpawnerS := preload("res://sandbox/SbSpawner.gd")
+const WebsS := preload("res://sandbox/SbWebs.gd")
 const ParticlesS := preload("res://sandbox/SbParticles.gd")
 const DecalsS := preload("res://sandbox/SbDecals.gd")
 const Art := preload("res://sandbox/SbArt.gd")
@@ -73,6 +74,7 @@ var cam: Camera2D
 var flash_rect: ColorRect
 var waves
 var spawner
+var webs
 var ui
 
 # Switches the prototype run flips (the sandbox keeps the defaults).
@@ -119,6 +121,9 @@ func _build_world() -> void:
 	spawner = SpawnerS.new()
 	spawner.sb = self
 	add_child(spawner)
+	webs = WebsS.new()
+	webs.sb = self
+	add_child(webs)
 	enemies = Node2D.new()
 	drones = Node2D.new()
 	bullets = Node2D.new()
@@ -301,6 +306,8 @@ func hurt_player(amount: float) -> void:
 
 func clear_enemies() -> void:
 	player.latch_count = 0
+	webs.clear()
+	player.held_t = 0.0
 	for e in enemies.get_children():
 		e.queue_free()
 	for b in bullets.get_children():
@@ -425,6 +432,7 @@ func explode(pos: Vector2, radius: float, damage: float, color: Color = Color(1.
 	audio.play("explosion", clampf(radius / 90.0 - 1.0, -6.0, 0.0) * 4.0)
 	fx_ring(pos, radius, color)
 	vfx_explosion(pos, radius, color, damage)
+	webs.burn(pos, radius)
 	for e in enemies.get_children():
 		if not e.dead and e.global_position.distance_to(pos) <= radius + e.radius:
 			e.take_damage(damage, color.lightened(0.3), (e.global_position - pos).normalized())

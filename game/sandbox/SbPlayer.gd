@@ -40,6 +40,7 @@ var latch_count := 0          # ticks currently attached to you
 var move_velocity := Vector2.ZERO   # how fast and which way you are moving (monsters lead their shots with it)
 var _prev_pos := Vector2.ZERO
 var dodge_cd := 0.0
+var held_t := 0.0                # stuck in a spider web: cannot move (can still shoot); dodge breaks free
 var _dash_t := 0.0
 var _dash_dir := Vector2.RIGHT
 var _invuln_t := 0.0
@@ -159,11 +160,12 @@ func _physics_process(delta: float) -> void:
 	if space and not _space_prev and dodge_cd <= 0.0:
 		_start_dodge(v)
 	_space_prev = space
+	held_t = maxf(0.0, held_t - delta)
 	if _dash_t > 0.0:
 		_dash_t -= delta
 		global_position += _dash_dir * DASH_SPEED * delta
 		sb.particles.add(global_position, Vector2.ZERO, 0.3, RADIUS * 0.9, Color(0.4, 0.6, 1.0, 0.35), "dot", 0.0)
-	else:
+	elif held_t <= 0.0:
 		global_position += v.normalized() * MOVE_SPEED * sb.move_speed_mult * delta
 	global_position = global_position.clamp(Vector2(RADIUS, RADIUS), sb.ARENA - Vector2(RADIUS, RADIUS))
 
@@ -334,6 +336,11 @@ func _draw() -> void:
 			var k := fmod(_t * 0.9 + i * 0.25, 1.0)
 			draw_circle(Vector2(sin(i * 2.3 + _t * 2.0) * RADIUS * 0.8, RADIUS * 0.6 - k * RADIUS * 1.8), 3.0 * (1.0 - k) + 1.0, Color(0.7, 0.35, 1.0, 0.85 * (1.0 - k)))
 		draw_string(ThemeDB.fallback_font, Vector2(-34, -RADIUS - 18), "POISONED x%d" % latch_count, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.8, 0.5, 1.0))
+	if held_t > 0.0:
+		for i in 8:
+			draw_line(Vector2.ZERO, Vector2.from_angle(TAU * i / 8.0) * RADIUS * 2.0, Color(0.9, 0.94, 1.0, 0.8), 1.5)
+		draw_arc(Vector2.ZERO, RADIUS * 1.3, 0.0, TAU, 20, Color(0.9, 0.94, 1.0, 0.8), 1.5)
+		draw_arc(Vector2.ZERO, RADIUS * 2.0, 0.0, TAU, 20, Color(0.9, 0.94, 1.0, 0.8), 1.5)
 	if dodge_cd > 0.0:
 		draw_arc(Vector2.ZERO, RADIUS + 12.0, -PI / 2.0, -PI / 2.0 + TAU * (1.0 - dodge_cd / DODGE_COOLDOWN), 24, Color(0.5, 0.7, 1.0, 0.35), 2.0)
 	var w := 44.0
@@ -354,6 +361,13 @@ func facing_angle() -> float:
 	return _aim_angle
 
 
+## Caught in a web for `seconds`.
+func web_hold(seconds: float) -> void:
+	held_t = seconds
+	sb.audio.play("click")
+	sb.fx_text(global_position + Vector2(0, -34), "STUCK!", Color(0.9, 0.95, 1.0))
+
+
 func is_invulnerable() -> bool:
 	return _invuln_t > 0.0
 
@@ -361,6 +375,9 @@ func is_invulnerable() -> bool:
 ## Dash toward the way you are moving (or where you aim if standing still).
 ## Grants a short invulnerable window and shakes every tick off you.
 func _start_dodge(move_dir: Vector2) -> void:
+	if held_t > 0.0:
+		held_t = 0.0
+		sb.fx_text(global_position + Vector2(0, -30), "BROKE FREE", Color(1.0, 1.0, 0.6))
 	_dash_dir = move_dir.normalized() if move_dir != Vector2.ZERO else Vector2.from_angle(_aim_angle)
 	_dash_t = DASH_TIME
 	_invuln_t = INVULN_TIME

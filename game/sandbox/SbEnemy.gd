@@ -60,6 +60,8 @@ var _brain_dt := 0.0
 var _skip_dt := 0.0
 var _heading := 0.0                # slow-turning monsters (Scrapper) move along this
 var _lift := 0.0                   # visual height of a tick mid-hop
+var _hop_total := 0.2
+var _web_acc := 0.0
 var _vel := Vector2.ZERO
 var _face := 0.0
 var _walk := 0.0
@@ -378,6 +380,8 @@ func _brain(player, delta: float) -> Vector2:
 			return _brain_stalk(player, delta)
 		"crawl_latch":
 			return _brain_tick(player, delta)
+		"wriggle":
+			return _brain_wriggle(player, delta)
 	return _brain_plod(player, delta)
 
 
@@ -437,11 +441,18 @@ func _brain_stalk(player, delta: float) -> Vector2:
 				_state_t = mp.get("dash_time", 0.32)
 				_dash_hit = false
 				sb.audio.play("whoosh", 2.0)
+				_web_acc = 0.0
+				_lay_web()
 			return Vector2.ZERO
 		"dash":
 			_state_t -= delta
 			var dv: Vector2 = _dash_dir * mp.get("dash_speed", 700.0) * (chill_speed if chill_t > 0.0 else 1.0)
 			_vel = dv
+			if mp.get("web", 0.0) > 0.0:
+				_web_acc += dv.length() * delta
+				if _web_acc >= mp.get("web_step", 70.0):
+					_web_acc = 0.0
+					_lay_web()
 			if not _dash_hit and d <= radius + player.RADIUS + 6.0 and not player.is_invulnerable():
 				_dash_hit = true
 				player.take_damage(stats.get("damage", 8.0) * mp.get("dash_damage_mult", 1.5))
@@ -469,35 +480,43 @@ func _brain_tick(player, delta: float) -> Vector2:
 		_lift = 0.0
 		latch(player)
 		return Vector2.ZERO
-	# Far away: a quick wiggling crawl. Close in: small creepy hops onto you.
-	if d > mp.get("hop_range", 150.0) and _state == "move":
+	# Far away: a quick wiggling crawl. Inside lunge range: a short crouch, then a
+	# fast pounce at the player (it leaps, it does not slow down), and a quick recover.
+	if d > mp.get("lunge_range", 130.0) and _state == "move":
 		_lift = 0.0
 		var dir := to_p.normalized().rotated(sin(_life_t * 7.0 + _aim_offset.x) * mp.get("wiggle", 0.45))
 		return dir * spd
 	match _state:
 		"move":
 			_state = "crouch"
-			_state_t = mp.get("crouch", 0.1)
+			_state_t = mp.get("crouch", 0.08)
 		"crouch":
 			_state_t -= delta
 			if _state_t <= 0.0:
 				_state = "hop"
-				_state_t = mp.get("hop_time", 0.17)
-				_dash_dir = to_p.normalized()
+				_dash_dir = (_lead_point(player) - global_position).normalized()
+				_hop_total = clampf((d + 8.0) / mp.get("lunge_speed", 540.0), 0.12, 0.3)
+				_state_t = _hop_total
 		"hop":
 			_state_t -= delta
-			var total: float = mp.get("hop_time", 0.17)
-			_lift = sin(PI * clampf(1.0 - _state_t / total, 0.0, 1.0)) * radius * 1.5
+			_lift = sin(PI * clampf(1.0 - _state_t / _hop_total, 0.0, 1.0)) * radius * 1.9
 			if _state_t <= 0.0:
 				_lift = 0.0
 				_state = "land"
-				_state_t = mp.get("land", 0.12)
-			return _dash_dir * (mp.get("hop_dist", 46.0) / total) * (chill_speed if chill_t > 0.0 else 1.0)
+				_state_t = mp.get("recover", 0.16)
+			return _lunge_velocity()
 		"land":
 			_state_t -= delta
 			if _state_t <= 0.0:
 				_state = "move"
 	return Vector2.ZERO
+
+
+## Maggots: a slow, sinuous crawl straight at the player. Weak alone, many together.
+func _brain_wriggle(player, _delta: float) -> Vector2:
+	var to_p: Vector2 = player.global_position - global_position
+	var dir := to_p.normalized().rotated(sin(_life_t * 9.0 + _aim_offset.x) * mp.get("wiggle", 0.7))
+	return dir * _speed()
 
 
 func _brain_plod(player, delta: float) -> Vector2:
@@ -676,3 +695,16 @@ func _think(player, delta: float) -> Vector2:
 		_desired = _brain(player, _brain_dt)
 		_brain_dt = 0.0
 	return _desired
+
+
+## Matriarch: leave a web where it is (at launch and along the dash).
+func _lay_web() -> void:
+	if mp.get("web", 0.0) > 0.0:
+		sb.webs.add(global_position, mp.get("web_radius", 26.0), mp.get("web_hold", 1.0), mp.get("web_life", 12.0))
+
+
+## A tick's pounce is instant (it bypasses the usual acceleration limit), so it
+## really does leap rather than speed up gradually.
+func _lunge_velocity() -> Vector2:
+	_vel = _dash_dir * mp.get("lunge_speed", 540.0) * (chill_speed if chill_t > 0.0 else 1.0)
+	return _vel

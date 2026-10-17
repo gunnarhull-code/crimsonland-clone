@@ -6,3 +6,4 @@ spider_drip,Spider drops,spider,base,4,drip,3.0,1,random,burrow,0.9,0,1
 alien_row,Alien march,alien,base,4,drip,2.0,1,random,rift,1.6,10,1
 tick_scatter,Tick scatter,tick,base,6,scatter,0.35,1,random,burrow,0.7,0,4
 scrapper_wall,Scrapper wall,scrapper,base,3,wall,0,1,random,rift,2.2,0,1
+maggot_pit,Maggots from a hole,maggot,base,36,drip,0.5,4,random,pit,1.8,0,1

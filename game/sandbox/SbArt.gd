@@ -9,6 +9,7 @@ const ICHOR := {
 	"alien": Color(0.25, 0.95, 0.70),
 	"tick": Color(0.55, 0.06, 0.22),
 	"scrapper": Color(0.85, 0.55, 0.2),
+	"maggot": Color(0.88, 0.86, 0.45),
 }
 
 
@@ -60,6 +61,8 @@ static func draw_enemy(ci: CanvasItem, species: String, boss: bool, r: float, an
 			_spider(ci, r, phase, tint, boss)
 		"tick":
 			_tick(ci, r, phase, tint, extra)
+		"maggot":
+			_maggot(ci, r, phase, tint)
 		"scrapper":
 			_scrapper(ci, r, phase, tint, extra)
 		_:
@@ -307,3 +310,16 @@ static func shadow(radius: float) -> PackedVector2Array:
 	for i in 14:
 		pts[i] = Vector2(u[i].x * radius * 1.3 + 3.0, u[i].y * radius * 0.95 + 5.0)
 	return pts
+
+
+## Maggot: four soft segments on a squirming line.
+static func _maggot(ci: CanvasItem, r: float, phase: float, tint: Color) -> void:
+	var body := _t(Color(0.93, 0.90, 0.68), tint)
+	var shade := _t(Color(0.74, 0.70, 0.46), tint)
+	for i in 4:
+		var x := -r * 0.9 * i
+		var y := sin(phase * 1.4 + i * 1.1) * r * 0.45
+		var rad := r * (1.0 - i * 0.14)
+		ci.draw_circle(Vector2(x, y) + Vector2(0.5, 1.0), rad, shade)
+		ci.draw_circle(Vector2(x, y), rad * 0.9, body)
+	ci.draw_circle(Vector2(r * 0.35, sin(phase * 1.4) * r * 0.45), r * 0.18, Color(0.15, 0.1, 0.05))
