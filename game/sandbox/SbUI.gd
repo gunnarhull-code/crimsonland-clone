@@ -3,6 +3,7 @@ extends CanvasLayer
 ## tuning on the right, live stats along the bottom.
 
 const Up := preload("res://sandbox/SbUpgrades.gd")
+const Formations := preload("res://sandbox/SbFormations.gd")
 
 const PANEL_W := 270.0
 
@@ -222,6 +223,16 @@ func _build_right() -> void:
 	_wave_status = _note(box, "")
 	_wave_history = _note(box, "")
 	_note(box, "Level sets enemy HP (x20 by level 10), enemies per wave and wave count. Levels 5 and 10 are the Rat King and Gate Warden (armored, adds at 75/50/25% HP). See levels.csv.")
+	var form_pick := OptionButton.new()
+	form_pick.focus_mode = Control.FOCUS_NONE
+	for fid in Formations.all_ids():
+		form_pick.add_item(Formations.get_formation(fid)["name"])
+		form_pick.set_item_metadata(form_pick.item_count - 1, fid)
+	box.add_child(form_pick)
+	var fh := HBoxContainer.new()
+	fh.add_child(_button("Run sequence", func(): sb.spawner.begin(form_pick.get_item_metadata(form_pick.selected))))
+	fh.add_child(_button("Skip +10 s", func(): sb.waves.skip_time(10.0)))
+	box.add_child(fh)
 	_on_level_changed(sb.level)
 
 	box.add_child(HSeparator.new())

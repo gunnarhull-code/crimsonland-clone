@@ -14,6 +14,7 @@ const EnemyS := preload("res://sandbox/SbEnemy.gd")
 const FxS := preload("res://sandbox/SbFx.gd")
 const RulesS := preload("res://sandbox/SbRules.gd")
 const WavesS := preload("res://sandbox/SbWaves.gd")
+const SpawnerS := preload("res://sandbox/SbSpawner.gd")
 const ParticlesS := preload("res://sandbox/SbParticles.gd")
 const DecalsS := preload("res://sandbox/SbDecals.gd")
 const Art := preload("res://sandbox/SbArt.gd")
@@ -71,6 +72,7 @@ var decals
 var cam: Camera2D
 var flash_rect: ColorRect
 var waves
+var spawner
 var ui
 
 # Switches the prototype run flips (the sandbox keeps the defaults).
@@ -106,6 +108,9 @@ func _build_world() -> void:
 	add_child(rules)
 	decals = DecalsS.new()
 	add_child(decals)
+	spawner = SpawnerS.new()
+	spawner.sb = self
+	add_child(spawner)
 	enemies = Node2D.new()
 	drones = Node2D.new()
 	bullets = Node2D.new()
@@ -380,6 +385,18 @@ func spawn_enemies(species: String, variant: String, count: int, at = null) -> A
 		enemies.add_child(e)
 		made.append(e)
 	return made
+
+
+## Spawn one monster at an exact spot. `emerge` seconds of rising out of the ground first (it cannot act yet).
+func spawn_one(species: String, variant: String, pos: Vector2, emerge: float = 0.0):
+	if enemies.get_child_count() >= MAX_ENEMIES:
+		return null
+	var e := EnemyS.new()
+	e.setup(self, species, variant, pos.clamp(Vector2(16, 16), ARENA - Vector2(16, 16)))
+	e.emerge_t = emerge
+	e.emerge_total = maxf(emerge, 0.001)
+	enemies.add_child(e)
+	return e
 
 
 func spawn_bullet(pos: Vector2, dir: Vector2, props: Dictionary, orbit: bool = false) -> void:

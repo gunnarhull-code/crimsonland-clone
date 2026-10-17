@@ -43,6 +43,8 @@ var held_t := 0.0
 var portal_cd := 0.0
 var link = null
 var latched := false
+var emerge_t := 0.0                # rising out of the ground: cannot act yet
+var emerge_total := 0.001
 var telegraph := 0.0             # 0..1 wind-up progress, drawn as a warning
 
 var _knock := Vector2.ZERO
@@ -241,8 +243,13 @@ func _physics_process(delta: float) -> void:
 	_update_regen(delta)
 	shrink_t = maxf(0.0, shrink_t - delta)
 	_size = move_toward(_size, shrink_scale if shrink_t > 0.0 else 1.0, 2.5 * delta)
-	radius = base_radius * _size
+	radius = base_radius * _size * (1.0 - 0.6 * clampf(emerge_t / emerge_total, 0.0, 1.0))
 
+	if emerge_t > 0.0:
+		emerge_t -= delta
+		_vel = Vector2.ZERO
+		queue_redraw()
+		return
 	var player = sb.player
 	stun_t = maxf(0.0, stun_t - delta)
 	held_t = maxf(0.0, held_t - delta)

@@ -64,3 +64,11 @@ Read from `SbWaves.gd`:
 3. Rebuild `levels.csv` as per-level timelines using those formations (level 1 one theme, level 9 several overlapping).
 4. Cheat menu: trigger any formation with any entrance on demand, scrub the level timeline.
 5. Maggot enemy once its design is agreed.
+
+## Built (2026-10-16): wave director step 1
+
+- `formations.csv` (7 sequences: rat burst, rat pit, rat rush, spider drip, alien march, tick scatter, scrapper wall) and `timeline.csv` (authored timelines for levels 1-4 and 6-9).
+- `SbSpawner.gd`: entrances **rift** (glowing gate at an edge), **burrow** (mounds heave, monsters burst up), **pit** (a hole opens and monsters pour out, then it closes), **edge** (chevron warning, walk in). Patterns: burst, drip, scatter, wall. Monsters rise out of the ground for a moment and cannot act while emerging. Entrances stay at least 280 px from the player.
+- `SbWaves.gd` now runs the timeline. A level ends when every event has started, every sequence has closed and every monster is dead. Boss levels (5, 10) are unchanged. Levels without a timeline fall back to the old counts.
+- Cheats: pick any sequence and run it, and "Skip +10 s" jumps the timeline.
+- Not built yet: Maggot enemy, themed pit nests that can be destroyed, ambush-from-behind sequences, sequences that react to the player's build, boss sequences, escalation tuning, the Matriarch webs.

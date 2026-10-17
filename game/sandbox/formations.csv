@@ -1,0 +1,8 @@
+id,name,species,variant,count,pattern,interval_sec,group,gate,entrance,warning_sec,spread,gates
+rat_burst,Rat burst,rat,base,10,burst,0,1,random,rift,1.2,80,1
+rat_pit,Rats from a hole,rat,base,12,drip,0.35,3,random,pit,1.6,0,1
+rat_rush,Rat rush,rat,base,10,burst,0,1,random,edge,0.4,150,1
+spider_drip,Spider drops,spider,base,4,drip,3.0,1,random,burrow,0.9,0,1
+alien_row,Alien march,alien,base,4,drip,2.0,1,random,rift,1.6,10,1
+tick_scatter,Tick scatter,tick,base,6,scatter,0.35,1,random,burrow,0.7,0,4
+scrapper_wall,Scrapper wall,scrapper,base,3,wall,0,1,random,rift,2.2,0,1

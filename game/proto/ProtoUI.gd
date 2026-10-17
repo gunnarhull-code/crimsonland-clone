@@ -4,6 +4,7 @@ extends CanvasLayer
 
 const Up := preload("res://sandbox/SbUpgrades.gd")
 const DraftS := preload("res://proto/Draft.gd")
+const Formations := preload("res://sandbox/SbFormations.gd")
 
 const CHEAT_W := 290.0
 const DAMAGE_STEPS := [1.0, 2.0, 5.0, 10.0, 50.0, 100.0, 1000.0]
@@ -358,6 +359,17 @@ func _build_cheats() -> void:
 	h2.add_child(_button("Kill all", func(): sb.clear_enemies()))
 	box.add_child(h2)
 	box.add_child(_button("Restart run", func(): run.new_run()))
+	box.add_child(_label("SPAWN SEQUENCE", 13, Color(1.0, 0.85, 0.4)))
+	var form_pick := OptionButton.new()
+	form_pick.focus_mode = Control.FOCUS_NONE
+	for fid in Formations.all_ids():
+		form_pick.add_item(Formations.get_formation(fid)["name"])
+		form_pick.set_item_metadata(form_pick.item_count - 1, fid)
+	box.add_child(form_pick)
+	var fh := HBoxContainer.new()
+	fh.add_child(_button("Run sequence", func(): sb.spawner.begin(form_pick.get_item_metadata(form_pick.selected))))
+	fh.add_child(_button("Skip +10 s", func(): sb.waves.skip_time(10.0)))
+	box.add_child(fh)
 
 	box.add_child(HSeparator.new())
 	box.add_child(_label("UPGRADES", 13, Color(1.0, 0.85, 0.4)))
