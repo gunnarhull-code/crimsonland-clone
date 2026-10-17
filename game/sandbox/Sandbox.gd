@@ -84,6 +84,8 @@ var move_speed_mult := 1.0        # cheat
 var juice_on := true             # particles, splatter, hit sparks
 var shake_on := true             # screen shake
 var _trauma := 0.0
+var shake_scale := 1.0             # 0..2, the cheat slider
+var _shake_t := 0.0
 var _damage_log: Array = []     # [time_sec, amount]
 
 
@@ -416,7 +418,7 @@ func explode(pos: Vector2, radius: float, damage: float, color: Color = Color(1.
 	explosions_this_frame += 1
 	audio.play("explosion", clampf(radius / 90.0 - 1.0, -6.0, 0.0) * 4.0)
 	fx_ring(pos, radius, color)
-	vfx_explosion(pos, radius, color)
+	vfx_explosion(pos, radius, color, damage)
 	for e in enemies.get_children():
 		if not e.dead and e.global_position.distance_to(pos) <= radius + e.radius:
 			e.take_damage(damage, color.lightened(0.3), (e.global_position - pos).normalized())
@@ -425,10 +427,16 @@ func explode(pos: Vector2, radius: float, damage: float, color: Color = Color(1.
 # ---------------------------------------------------------------------- juice --
 # Screen shake, hit sparks, gore and scorch marks. All optional (juice_on, shake_on).
 
+## Smooth, low-frequency camera sway (not per-frame random jitter, which is what gives headaches).
+## Strength is trauma squared, so small events are barely felt and big ones are wild.
 func _process(delta: float) -> void:
-	_trauma = maxf(0.0, _trauma - delta * 1.8)
-	var s := _trauma * _trauma * 22.0
-	cam.offset = Vector2(randf_range(-s, s), randf_range(-s, s)) if s > 0.01 else Vector2.ZERO
+	_trauma = maxf(0.0, _trauma - delta * 2.2)
+	_shake_t += delta
+	var s := _trauma * _trauma * 16.0 * shake_scale
+	if s > 0.05:
+		cam.offset = Vector2(sin(_shake_t * 23.0) + 0.5 * sin(_shake_t * 37.0 + 1.3), cos(_shake_t * 19.0) + 0.5 * sin(_shake_t * 31.0 + 0.7)) * s * 0.7
+	else:
+		cam.offset = Vector2.ZERO
 	if flash_rect.color.a > 0.0:
 		flash_rect.color.a = maxf(0.0, flash_rect.color.a - delta * 1.6)
 
@@ -463,10 +471,9 @@ func vfx_hit(pos: Vector2, dir: Vector2, ichor: Color, amount: float, _radius: f
 func vfx_kill(pos: Vector2, species: String, radius: float, boss: bool, dir: Vector2) -> void:
 	var ichor := Art.ichor(species)
 	if boss:
-		shake(0.45)
-		screen_flash(ichor, 0.12)
-	else:
-		shake(0.04)
+		shake(0.35)
+		screen_flash(ichor, 0.08)
+
 	if not juice_on:
 		return
 	var n := 14 + (16 if boss else 0)
@@ -476,8 +483,11 @@ func vfx_kill(pos: Vector2, species: String, radius: float, boss: bool, dir: Vec
 	fx_ring(pos, radius * (3.2 if boss else 1.9), ichor)
 
 
-func vfx_explosion(pos: Vector2, radius: float, color: Color) -> void:
-	shake(clampf(radius / 260.0, 0.04, 0.4))
+func vfx_explosion(pos: Vector2, radius: float, color: Color, damage: float = 20.0) -> void:
+	# power 1.0 is a mid-size blast (radius 90, 20 damage). Below ~0.5 there is no shake at all;
+	# a stack-4 Shrapnel or a big Volatile Core chain is well past 1.5 and shakes hard.
+	var power := (radius / 90.0) * sqrt(maxf(damage, 1.0) / 20.0)
+	shake(clampf((power - 0.5) * 0.35, 0.0, 0.6))
 	if not juice_on:
 		return
 	particles.burst(pos, Vector2.RIGHT, 16, clampf(radius * 4.0, 160.0, 520.0), PI, 0.5, 4.0, color.lightened(0.35), "line", 3.0)

@@ -97,3 +97,10 @@ A hole opens in the earth and reveals maggots. Proposed: small and soft, slow in
 ## Escalation rule (owner)
 
 Later levels stack several themed spawning sequences at once. The point is to raise difficulty and give the player a reason to dodge, so dodgeable, telegraphed threats overlap more as levels go on (see `wave-spawning-design.md`).
+
+## Tweaks after owner testing (2026-10-16)
+
+- **Tick:** crawls fast from far away, but inside 150 px it moves in small hops (crouch, hop about 46 px with a visible lift, land) and hops onto the player to latch.
+- **Scrapper:** turns very slowly (26 degrees per second, set by `turn_rate` in `monsters.csv`), so the player can run round behind it where the plate does not cover.
+- **Personal space:** monsters (ticks included, until they latch) are pushed out of the player's body, so they bite from the edge and never stand in the middle of the player.
+- **Screen shake:** scaled by how big the effect really is (blast radius and damage), so stack 1-2 effects are barely felt, stack 3-4 Shrapnel and big Volatile Core chains are strong. Smooth low-frequency sway, not random jitter. A strength slider is in the cheat menu.

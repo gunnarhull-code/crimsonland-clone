@@ -48,6 +48,8 @@ var emerge_total := 0.001
 var telegraph := 0.0             # 0..1 wind-up progress, drawn as a warning
 
 var _knock := Vector2.ZERO
+var _heading := 0.0                # slow-turning monsters (Scrapper) move along this
+var _lift := 0.0                   # visual height of a tick mid-hop
 var _vel := Vector2.ZERO
 var _face := 0.0
 var _walk := 0.0
@@ -98,6 +100,7 @@ func setup(p_sb, sp: String, p_variant: String, pos: Vector2) -> void:
 	_aim_offset = Vector2.RIGHT.rotated(randf() * TAU) * randf_range(30.0, 90.0)
 	_speed_var = randf_range(0.85, 1.15)
 	_face = randf() * TAU
+	_heading = _face
 	_walk = randf() * TAU
 	_side = 1.0 if randf() < 0.5 else -1.0
 	_flanker = randf() < mp.get("flank_chance", 0.0)
@@ -274,7 +277,13 @@ func _physics_process(delta: float) -> void:
 	global_position += (_vel + _knock) * delta
 	_knock = _knock.move_toward(Vector2.ZERO, KNOCK_DECEL * delta)
 	global_position = global_position.clamp(Vector2.ZERO, sb.ARENA)
-	if _vel.length() > 1.0:
+	_keep_out_of_player(player)
+	var slow_turner: bool = mp.get("turn_rate", 0.0) > 0.0
+	if slow_turner:
+		_face = _heading
+		if _vel.length() > 1.0:
+			_walk += _vel.length() * delta * (0.5 / maxf(radius, 6.0)) * 6.0
+	elif _vel.length() > 1.0:
 		_face = lerp_angle(_face, _vel.angle(), minf(1.0, 14.0 * delta))
 		_walk += _vel.length() * delta * (0.5 / maxf(radius, 6.0)) * 6.0
 	elif sb.enemies_chase and player.hp > 0.0 and move_kind != "swarm":
@@ -420,16 +429,43 @@ func _brain_stalk(player, delta: float) -> Vector2:
 	return Vector2.ZERO
 
 
-func _brain_tick(player, _delta: float) -> Vector2:
+func _brain_tick(player, delta: float) -> Vector2:
 	var spd := _speed()
 	var to_p: Vector2 = player.global_position - global_position
 	var d := to_p.length()
-	if d <= radius + player.RADIUS + 4.0 and not player.is_invulnerable() \
-			and player.latch_count < int(mp.get("stack_max", 6.0)):
+	if d <= radius + player.RADIUS + 4.0 and not player.is_invulnerable() and player.latch_count < int(mp.get("stack_max", 6.0)):
+		_lift = 0.0
 		latch(player)
 		return Vector2.ZERO
-	var dir := to_p.normalized().rotated(sin(_life_t * 7.0 + _aim_offset.x) * mp.get("wiggle", 0.45))
-	return dir * spd
+	# Far away: a quick wiggling crawl. Close in: small creepy hops onto you.
+	if d > mp.get("hop_range", 150.0) and _state == "move":
+		_lift = 0.0
+		var dir := to_p.normalized().rotated(sin(_life_t * 7.0 + _aim_offset.x) * mp.get("wiggle", 0.45))
+		return dir * spd
+	match _state:
+		"move":
+			_state = "crouch"
+			_state_t = mp.get("crouch", 0.1)
+		"crouch":
+			_state_t -= delta
+			if _state_t <= 0.0:
+				_state = "hop"
+				_state_t = mp.get("hop_time", 0.17)
+				_dash_dir = to_p.normalized()
+		"hop":
+			_state_t -= delta
+			var total: float = mp.get("hop_time", 0.17)
+			_lift = sin(PI * clampf(1.0 - _state_t / total, 0.0, 1.0)) * radius * 1.5
+			if _state_t <= 0.0:
+				_lift = 0.0
+				_state = "land"
+				_state_t = mp.get("land", 0.12)
+			return _dash_dir * (mp.get("hop_dist", 46.0) / total) * (chill_speed if chill_t > 0.0 else 1.0)
+		"land":
+			_state_t -= delta
+			if _state_t <= 0.0:
+				_state = "move"
+	return Vector2.ZERO
 
 
 func _brain_plod(player, delta: float) -> Vector2:
@@ -454,6 +490,11 @@ func _brain_plod(player, delta: float) -> Vector2:
 	var target: Vector2 = player.global_position
 	if d >= 100.0:
 		target += _aim_offset
+	var turn: float = mp.get("turn_rate", 0.0)
+	if turn > 0.0:
+		# Slow turners keep moving along their heading, so you can get round behind them.
+		_heading = rotate_toward(_heading, (target - global_position).angle(), deg_to_rad(turn) * delta)
+		return Vector2.from_angle(_heading) * spd
 	return (target - global_position).normalized() * spd
 
 
@@ -461,7 +502,7 @@ func _slam(player) -> void:
 	var r: float = mp.get("stomp_radius", 130.0)
 	sb.fx_ring(global_position, r, Color(1.0, 0.4, 0.2))
 	sb.audio.play("explosion", -2.0)
-	sb.shake(0.3)
+	sb.shake(0.16)
 	sb.particles.burst(global_position, Vector2.RIGHT, 18, r * 2.2, PI, 0.45, 4.0, Color(0.55, 0.5, 0.45, 0.8), "dot", 4.0)
 	if global_position.distance_to(player.global_position) <= r + player.RADIUS and not player.is_invulnerable():
 		player.take_damage(mp.get("stomp_damage", 18.0))
@@ -540,7 +581,8 @@ func _draw() -> void:
 	elif species == "scrapper":
 		extra = deg_to_rad(plate_arc_deg)
 	var bob := sin(_life_t * 9.0 + _walk) * 0.015 if _vel.length() > 5.0 else 0.0
-	Art.draw_enemy(self, species, variant == "boss", radius, _face, _walk, tint, _flash * 1.2 + bob + squat, armor > 0.0, _kick, extra)
+	Art.draw_enemy(self, species, variant == "boss", radius, _face, _walk, tint, _flash * 1.2 + bob + squat, armor > 0.0, _kick + Vector2(0, -_lift), extra)
+	draw_set_transform(Vector2(0, -_lift), 0.0, Vector2.ONE)
 	Art.draw_status(self, radius, _life_t, poison_t > 0.0, chill_t > 0.0, stun_t > 0.0, shards)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
@@ -548,3 +590,14 @@ func _draw() -> void:
 		var w := radius * 2.0 + 10.0
 		draw_rect(Rect2(-w / 2.0, -radius - 12.0, w, 4.0), Color(0, 0, 0, 0.6))
 		draw_rect(Rect2(-w / 2.0, -radius - 12.0, w * clampf(hp / max_hp, 0.0, 1.0), 4.0), Color(0.9, 0.3, 0.3))
+
+
+## Monsters bite from the edge of the player, never from inside the centre.
+func _keep_out_of_player(player) -> void:
+	if latched or emerge_t > 0.0 or player.hp <= 0.0:
+		return
+	var off: Vector2 = global_position - player.global_position
+	var min_d: float = radius + player.RADIUS
+	if off.length() < min_d:
+		var dir := off.normalized() if off.length() > 0.01 else Vector2.RIGHT.rotated(randf() * TAU)
+		global_position = player.global_position + dir * min_d

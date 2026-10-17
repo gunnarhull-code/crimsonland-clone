@@ -273,6 +273,20 @@ func _build_cheats() -> void:
 	_check(box, "Damage numbers", sb.show_numbers, func(v): sb.show_numbers = v)
 	_check(box, "Particles and splatter", sb.juice_on, func(v): sb.set_juice(v))
 	_check(box, "Screen shake", sb.shake_on, func(v): sb.shake_on = v)
+	var sh_label := Label.new()
+	sh_label.add_theme_font_size_override("font_size", 12)
+	sh_label.text = "Shake strength x%.2f" % sb.shake_scale
+	box.add_child(sh_label)
+	var sh := HSlider.new()
+	sh.min_value = 0.0
+	sh.max_value = 2.0
+	sh.step = 0.1
+	sh.value = sb.shake_scale
+	sh.focus_mode = Control.FOCUS_NONE
+	sh.value_changed.connect(func(v):
+		sb.shake_scale = v
+		sh_label.text = "Shake strength x%.2f" % v)
+	box.add_child(sh)
 	_check(box, "Sound effects", sb.audio.enabled, func(v): sb.audio.enabled = v)
 	var dmg_label := _label("Damage dealt x1", 12)
 	box.add_child(dmg_label)

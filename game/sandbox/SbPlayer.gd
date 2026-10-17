@@ -266,7 +266,7 @@ func _fire_beam(dir: Vector2) -> void:
 	var st: Dictionary = sb.bullet_stacks(0)
 	var props := make_props(st, 0)
 	sb.audio.play("beam")
-	sb.shake(0.25)
+	sb.shake(0.12)
 	sb.rules.on_fired(props)
 	var dmg: float = props["damage"] * Up.p("heat_coil", "beam_mult")
 	var from := global_position
@@ -288,8 +288,8 @@ func take_damage(amount: float) -> void:
 	hp = maxf(0.0, hp - amount)
 	damage_taken += amount
 	sb.audio.play("hurt")
-	sb.shake(0.3)
-	sb.screen_flash(Color(1.0, 0.1, 0.1), 0.3)
+	sb.shake(clampf(amount / 60.0, 0.03, 0.2))
+	sb.screen_flash(Color(1.0, 0.1, 0.1), clampf(amount / 50.0 * 0.3, 0.06, 0.3))
 	sb.fx_text(global_position + Vector2(0, -26), "-%d" % int(amount), Color(1.0, 0.4, 0.4))
 	if hp <= 0.0:
 		_dead_t = 1.5
