@@ -1,6 +1,6 @@
 # Wave spawning design (draft, for review)
 
-Status: **design only.** The owner said wave spawning "needs serious work" and has not yet answered the questions at the bottom.
+Status: **design only (no code).** The owner said wave spawning "needs serious work". Answers so far are in "Owner decisions" below.
 
 ## What is wrong today
 
@@ -25,3 +25,27 @@ Read from `SbWaves.gd`:
 2. Authored timeline per level, a random director with a budget, or an authored skeleton with random details?
 3. Overlapping waves, or strictly clear-first with telegraphed gates?
 4. Should some spawns react to the player's build (for example more flankers if the player owns Blast Ring), or stay fixed per level?
+
+## Owner decisions (2026-10-16)
+
+- **What bothers them:** everything appearing at once in a ring, every wave feeling the same, and mixes that lack pressure and variety. (Dead time between waves was not ticked.)
+- **Structure:** **authored timeline per level** (a CSV list of timed events).
+- **Overlap model: themed spawning sequences, one signature per enemy type.** Not "wave then clear". Examples from the owner: groups of rats all at once; a row of aliens every couple of seconds. Sequences from different species overlap on the level timeline.
+- **Consequence for the design:** a formation is a *species-themed sequence* (a pattern in time and space), not just a count. `formations.csv` rows should describe: species, count, gate or edge, timing (all at once, drip every N s, rows), and the telegraph. A level's timeline then places several of these sequences. See the open questions below.
+
+## Next questions (still open)
+
+1. Which signature sequence for each species? (draft below)
+2. Where do monsters come from: telegraphed rifts at the edges, or anywhere?
+3. How long is the warning before a sequence arrives?
+4. Do later levels run several sequences at once, or just faster and bigger ones?
+
+### Draft signature sequences (for the owner to change)
+
+| species | signature sequence |
+|---|---|
+| Rat | a burst: 8-12 at once from one gate, plus flankers peeling off |
+| Spider | singles or pairs dropping in every few seconds, so there is always a hunter on you |
+| Alien Brute | a row of 3-5 marching in from one edge, one every ~2 s |
+| Tick | a fast scatter from several gates at once, arriving low and quick |
+| Scrapper | a slow wall: 2-3 side by side advancing together, tick packs behind them |

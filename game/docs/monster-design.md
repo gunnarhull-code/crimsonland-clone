@@ -78,11 +78,11 @@ Marked **(1)** are proposed for the first build batch.
 The boss spider leaves spiderweb traps where it launches.
 
 - **Where:** a web at each launch point; optionally a thin trail along the dash path. The dash wind-up already marks where it lands, so webs mark where it has been.
-- **Effect:** a ground patch (about 40-60 px). Stepping in slows the player to about 40% for 2 s, longer while standing in it. A stuck player is easy prey for the next lunge, which is the trap.
+- **Effect (updated by the owner):** a ground patch (about 40-60 px). Stepping in holds the player in place for about 1 s (earlier draft: a 40% slow). A stuck player is easy prey for the next lunge, which is the trap.
 - **Counterplay:** dodge cuts through a web so you are not stuck; blasts (Blast Ring, Shrapnel) burn webs; Chill makes webs brittle so they stop slowing you; Gravity Seed can pull monsters into webs. Webs can snare monsters too (rats running through them).
 - **Limits:** about 12 s lifetime, around 8 at once.
 - **Look:** pale web lines on the dark floor with a slight shimmer.
-- **Open:** launch point only or a trail? slow or brief hold? Matriarch only, or elite spiders on normal levels too?
+- **Owner decisions:** webs at the launch points **and a trail along the dash**, and stepping in a web **holds the player down for about a second** (not just a slow). Still open: Matriarch only, or elite spiders on normal levels too?
 
 ## Other owner ideas parked here
 
