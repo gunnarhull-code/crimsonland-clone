@@ -145,4 +145,4 @@ Bullets curve softly toward the closest enemy ahead (turn 70 deg/s, 50 degree co
 - **Result:** level 9 averages about 190 fps (was single digits at level 8); 400 chasing rats about 145 fps.
 - **FPS counter:** top right (F2 hides it) shows FPS, frame time, enemy, bullet, text and particle counts, and draw calls.
 - **Scrapper is twice the size** (radius 48, was 24); the wall formation spaces them by size.
-- **Rat King adds are capped:** at most 24 rat adds alive at once (`add_cap` in `levels.csv`), spawning 5 every 1.5 s as space opens. The Gate Warden's escorts cap at 8.
+- **Rat King adds are capped:** at most 100 rat adds alive at once (`add_cap` in `levels.csv`), spawning 5 every 1.5 s as space opens. The Gate Warden's escorts cap at 8.
