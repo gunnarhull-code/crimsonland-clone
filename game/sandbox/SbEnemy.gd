@@ -391,7 +391,7 @@ func _brain_stalk(player, delta: float) -> Vector2:
 			if _lunge_cd <= 0.0 and d < mp.get("orbit", 250.0) * 1.8:
 				_state = "windup"
 				_state_t = mp.get("windup", 0.55)
-				_dash_dir = to_p.normalized()
+				_dash_dir = (_lead_point(player) - global_position).normalized()
 				sb.audio.play("alert")
 			return v
 		"windup":
@@ -399,7 +399,7 @@ func _brain_stalk(player, delta: float) -> Vector2:
 			var total: float = mp.get("windup", 0.55)
 			telegraph = 1.0 - clampf(_state_t / total, 0.0, 1.0)
 			if _state_t > 0.12:
-				_dash_dir = to_p.normalized()
+				_dash_dir = (_lead_point(player) - global_position).normalized()
 			if _state_t <= 0.0:
 				_state = "dash"
 				_state_t = mp.get("dash_time", 0.32)
@@ -601,3 +601,19 @@ func _keep_out_of_player(player) -> void:
 	if off.length() < min_d:
 		var dir := off.normalized() if off.length() > 0.01 else Vector2.RIGHT.rotated(randf() * TAU)
 		global_position = player.global_position + dir * min_d
+
+
+## Where the player will be when a dash started now would arrive: aim there, not
+## at where they stand. A running player gets cut off; only a dodge (or turning
+## after the aim locks) avoids it. `lead` in monsters.csv scales the prediction.
+func _lead_point(player) -> Vector2:
+	var lead: float = mp.get("lead", 0.0)
+	if lead <= 0.0:
+		return player.global_position
+	var dash_speed: float = mp.get("dash_speed", 700.0)
+	var t := global_position.distance_to(player.global_position) / dash_speed
+	var future: Vector2 = player.global_position
+	for i in 2:
+		future = player.global_position + player.move_velocity * t * lead
+		t = global_position.distance_to(future) / dash_speed
+	return future.clamp(Vector2.ZERO, sb.ARENA)

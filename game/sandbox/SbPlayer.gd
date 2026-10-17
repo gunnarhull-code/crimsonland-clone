@@ -37,6 +37,8 @@ var heat := 0
 var aim_override = null      # tests can force the aim point
 var damage_taken := 0.0
 var latch_count := 0          # ticks currently attached to you
+var move_velocity := Vector2.ZERO   # how fast and which way you are moving (monsters lead their shots with it)
+var _prev_pos := Vector2.ZERO
 var dodge_cd := 0.0
 var _dash_t := 0.0
 var _dash_dir := Vector2.RIGHT
@@ -132,6 +134,8 @@ func _count(st: Dictionary, extra: int) -> int:
 # -------------------------------------------------------------------- update --
 
 func _physics_process(delta: float) -> void:
+	move_velocity = (global_position - _prev_pos) / maxf(delta, 0.0001)
+	_prev_pos = global_position
 	_t += delta
 	_flash_t = maxf(0.0, _flash_t - delta)
 	_recoil = move_toward(_recoil, 0.0, 60.0 * delta)
