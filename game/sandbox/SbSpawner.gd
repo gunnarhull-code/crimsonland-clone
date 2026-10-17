@@ -167,7 +167,13 @@ func _physics_process(delta: float) -> void:
 				if s["t"] >= f["warning"]:
 					s["state"] = "run"
 					s["t"] = 0.0
+					if f["entrance"] == "pit":
+						_open_nest(s)
 			"run":
+				if f["entrance"] == "pit":
+					s["state"] = "close"
+					s["close_t"] = 0.05
+					continue
 				var entries: Array = s["entries"]
 				while s["next"] < entries.size() and entries[s["next"]]["at"] <= s["t"]:
 					_spawn_entry(s, entries[s["next"]])
@@ -212,8 +218,9 @@ func _draw() -> void:
 				for p in s["points"]:
 					_draw_rift(p, prog * closing, now)
 			"pit":
-				for p in s["points"]:
-					_draw_pit(p, prog * closing, now, s["state"] == "warn")
+				if s["state"] == "warn":
+					for p in s["points"]:
+						_draw_pit(p, prog, now, true)
 			"burrow":
 				var entries: Array = s["entries"]
 				for i in entries.size():
@@ -260,3 +267,18 @@ func _draw_chevron(p: Vector2, k: float, now: float) -> void:
 	for i in 3:
 		var o := Vector2(0, -float(i) * 10.0)
 		draw_colored_polygon(PackedVector2Array([p + o + Vector2(-9, 0), p + o + Vector2(0, -9), p + o + Vector2(9, 0)]), Color(1.0, 0.45, 0.2, (0.3 + 0.5 * pulse) * k))
+
+
+## A pit entrance becomes a nest: a monster you can shoot or blast. The nest
+## breeds the formation's monsters out of the hole (count, interval and group
+## from formations.csv) and collapses when it runs dry; destroy it first and
+## the rest never come out.
+func _open_nest(s: Dictionary) -> void:
+	var f: Dictionary = s["f"]
+	if s["points"].is_empty():
+		return
+	var nest = sb.spawn_one("nest", "base", s["points"][0], 0.5)
+	if nest == null:
+		return
+	nest.nest_setup(f["species"], f["variant"], s["count"], f["interval"], f["group"])
+	sb.audio.play("rumble")

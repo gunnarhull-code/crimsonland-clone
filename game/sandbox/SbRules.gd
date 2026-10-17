@@ -360,6 +360,8 @@ func _tick_zones(delta: float) -> void:
 			var off: Vector2 = z["pos"] - e.global_position
 			if off.length() > z["r"] + e.radius:
 				continue
+			if z["kind"] == "gravity" and e.immovable:
+				continue
 			if z["kind"] == "gravity":
 				e.global_position += off.normalized() * minf(Up.p("gravity_seed", "pull") * delta, off.length())
 			else:
@@ -408,6 +410,8 @@ func _tick_portals(delta: float) -> void:
 		return
 	var r := Up.p("twin_gate", "radius")
 	for e in sb.enemies.get_children():
+		if e.immovable:
+			continue
 		if e.portal_cd > 0.0:
 			e.portal_cd -= delta
 			continue

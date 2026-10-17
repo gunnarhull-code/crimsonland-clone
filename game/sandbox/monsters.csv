@@ -9,3 +9,4 @@ tick,base,Tick,12,0,0,225,7,crawl_latch,latch_dps=3;stack_max=6;shake_stun=1.0;w
 scrapper,base,Scrapper,120,12,1.2,52,24,plod,plate_arc=150;turn_rate=55
 maggot,base,Maggot,8,4,0.6,100,6,wriggle,wiggle=0.7;grow_time=16;pupate=1.4
 fly,base,Fly,24,4,0.5,185,7,flit,dart_min=0.18;dart_max=0.45;sidestep_chance=0.35;sidestep_dist=60;sidestep_cd=1.2
+nest,base,Nest,60,0,0,0,40,nest,immovable=1

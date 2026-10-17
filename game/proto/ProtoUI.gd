@@ -409,9 +409,9 @@ func _build_cheats() -> void:
 
 	box.add_child(HSeparator.new())
 	box.add_child(_label("SPAWN  (ring around you)", 13, Color(1.0, 0.85, 0.4)))
-	for sp in ["rat", "spider", "alien", "tick", "scrapper", "maggot", "fly"]:
+	for sp in ["rat", "spider", "alien", "tick", "scrapper", "maggot", "fly", "nest"]:
 		for variant in ["base", "boss"]:
-			if variant == "boss" and (sp == "tick" or sp == "scrapper" or sp == "maggot" or sp == "fly"):
+			if variant == "boss" and (sp == "tick" or sp == "scrapper" or sp == "maggot" or sp == "fly" or sp == "nest"):
 				continue
 			var r := HBoxContainer.new()
 			var l := _label("%s%s" % [sp.capitalize(), " boss" if variant == "boss" else ""], 12)

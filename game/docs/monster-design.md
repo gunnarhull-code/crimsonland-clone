@@ -127,3 +127,12 @@ Owner: maggots were harmless. Rework:
 ## Upgrade added: Homing (owner idea)
 
 Bullets curve softly toward the closest enemy ahead (turn 70 deg/s, 50 degree cone, 450 px range at stack 1, so no hard turns). Each stack doubles the turn rate and the cone (cone capped at 180). Skips enemies the bullet already hit. Weight 0.1 (early, common).
+
+## Built 2026-10-17: destructible Nest
+
+- A **pit entrance now makes a Nest**: a real monster (60 HP at level 1, scaled by level, radius 40) sitting in a hole. Bullets, blasts and poison hit it like any monster; it cannot be shoved, pulled or teleported.
+- The nest **breeds the formation's monsters out of the hole** over time (count, interval and group size come from `formations.csv`), so `maggot_pit` is a nest that spits maggots and `rat_pit` a nest that spits rats.
+- **Destroy it and the stream stops**: the rest never come out. If it runs dry it collapses on its own (not a kill). The level does not end while a nest is alive, so it is also an objective.
+- The pit warning (a hole opening, 1.6-1.8 s) is unchanged; the nest rises out of it.
+- A nest from the spawn buttons just breeds maggots (40 of them).
+- Observation from a scripted bot: a stationary bot can never kill a Scrapper (the plate always faces it). At 55 degrees per second a Scrapper out-turns anyone circling it from further than about 220 px, so outflanking means running a tight arc close in. If that proves too hard in play, lower `turn_rate` for the Scrapper.

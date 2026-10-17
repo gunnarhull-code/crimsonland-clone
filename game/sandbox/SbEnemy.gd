@@ -62,6 +62,14 @@ var _heading := 0.0                # slow-turning monsters (Scrapper) move along
 var _lift := 0.0                   # visual height of a tick mid-hop
 var _hop_total := 0.2
 var _grow_t := 0.0               # maggots: time alive, they pupate into a fly if you leave them
+var immovable := false             # nests: cannot be shoved, pulled or teleported
+var _emit_species := ""
+var _emit_variant := "base"
+var _emit_left := 0
+var _emit_group := 2
+var _emit_interval := 0.9
+var _emit_t := 0.6
+var _collapse_t := -1.0
 var _flit_t := 0.0
 var _flit_dir := Vector2.RIGHT
 var _flit_mult := 1.0
@@ -122,6 +130,7 @@ func setup(p_sb, sp: String, p_variant: String, pos: Vector2) -> void:
 	_dmg = stats.get("damage", 0.0)
 	_atk_cd = stats.get("attack_cooldown_sec", 1.0)
 	_pack_speed = mp.get("pack_speed", 0.0)
+	immovable = mp.get("immovable", 0.0) > 0.0
 	_pack_bite = mp.get("pack_bite", 0.0)
 	_base_speed = stats.get("chase_speed_px_s", 100.0)
 	_walk = randf() * TAU
@@ -154,6 +163,8 @@ func apply_chill(speed_mult: float, duration: float) -> void:
 
 
 func knock(impulse: Vector2) -> void:
+	if immovable:
+		return
 	if latched:
 		unlatch(0.6)
 	_knock += impulse
@@ -288,6 +299,10 @@ func _physics_process(delta: float) -> void:
 		_vel = Vector2.ZERO
 		queue_redraw()
 		return
+	if move_kind == "nest":
+		_brain_nest(delta)
+		queue_redraw()
+		return
 	var player = sb.player
 	stun_t = maxf(0.0, stun_t - delta)
 	held_t = maxf(0.0, held_t - delta)
@@ -390,6 +405,8 @@ func _brain(player, delta: float) -> Vector2:
 			return _brain_tick(player, delta)
 		"wriggle":
 			return _brain_wriggle(player, delta)
+		"nest":
+			return _brain_nest(delta)
 		"flit":
 			return _brain_flit(player, delta)
 	return _brain_plod(player, delta)
@@ -661,6 +678,8 @@ func _draw() -> void:
 
 ## Monsters bite from the edge of the player, never from inside the centre.
 func _keep_out_of_player(player) -> void:
+	if immovable:
+		return
 	if latched or emerge_t > 0.0 or player.hp <= 0.0:
 		return
 	var off: Vector2 = global_position - player.global_position
@@ -755,3 +774,44 @@ func _grow(delta: float) -> void:
 	elif _grow_t >= total - pupate and _state != "pupate":
 		_state = "pupate"
 		_vel = Vector2.ZERO
+
+
+## Nest setup: what it spits out, how many, how fast. A nest made with no setup
+## (spawn buttons) just breeds maggots.
+func nest_setup(species_id: String, variant_id: String, count: int, interval: float, group: int) -> void:
+	_emit_species = species_id
+	_emit_variant = variant_id
+	_emit_left = count
+	_emit_interval = maxf(interval, 0.15)
+	_emit_group = maxi(group, 1)
+
+
+## A nest sits still and breeds monsters out of the hole until it has none left,
+## then collapses. Destroy it first and the rest never come out.
+func _brain_nest(delta: float) -> Vector2:
+	_walk += delta * 3.0
+	if _emit_species == "":
+		nest_setup("maggot", "base", 40, 0.9, 2)
+	if _collapse_t >= 0.0:
+		_collapse_t -= delta
+		if _collapse_t <= 0.0:
+			_collapse()
+		return Vector2.ZERO
+	_emit_t -= delta
+	if _emit_t <= 0.0 and _emit_left > 0:
+		_emit_t = _emit_interval
+		for i in mini(_emit_group, _emit_left):
+			sb.spawn_one(_emit_species, _emit_variant, global_position + Vector2.from_angle(randf() * TAU) * randf_range(0.0, radius * 0.4), 0.45)
+		_emit_left -= _emit_group
+		sb.particles.burst(global_position, Vector2.UP, 6, 140.0, PI, 0.4, 3.5, Color(0.32, 0.24, 0.17, 0.9), "dot", 4.0)
+		if _emit_left <= 0:
+			_collapse_t = 0.9
+	return Vector2.ZERO
+
+
+## Ran dry: the hole caves in. Not a kill.
+func _collapse() -> void:
+	dead = true
+	sb.particles.burst(global_position, Vector2.UP, 16, 200.0, PI, 0.6, 4.5, Color(0.32, 0.24, 0.17, 0.9), "dot", 3.0)
+	sb.audio.play("rumble")
+	queue_free()

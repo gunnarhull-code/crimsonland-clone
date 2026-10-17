@@ -11,6 +11,7 @@ const ICHOR := {
 	"scrapper": Color(0.85, 0.55, 0.2),
 	"maggot": Color(0.88, 0.86, 0.45),
 	"fly": Color(0.45, 0.85, 0.4),
+	"nest": Color(0.42, 0.3, 0.2),
 }
 
 
@@ -66,6 +67,8 @@ static func draw_enemy(ci: CanvasItem, species: String, boss: bool, r: float, an
 			_maggot(ci, r, phase, tint)
 		"fly":
 			_fly(ci, r, phase, tint)
+		"nest":
+			_nest(ci, r, phase, tint)
 		"scrapper":
 			_scrapper(ci, r, phase, tint, extra)
 		_:
@@ -355,3 +358,18 @@ static func draw_cocoon(ci: CanvasItem, r: float, shake: Vector2) -> void:
 		var y := (i - 1) * r * 0.6
 		ci.draw_line(shake + Vector2(-r * 1.5, y), shake + Vector2(r * 1.5, y), Color(0.7, 0.68, 0.55, 0.9), 1.2)
 	ci.draw_circle(shake + Vector2(r * 0.4, -r * 0.1), r * 0.3, Color(0.5, 0.65, 0.3, 0.7))
+
+
+## Nest: a hole in the ground ringed with churned dirt, with something pale writhing inside.
+static func _nest(ci: CanvasItem, r: float, phase: float, tint: Color) -> void:
+	_ellipse(ci, Vector2.ZERO, r * 1.3, r * 1.3, _t(Color(0.25, 0.18, 0.12), tint), 16)
+	_ellipse(ci, Vector2.ZERO, r * 1.05, r * 1.05, _t(Color(0.4, 0.29, 0.19), tint), 16)
+	_ellipse(ci, Vector2.ZERO, r * 0.85, r * 0.85, Color(0.01, 0.01, 0.01), 16)
+	for i in 6:   # clods of earth round the rim
+		var a := TAU * i / 6.0 + 0.3
+		ci.draw_circle(Vector2.from_angle(a) * r * 1.12, r * 0.14, _t(Color(0.5, 0.37, 0.25), tint))
+	for i in 3:   # pale worms squirming in the dark
+		var a2 := phase * 0.7 + i * 2.1
+		var p := Vector2.from_angle(a2) * r * 0.35
+		ci.draw_circle(p, r * 0.13, Color(0.93, 0.9, 0.68))
+		ci.draw_circle(p + Vector2.from_angle(a2 + 1.6) * r * 0.18, r * 0.11, Color(0.8, 0.77, 0.55))
