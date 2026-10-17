@@ -72,3 +72,20 @@ Marked **(1)** are proposed for the first build batch.
 ## Later ideas (owner)
 
 - **Pick your stages:** let the player choose which levels or scenarios to play, to tailor their own experience (stage selection before or between levels). Not designed yet. Ties into the portal choice in spec section 8.
+
+## Idea: Spider Matriarch webs (owner, draft)
+
+The boss spider leaves spiderweb traps where it launches.
+
+- **Where:** a web at each launch point; optionally a thin trail along the dash path. The dash wind-up already marks where it lands, so webs mark where it has been.
+- **Effect:** a ground patch (about 40-60 px). Stepping in slows the player to about 40% for 2 s, longer while standing in it. A stuck player is easy prey for the next lunge, which is the trap.
+- **Counterplay:** dodge cuts through a web so you are not stuck; blasts (Blast Ring, Shrapnel) burn webs; Chill makes webs brittle so they stop slowing you; Gravity Seed can pull monsters into webs. Webs can snare monsters too (rats running through them).
+- **Limits:** about 12 s lifetime, around 8 at once.
+- **Look:** pale web lines on the dark floor with a slight shimmer.
+- **Open:** launch point only or a trail? slow or brief hold? Matriarch only, or elite spiders on normal levels too?
+
+## Other owner ideas parked here
+
+- **Slower bullets as an upgrade debuff.** Any upgrade can carry a `bullet_speed` number in `upgrades.csv` (already supported; nothing uses it yet). Candidates: Grow, Pierce, Shrapnel.
+- **Shrink (built as an upgrade):** shrunk enemies are smaller (harder to hit) but take 50% more damage. A pickup version (a ground item that shrinks nearby enemies) is a later idea.
+- **Pick your own stages** (see above).

@@ -1,6 +1,6 @@
 # Handoff: Crimsonland-clone V2 prototype
 
-For a fresh Claude Code session (e.g. via remote control on the owner's PC). Read this first, then `design-v2-exponential-upgrades.md`. **Nothing for V2 has been coded yet.** Last updated 2026-10-12.
+For a fresh Claude Code session (e.g. via remote control on the owner's PC). Read this first, then `design-v2-exponential-upgrades.md`. **A playable prototype and a test sandbox now exist (see "What is built" below).** Last updated 2026-10-16.
 
 ## Setup
 
@@ -14,6 +14,18 @@ For a fresh Claude Code session (e.g. via remote control on the owner's PC). Rea
   - `rubric-page/`: source for the phone/desktop page that shows the rubric. `template.html` plus `build.ps1`, see its README. The page is published as a private artifact: https://claude.ai/artifact/CjLSR36SKGLYJqBizP4g9v . Edits made on the page save in the viewer's browser only; its "Copy CSV" button exports the table so it can be pasted over `upgrade-rubric.csv`.
   - `design-weapons-perks-shop.md`: **superseded**, background only.
   - `HANDOFF.md`: this file.
+
+## What is built (2026-10-16)
+
+No `game_v2/` fork was made. Instead two folders sit next to the old game and share scripts. The old game is untouched.
+
+- **`game/sandbox/`**: the test bench (run with `run-sandbox.bat`). Left panel: +/- stacks for all 32 upgrades, hover for exact numbers. Right panel: spawn monsters, level 1-10 wave test, cheats. Scripts: `Sandbox.gd` (world), `SbPlayer.gd` (firing pipeline, dodge), `SbBullet.gd` (shape upgrades), `SbRules.gd` (triggers, states, world objects, tooltips text), `SbEnemy.gd` (monster brains), `SbWaves.gd` (level runner), `SbArt.gd` (all drawn art, no image files), `SbParticles.gd`, `SbDecals.gd`, `SbAudio.gd` (synthesized sounds), `SbUI.gd`.
+- **`game/proto/`**: the real run (run with `run-proto.bat`): `Run.gd` (10-level flow, extends the sandbox world), `Draft.gd` (spec 13.15 weighted pick-1-of-3, pick N before level N), `ProtoUI.gd` (HUD, pick cards, end screens, F1 cheat menu).
+- **Data (all CSV, in `game/sandbox/`)**: `upgrades.csv` (summary text, numeric params, weight, requires), `monsters.csv` (stats, `move` brain, behaviour params), `levels.csv` (waves and enemy counts per level, boss rows).
+- **Monsters built (batch 1)**: Rat (flank, scatter), Tick (latch, poison), Spider (stalk, lunge, sidestep), Alien Brute (armor, regen, stomp), Scrapper (front plate), plus a player dodge (Space). Bosses are the same species with boss rows (Rat King, Spider Matriarch, Gate Warden) but have no special behaviour yet. See `monster-design.md`.
+- **Verification**: headless Godot checks and scripted bot runs; rendered frames can be captured with `--write-movie` (non-headless) to see the art. A bot run through all 10 levels completes.
+- **Rules the owner set during testing**: Blast Ring does not hurt the player; default bullet speed is 475 px/s with the Velocity upgrade (x2 per stack); every bullet lives 20 s; portals keep the bullet angle to the wall; a bullet (and its Split/Echo children) cannot hit an enemy it already hit (Zigzag aside); Still Field only affects enemies; Brood Seed drones never expire (cap 60); Grow keeps its charge time and gets a size slider.
+- **Owner is holding builds**: as of 2026-10-16 the owner said not to rebuild or relaunch the app until they say. Docs can be edited freely.
 
 ## The owner's goals and working style
 
@@ -56,9 +68,11 @@ For a fresh Claude Code session (e.g. via remote control on the owner's PC). Rea
 
 ## Suggested next steps
 
-1. Get answers to the open questions above, especially 1 (charge time), which changes Grow's balance.
-2. **Write the build calculator before the roster passes about 30 upgrades** (see `balance-system.md`). Do it in GDScript or PowerShell. It tests builds of exactly L picks for level L against the enemy line and the per-level ceiling.
-3. Build step 1 of spec section 11 when the owner says to proceed: copy `game/` to `game_v2/`, add `upgrades.csv`, `upgrade_effects.csv` and `states.csv` plus loaders, implement the fire pipeline (with inheritance for spawned bullets) and the 5 starter upgrades. Keep it playable at each step.
+1. Wait for the owner to say building may resume.
+2. **Wave spawning needs serious work** (owner). Proposal in `wave-spawning-design.md`; the owner has not answered its questions yet.
+3. More monsters and boss behaviour: `monster-design.md` (Can Bomb, Mender, Blinker, Matriarch webs, Rat King, Gate Warden).
+4. Ideas parked: pick-your-own-stages, slower bullets as an upgrade debuff, shrink pickups, unlocks system, portal choice between levels, a retune of the open questions list above.
+5. Write the build calculator before the roster passes about 30 upgrades (`balance-system.md`).
 
 ## Existing code you'll need to know (`game/`)
 
