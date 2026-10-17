@@ -136,7 +136,16 @@ func _spawn_boss() -> void:
 
 
 func _spawn_adds() -> void:
-	var made: Array = sb.spawn_enemies(_row["add_species"], "base", int(_row["add_batch"]),
+	# never more than add_cap of the boss adds alive at once; killing them frees room for more
+	var cap := int(_row["add_cap"]) if _row.get("add_cap", "") != "" else 9999
+	var alive := 0
+	for e in sb.enemies.get_children():
+		if e.species == _row["add_species"] and e.variant == "base" and not e.dead:
+			alive += 1
+	var want := mini(int(_row["add_batch"]), cap - alive)
+	if want <= 0:
+		return
+	var made: Array = sb.spawn_enemies(_row["add_species"], "base", want,
 		_boss.global_position if is_instance_valid(_boss) else null)
 	for e in made:
 		e.armor = maxf(e.armor, float(_row["armor"]))

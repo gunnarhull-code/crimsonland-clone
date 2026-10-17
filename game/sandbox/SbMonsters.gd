@@ -46,3 +46,10 @@ static func _parse(s: String) -> Dictionary:
 		if kv.size() == 2:
 			d[kv[0].strip_edges()] = float(kv[1])
 	return d
+
+
+## Every monster row, for things that need the whole roster (the sprite baker).
+static func all() -> Array:
+	if _rows.is_empty():
+		_load()
+	return _rows.values()

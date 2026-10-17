@@ -10,6 +10,7 @@ extends Node2D
 ## over several points), wall (side by side along an edge).
 
 const Formations := preload("res://sandbox/SbFormations.gd")
+const Monsters := preload("res://sandbox/SbMonsters.gd")
 
 const SAFE_DISTANCE := 280.0     # entrances stay this far from the player
 const EDGE_INSET := 34.0
@@ -77,7 +78,7 @@ func _plan(s: Dictionary) -> void:
 			points = [gate3]
 			var along := _edge_tangent(gate3)
 			for i in count:
-				var off := (i - (count - 1) * 0.5) * 62.0
+				var off := (i - (count - 1) * 0.5) * (2.0 * float(Monsters.get_stats(f["species"], f["variant"]).get("hitbox_radius_px", 24.0)) + 16.0)
 				entries.append({"at": i * 0.12, "pos": (gate3 + along * off).clamp(Vector2(20, 20), sb.ARENA - Vector2(20, 20)), "done": false})
 		"around":
 			var center: Vector2 = sb.player.global_position

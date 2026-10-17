@@ -50,15 +50,12 @@ static func _t(col: Color, tint: Color) -> Color:
 ## cycle, tint multiplies every colour (hit flash, poison, chill), pop > 0 puffs
 ## the body up briefly when hit.
 static func draw_enemy(ci: CanvasItem, species: String, boss: bool, r: float, angle: float,
-		phase: float, tint: Color, pop: float, armored: bool, offset: Vector2 = Vector2.ZERO, extra: float = 0.0, low: bool = false) -> void:
+		phase: float, tint: Color, pop: float, armored: bool, offset: Vector2 = Vector2.ZERO, extra: float = 0.0) -> void:
 	var s := 1.0 + pop
 	ci.draw_set_transform(offset, angle, Vector2(s, s))
 	match species:
 		"rat":
-			if low and not boss:
-				_rat_low(ci, r, phase, tint, extra)
-			else:
-				_rat(ci, r, phase, tint, boss, extra)
+			_rat(ci, r, phase, tint, boss, extra)
 		"spider":
 			_spider(ci, r, phase, tint, boss)
 		"tick":
@@ -83,7 +80,7 @@ static func _rat(ci: CanvasItem, r: float, phase: float, tint: Color, boss: bool
 	# tail, swaying
 	var tail := PackedVector2Array()
 	for i in 7:
-		tail.append(Vector2(-r * (1.0 + i * 0.30), sin(phase * 0.8 + i * 0.7) * r * 0.22 * (0.3 + i / 6.0)))
+		tail.append(Vector2(-r * (1.0 + i * 0.30), sin(phase + i * 0.7) * r * 0.22 * (0.3 + i / 6.0)))
 	ci.draw_polyline(tail, pink, maxf(1.5, r * 0.14))
 	# legs
 	for side in [-1.0, 1.0]:
@@ -259,7 +256,7 @@ static func _tick(ci: CanvasItem, r: float, phase: float, tint: Color, engorge: 
 	for side in [-1.0, 1.0]:
 		for i in 4:
 			var root := Vector2(r * (0.5 - i * 0.35), side * r * 0.4)
-			var swing := sin(phase * 1.6 + i * 1.3 + (0.0 if side > 0.0 else PI)) * 0.35
+			var swing := sin(phase * 2.0 + i * 1.3 + (0.0 if side > 0.0 else PI)) * 0.35
 			var ang: float = (0.7 + i * 0.28) * side + swing * side
 			ci.draw_line(root, root + Vector2.from_angle(ang) * r * 1.15, plate, lw)
 	var swell := 1.0 + engorge * 0.9
@@ -296,18 +293,6 @@ static func _scrapper(ci: CanvasItem, r: float, phase: float, tint: Color, plate
 		ci.draw_arc(Vector2.ZERO, r * 1.22, -plate_rad * 0.5, plate_rad * 0.5, 20, _t(Color(0.78, 0.8, 0.84), tint), maxf(1.5, r * 0.08))
 
 
-## Cheap rat for big crowds: tail, body, head, two eyes (about 8 draw calls instead of 40).
-static func _rat_low(ci: CanvasItem, r: float, phase: float, tint: Color, pack: float) -> void:
-	var fur := _t(Color(0.50, 0.42, 0.36), tint)
-	var sway := sin(phase * 0.8) * r * 0.3
-	ci.draw_polyline(PackedVector2Array([Vector2(-r, 0), Vector2(-r * 1.6, sway * 0.5), Vector2(-r * 2.3, sway)]), _t(Color(0.88, 0.60, 0.64), tint), maxf(1.5, r * 0.14))
-	_ellipse(ci, Vector2(-r * 0.15, 0), r * 1.05, r * 0.78, fur, 10)
-	_ellipse(ci, Vector2(r * 0.85, 0), r * 0.62, r * 0.48, fur, 8)
-	var eye := Color(0.95, 0.15 + 0.35 * pack, 0.15)
-	ci.draw_circle(Vector2(r * 1.05, r * 0.26), r * (0.12 + 0.07 * pack), eye)
-	ci.draw_circle(Vector2(r * 1.05, -r * 0.26), r * (0.12 + 0.07 * pack), eye)
-
-
 ## Soft ground shadow polygon for a monster of this radius (cached unit circle).
 static func shadow(radius: float) -> PackedVector2Array:
 	var u := _unit(14)
@@ -324,11 +309,11 @@ static func _maggot(ci: CanvasItem, r: float, phase: float, tint: Color) -> void
 	var shade := _t(Color(0.74, 0.70, 0.46), tint)
 	for i in 4:
 		var x := -r * 0.9 * i
-		var y := sin(phase * 1.4 + i * 1.1) * r * 0.45
+		var y := sin(phase + i * 1.1) * r * 0.45
 		var rad := r * (1.0 - i * 0.14)
 		ci.draw_circle(Vector2(x, y) + Vector2(0.5, 1.0), rad, shade)
 		ci.draw_circle(Vector2(x, y), rad * 0.9, body)
-	ci.draw_circle(Vector2(r * 0.35, sin(phase * 1.4) * r * 0.45), r * 0.18, Color(0.15, 0.1, 0.05))
+	ci.draw_circle(Vector2(r * 0.35, sin(phase) * r * 0.45), r * 0.18, Color(0.15, 0.1, 0.05))
 
 
 ## Fly: small, dark, glossy, with blurred buzzing wings.
@@ -369,7 +354,7 @@ static func _nest(ci: CanvasItem, r: float, phase: float, tint: Color) -> void:
 		var a := TAU * i / 6.0 + 0.3
 		ci.draw_circle(Vector2.from_angle(a) * r * 1.12, r * 0.14, _t(Color(0.5, 0.37, 0.25), tint))
 	for i in 3:   # pale worms squirming in the dark
-		var a2 := phase * 0.7 + i * 2.1
+		var a2 := phase + i * 2.1
 		var p := Vector2.from_angle(a2) * r * 0.35
 		ci.draw_circle(p, r * 0.13, Color(0.93, 0.9, 0.68))
 		ci.draw_circle(p + Vector2.from_angle(a2 + 1.6) * r * 0.18, r * 0.11, Color(0.8, 0.77, 0.55))

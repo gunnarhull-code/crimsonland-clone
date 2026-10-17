@@ -9,6 +9,7 @@ extends Node2D
 
 const Art := preload("res://sandbox/SbArt.gd")
 const Monsters := preload("res://sandbox/SbMonsters.gd")
+const OverlayS := preload("res://sandbox/SbEnemyOverlay.gd")
 
 const ACCEL := 900.0
 const TOUCH_BUFFER := 6.0
@@ -55,12 +56,15 @@ var _atk_cd := 1.0
 var _pack_speed := 0.0
 var _pack_bite := 0.0
 var _base_speed := 100.0
-var _desired := Vector2.ZERO       # last brain result, reused between brain updates in a crowd
-var _brain_dt := 0.0
-var _skip_dt := 0.0
 var _heading := 0.0                # slow-turning monsters (Scrapper) move along this
 var _lift := 0.0                   # visual height of a tick mid-hop
 var _hop_total := 0.2
+var _spr: Sprite2D = null
+var _ov: Node2D = null
+var _drawn_radius := -1.0
+var _tele_drawn := false
+var _ov_hp := -1.0
+var _ov_active := false
 var _grow_t := 0.0               # maggots: time alive, they pupate into a fly if you leave them
 var immovable := false             # nests: cannot be shoved, pulled or teleported
 var _emit_species := ""
@@ -139,6 +143,7 @@ func setup(p_sb, sp: String, p_variant: String, pos: Vector2) -> void:
 	_flank_t = randf_range(3.0, 4.5)   # then it gives up and just charges
 	_lunge_cd = randf_range(0.8, 2.0)
 	_stomp_cd = randf_range(1.5, 3.0)
+	_make_sprite()
 
 
 func is_debuffed() -> bool:
@@ -249,17 +254,6 @@ func unlatch(stun: float) -> void:
 func _physics_process(delta: float) -> void:
 	if dead:
 		return
-	# Huge rat crowds update every 2nd or 3rd frame (staggered), using the accumulated time.
-	var crowd: int = sb.crowd_size
-	if crowd > 150 and move_kind == "swarm" and not latched and emerge_t <= 0.0:
-		var step := 2 if crowd < 280 else 3
-		_skip_dt += delta
-		if (Engine.get_physics_frames() + get_instance_id()) % step != 0:
-			return
-		delta = _skip_dt
-		_skip_dt = 0.0
-	else:
-		_skip_dt = 0.0
 	_life_t += delta
 	_flash = maxf(0.0, _flash - delta)
 	_kick = _kick.move_toward(Vector2.ZERO, 60.0 * delta)
@@ -297,11 +291,11 @@ func _physics_process(delta: float) -> void:
 	if emerge_t > 0.0:
 		emerge_t -= delta
 		_vel = Vector2.ZERO
-		queue_redraw()
+		_refresh_visual()
 		return
 	if move_kind == "nest":
 		_brain_nest(delta)
-		queue_redraw()
+		_refresh_visual()
 		return
 	var player = sb.player
 	stun_t = maxf(0.0, stun_t - delta)
@@ -312,7 +306,7 @@ func _physics_process(delta: float) -> void:
 			unlatch(0.0)
 		else:
 			_latched_step(player, delta)
-			queue_redraw()
+			_refresh_visual()
 			return
 
 	if species == "maggot":
@@ -324,7 +318,7 @@ func _physics_process(delta: float) -> void:
 	if sb.enemies_chase and player.hp > 0.0 and not immobile:
 		if _sidestep > 0.0:
 			_check_sidestep(player, delta)
-		desired = _think(player, delta)
+		desired = _brain(player, delta)
 	if immobile:
 		_vel = Vector2.ZERO
 		telegraph = 0.0
@@ -346,7 +340,7 @@ func _physics_process(delta: float) -> void:
 
 	if sb.enemies_chase and not immobile and player.hp > 0.0:
 		_contact(player, delta)
-	_redraw_lod()
+	_refresh_visual()
 
 
 func _update_regen(delta: float) -> void:
@@ -625,12 +619,83 @@ func _check_sidestep(player, delta: float) -> void:
 
 # --------------------------------------------------------------------- draw --
 
+func _tint() -> Color:
+	var tint := Color(1, 1, 1)
+	if poison_t > 0.0:
+		tint *= Color(0.75, 1.0, 0.65)
+	if chill_t > 0.0:
+		tint *= Color(0.7, 0.85, 1.2)
+	if telegraph > 0.0:
+		tint *= Color(1.0 + 0.5 * telegraph, 1.0 - 0.2 * telegraph, 1.0 - 0.3 * telegraph)
+	if _flash > 0.0:
+		tint = Color(2.2, 2.2, 2.2)
+	return tint
+
+
+func _pop() -> float:
+	var squat := -0.12 * telegraph if _state == "windup" else 0.0
+	var bob := sin(_life_t * 9.0 + _walk) * 0.015 if _vel.length() > 5.0 else 0.0
+	return _flash * 1.2 + bob + squat
+
+
+# ------------------------------------------------------------------- sprites --
+# Monsters are drawn once into a sprite sheet (SbBaker.gd); on screen each one is
+# a single Sprite2D. If no sheet exists (headless), _draw() draws the vector art.
+
+func _make_sprite() -> void:
+	if sb.baker == null or not sb.baker.ready_flag:
+		return
+	var k: String = sb.baker.key(species, variant, 0)
+	if not sb.baker.has_key(k):
+		return
+	_spr = Sprite2D.new()
+	_spr.texture = sb.baker.atlas
+	_spr.region_enabled = true
+	add_child(_spr)
+	_ov = OverlayS.new()
+	_ov.enemy = self
+	add_child(_ov)
+
+
+func _update_sprite() -> void:
+	var flag := 0
+	if species == "rat" and sb.rat_pack() > 0.5:
+		flag = 1
+	elif species == "tick" and _latch_time > 2.0:
+		flag = 1
+	var frame: int = int(fposmod(_walk, TAU) / TAU * 12.0) % 12
+	_spr.region_rect = sb.baker.rect(sb.baker.key(species, variant, flag), frame)
+	var s: float = (1.0 + _pop()) * radius / maxf(base_radius, 0.1)
+	if species == "tick" and latched:
+		s *= 1.0 + minf(_latch_time * 0.08, 0.5)
+	_spr.scale = Vector2(s, s)
+	_spr.rotation = _face
+	_spr.position = _kick + Vector2(0, -_lift)
+	_spr.modulate = _tint()
+
+
+## Called wherever the old code asked for a redraw. With sprites, only the shadow,
+## warnings and overlay ever redraw, and only when something changed.
+func _refresh_visual() -> void:
+	if _spr == null:
+		queue_redraw()
+		return
+	_update_sprite()
+	if telegraph > 0.0 or _tele_drawn or absf(radius - _drawn_radius) > 0.4:
+		_drawn_radius = radius
+		_tele_drawn = telegraph > 0.0
+		queue_redraw()
+	var active := poison_t > 0.0 or chill_t > 0.0 or stun_t > 0.0 or shards > 0 or _state == "pupate"
+	if active or _ov_active or hp != _ov_hp:
+		_ov_hp = hp
+		_ov_active = active
+		_ov.queue_redraw()
+
+
+# ---------------------------------------------------------------------- draw --
+
 func _draw() -> void:
-	var low: bool = species == "rat" and sb.crowd_size > 90
-	if low:
-		draw_circle(Vector2(3.0, 5.0), radius * 1.1, Color(0, 0, 0, 0.26))
-	else:
-		draw_colored_polygon(Art.shadow(radius), Color(0, 0, 0, 0.28))
+	draw_colored_polygon(Art.shadow(radius), Color(0, 0, 0, 0.28))
 
 	# telegraphs: warn before the dangerous thing happens
 	if telegraph > 0.0:
@@ -643,37 +708,31 @@ func _draw() -> void:
 			draw_line(Vector2.ZERO, _dash_dir * (mp.get("dash_speed", 700.0) * mp.get("dash_time", 0.3)), Color(1.0, 0.25, 0.15, 0.25 + 0.4 * telegraph), 2.0)
 			draw_arc(Vector2.ZERO, radius * (1.9 - 0.5 * telegraph), 0.0, TAU, 24, Color(1.0, 0.3, 0.15, 0.4 + 0.5 * telegraph), 2.5)
 
-	var tint := Color(1, 1, 1)
-	if poison_t > 0.0:
-		tint *= Color(0.75, 1.0, 0.65)
-	if chill_t > 0.0:
-		tint *= Color(0.7, 0.85, 1.2)
-	if telegraph > 0.0:
-		tint *= Color(1.0 + 0.5 * telegraph, 1.0 - 0.2 * telegraph, 1.0 - 0.3 * telegraph)
-	if _flash > 0.0:
-		tint = Color(2.2, 2.2, 2.2)
-	var squat := -0.12 * telegraph if _state == "windup" else 0.0
-	var extra := 0.0
-	if species == "tick":
-		extra = clampf(_latch_time / 6.0, 0.0, 1.0)
-	elif species == "scrapper":
-		extra = deg_to_rad(plate_arc_deg)
-	elif species == "rat":
-		extra = sb.rat_pack()
-	var bob := sin(_life_t * 9.0 + _walk) * 0.015 if _vel.length() > 5.0 else 0.0
-	Art.draw_enemy(self, species, variant == "boss", radius, _face, _walk, tint, _flash * 1.2 + bob + squat, armor > 0.0, _kick + Vector2(0, -_lift), extra, low)
-	if poison_t > 0.0 or chill_t > 0.0 or stun_t > 0.0 or shards > 0:
-		draw_set_transform(Vector2(0, -_lift), 0.0, Vector2.ONE)
-		Art.draw_status(self, radius, _life_t, poison_t > 0.0, chill_t > 0.0, stun_t > 0.0, shards)
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	if _spr == null:   # no sprite sheet: draw the vector art directly
+		var extra := 0.0
+		if species == "tick":
+			extra = clampf(_latch_time / 6.0, 0.0, 1.0)
+		elif species == "scrapper":
+			extra = deg_to_rad(plate_arc_deg)
+		elif species == "rat":
+			extra = sb.rat_pack()
+		Art.draw_enemy(self, species, variant == "boss", radius, _face, _walk, _tint(), _pop(), armor > 0.0, _kick + Vector2(0, -_lift), extra)
+		_draw_overlay(self)
 
+
+## Status marks, cocoon and health bar (on the overlay child when sprites are used).
+func _draw_overlay(ci: CanvasItem) -> void:
+	ci.draw_set_transform(_kick + Vector2(0, -_lift), 0.0, Vector2.ONE)
+	if poison_t > 0.0 or chill_t > 0.0 or stun_t > 0.0 or shards > 0:
+		Art.draw_status(ci, radius, _life_t, poison_t > 0.0, chill_t > 0.0, stun_t > 0.0, shards)
 	if _state == "pupate":
 		var sh2 := Vector2(sin(_life_t * 40.0), cos(_life_t * 37.0)) * 1.2
-		Art.draw_cocoon(self, radius, sh2)
+		Art.draw_cocoon(ci, radius, sh2)
+	ci.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	if hp < max_hp:
 		var w := radius * 2.0 + 10.0
-		draw_rect(Rect2(-w / 2.0, -radius - 12.0, w, 4.0), Color(0, 0, 0, 0.6))
-		draw_rect(Rect2(-w / 2.0, -radius - 12.0, w * clampf(hp / max_hp, 0.0, 1.0), 4.0), Color(0.9, 0.3, 0.3))
+		ci.draw_rect(Rect2(-w / 2.0, -radius - 12.0, w, 4.0), Color(0, 0, 0, 0.6))
+		ci.draw_rect(Rect2(-w / 2.0, -radius - 12.0, w * clampf(hp / max_hp, 0.0, 1.0), 4.0), Color(0.9, 0.3, 0.3))
 
 
 ## Monsters bite from the edge of the player, never from inside the centre.
@@ -704,29 +763,6 @@ func _lead_point(player) -> Vector2:
 		t = global_position.distance_to(future) / dash_speed
 	return future.clamp(Vector2.ZERO, sb.ARENA)
 
-
-## Level of detail: with a big crowd, redraw each monster every 2nd or 3rd frame
-## (they are small and the animation still reads), staggered so it is not visible.
-func _redraw_lod() -> void:
-	var n: int = sb.crowd_size
-	var every := 1 if n < 80 else (2 if n < 200 else 3)
-	if every == 1 or (Engine.get_physics_frames() + get_instance_id()) % every == 0:
-		queue_redraw()
-
-
-## The brain, but in a big rat crowd it only thinks every 2nd or 3rd physics frame
-## (staggered per monster) and the movement reuses its last answer. Other species
-## always think every frame: their wind-ups need exact timing.
-func _think(player, delta: float) -> Vector2:
-	if move_kind != "swarm":
-		return _brain(player, delta)
-	_brain_dt += delta
-	var n: int = sb.crowd_size
-	var every := 1 if n < 100 else (2 if n < 250 else 3)
-	if every == 1 or (Engine.get_physics_frames() + get_instance_id()) % every == 0:
-		_desired = _brain(player, _brain_dt)
-		_brain_dt = 0.0
-	return _desired
 
 
 ## Matriarch: leave a web where it is (at launch and along the dash).

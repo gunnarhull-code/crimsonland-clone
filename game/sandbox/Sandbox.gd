@@ -11,7 +11,7 @@ const Up := preload("res://sandbox/SbUpgrades.gd")
 const PlayerS := preload("res://sandbox/SbPlayer.gd")
 const BulletS := preload("res://sandbox/SbBullet.gd")
 const EnemyS := preload("res://sandbox/SbEnemy.gd")
-const FxS := preload("res://sandbox/SbFx.gd")
+const FxS := preload("res://sandbox/SbFxLayer.gd")
 const RulesS := preload("res://sandbox/SbRules.gd")
 const WavesS := preload("res://sandbox/SbWaves.gd")
 const SpawnerS := preload("res://sandbox/SbSpawner.gd")
@@ -21,6 +21,8 @@ const DecalsS := preload("res://sandbox/SbDecals.gd")
 const Art := preload("res://sandbox/SbArt.gd")
 const AudioS := preload("res://sandbox/SbAudio.gd")
 const UiS := preload("res://sandbox/SbUI.gd")
+const PerfS := preload("res://sandbox/SbPerf.gd")
+const BakerS := preload("res://sandbox/SbBaker.gd")
 
 const ARENA := Vector2(1600, 900)
 # Performance safety valves (spec 4.3 placeholders).
@@ -65,7 +67,7 @@ var player
 var enemies: Node2D
 var bullets: Node2D
 var drones: Node2D
-var fx: Node2D
+var fx
 var rules
 var audio
 var particles
@@ -75,6 +77,7 @@ var flash_rect: ColorRect
 var waves
 var spawner
 var webs
+var baker
 var ui
 
 # Switches the prototype run flips (the sandbox keeps the defaults).
@@ -101,9 +104,12 @@ func _ready() -> void:
 	_build_world()
 	_build_ui()
 	_after_ready()
+	baker.bake()   # draws the monsters into a sprite sheet (takes a moment, runs in the background)
 
 
 func _build_world() -> void:
+	baker = BakerS.new()
+	add_child(baker)
 	cam = Camera2D.new()
 	cam.position = ARENA / 2.0
 	var vp := get_viewport_rect().size
@@ -136,7 +142,7 @@ func _build_world() -> void:
 	add_child(player)
 	particles = ParticlesS.new()
 	add_child(particles)
-	fx = Node2D.new()
+	fx = FxS.new()
 	add_child(fx)
 	var flash_layer := CanvasLayer.new()
 	flash_layer.layer = 1
@@ -146,6 +152,9 @@ func _build_world() -> void:
 	flash_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	flash_rect.color = Color(1, 0.1, 0.1, 0.0)
 	flash_layer.add_child(flash_rect)
+	var perf := PerfS.new()
+	perf.sb = self
+	add_child(perf)
 	waves = WavesS.new()
 	waves.sb = self
 	add_child(waves)
@@ -346,38 +355,16 @@ func recent_dps() -> float:
 
 
 func fx_text(pos: Vector2, text: String, color: Color = Color.WHITE, size: int = 14) -> void:
-	if not show_numbers or fx.get_child_count() >= MAX_FX:
-		return
-	var f := FxS.new()
-	f.kind = "text"
-	f.text = text
-	f.color = color
-	f.font_size = size
-	f.position = pos
-	fx.add_child(f)
+	if show_numbers:
+		fx.text(pos, text, color, size)
 
 
 func fx_ring(pos: Vector2, radius: float, color: Color) -> void:
-	if fx.get_child_count() >= MAX_FX:
-		return
-	var f := FxS.new()
-	f.kind = "ring"
-	f.radius = radius
-	f.color = color
-	f.life = 0.35
-	f.position = pos
-	fx.add_child(f)
+	fx.ring(pos, radius, color)
 
 
 func fx_beam(from: Vector2, to: Vector2, width: float) -> void:
-	var f := FxS.new()
-	f.kind = "beam"
-	f.life = 0.25
-	f.position = from
-	f.beam_to = to - from
-	f.beam_width = width
-	f.color = Color(1.0, 0.55, 0.25)
-	fx.add_child(f)
+	fx.beam(from, to, width, Color(1.0, 0.55, 0.25))
 
 
 # ----------------------------------------------------------------- spawning --

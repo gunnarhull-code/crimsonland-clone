@@ -136,3 +136,13 @@ Bullets curve softly toward the closest enemy ahead (turn 70 deg/s, 50 degree co
 - The pit warning (a hole opening, 1.6-1.8 s) is unchanged; the nest rises out of it.
 - A nest from the spawn buttons just breeds maggots (40 of them).
 - Observation from a scripted bot: a stationary bot can never kill a Scrapper (the plate always faces it). At 55 degrees per second a Scrapper out-turns anyone circling it from further than about 220 px, so outflanking means running a tight arc close in. If that proves too hard in play, lower `turn_rate` for the Scrapper.
+
+## Performance and look changes (2026-10-17, owner testing)
+
+- **Owner report:** the game got ridiculously slow in big fights, and the earlier "optimisation" (cheaper rats and staggered updates in crowds) looked bad. Both were addressed.
+- **Cause (measured with a real renderer, vsync off):** the monsters were drawn as many vector polygons rebuilt by script every frame. Hiding only the monsters' drawing took level 8 from 8.5 fps to 116 fps. Particles and splatter were the next biggest cost.
+- **Fix:** monsters are still the same vector art, but drawn **once** at startup into a sprite sheet (`SbBaker.gd`: 12 walk frames per monster) and shown as single sprites; hit flash, poison and chill tint, size changes, and rotation are done by the GPU. Status marks, health bars, cocoons and warnings are drawn only when they change. Particles draw in a few batched calls, ground splatter is a few batched sprites, and floating text and rings share one node (`SbFxLayer.gd`). The crowd shortcuts were removed: every rat is full quality and updates every frame.
+- **Result:** level 9 averages about 190 fps (was single digits at level 8); 400 chasing rats about 145 fps.
+- **FPS counter:** top right (F2 hides it) shows FPS, frame time, enemy, bullet, text and particle counts, and draw calls.
+- **Scrapper is twice the size** (radius 48, was 24); the wall formation spaces them by size.
+- **Rat King adds are capped:** at most 24 rat adds alive at once (`add_cap` in `levels.csv`), spawning 5 every 1.5 s as space opens. The Gate Warden's escorts cap at 8.
