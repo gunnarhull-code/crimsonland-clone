@@ -48,6 +48,16 @@ var emerge_total := 0.001
 var telegraph := 0.0             # 0..1 wind-up progress, drawn as a warning
 
 var _knock := Vector2.ZERO
+var _regen := 0.0                    # cached from mp (dictionary lookups every frame are slow with hundreds of monsters)
+var _sidestep := 0.0
+var _dmg := 0.0
+var _atk_cd := 1.0
+var _pack_speed := 0.0
+var _pack_bite := 0.0
+var _base_speed := 100.0
+var _desired := Vector2.ZERO       # last brain result, reused between brain updates in a crowd
+var _brain_dt := 0.0
+var _skip_dt := 0.0
 var _heading := 0.0                # slow-turning monsters (Scrapper) move along this
 var _lift := 0.0                   # visual height of a tick mid-hop
 var _vel := Vector2.ZERO
@@ -101,6 +111,13 @@ func setup(p_sb, sp: String, p_variant: String, pos: Vector2) -> void:
 	_speed_var = randf_range(0.85, 1.15)
 	_face = randf() * TAU
 	_heading = _face
+	_regen = mp.get("regen", 0.0)
+	_sidestep = mp.get("sidestep_chance", 0.0)
+	_dmg = stats.get("damage", 0.0)
+	_atk_cd = stats.get("attack_cooldown_sec", 1.0)
+	_pack_speed = mp.get("pack_speed", 0.0)
+	_pack_bite = mp.get("pack_bite", 0.0)
+	_base_speed = stats.get("chase_speed_px_s", 100.0)
 	_walk = randf() * TAU
 	_side = 1.0 if randf() < 0.5 else -1.0
 	_flanker = randf() < mp.get("flank_chance", 0.0)
@@ -215,6 +232,17 @@ func unlatch(stun: float) -> void:
 func _physics_process(delta: float) -> void:
 	if dead:
 		return
+	# Huge rat crowds update every 2nd or 3rd frame (staggered), using the accumulated time.
+	var crowd: int = sb.crowd_size
+	if crowd > 150 and move_kind == "swarm" and not latched and emerge_t <= 0.0:
+		var step := 2 if crowd < 280 else 3
+		_skip_dt += delta
+		if (Engine.get_physics_frames() + get_instance_id()) % step != 0:
+			return
+		delta = _skip_dt
+		_skip_dt = 0.0
+	else:
+		_skip_dt = 0.0
 	_life_t += delta
 	_flash = maxf(0.0, _flash - delta)
 	_kick = _kick.move_toward(Vector2.ZERO, 60.0 * delta)
@@ -243,7 +271,8 @@ func _physics_process(delta: float) -> void:
 		poison_dps = 0.0
 	if chill_t > 0.0:
 		chill_t -= delta
-	_update_regen(delta)
+	if _regen > 0.0:
+		_update_regen(delta)
 	shrink_t = maxf(0.0, shrink_t - delta)
 	_size = move_toward(_size, shrink_scale if shrink_t > 0.0 else 1.0, 2.5 * delta)
 	radius = base_radius * _size * (1.0 - 0.6 * clampf(emerge_t / emerge_total, 0.0, 1.0))
@@ -268,8 +297,9 @@ func _physics_process(delta: float) -> void:
 	var immobile := stun_t > 0.0 or held_t > 0.0
 	var desired := Vector2.ZERO
 	if sb.enemies_chase and player.hp > 0.0 and not immobile:
-		_check_sidestep(player, delta)
-		desired = _brain(player, delta)
+		if _sidestep > 0.0:
+			_check_sidestep(player, delta)
+		desired = _think(player, delta)
 	if immobile:
 		_vel = Vector2.ZERO
 		telegraph = 0.0
@@ -291,7 +321,7 @@ func _physics_process(delta: float) -> void:
 
 	if sb.enemies_chase and not immobile and player.hp > 0.0:
 		_contact(player, delta)
-	queue_redraw()
+	_redraw_lod()
 
 
 func _update_regen(delta: float) -> void:
@@ -309,7 +339,9 @@ func _update_regen(delta: float) -> void:
 
 
 func _speed() -> float:
-	var s: float = stats.get("chase_speed_px_s", 100.0) * _speed_var
+	var s: float = _base_speed * _speed_var
+	if _pack_speed > 0.0:
+		s *= 1.0 + _pack_speed * sb.rat_pack()
 	return s * chill_speed if chill_t > 0.0 else s
 
 
@@ -325,14 +357,14 @@ func _latched_step(player, delta: float) -> void:
 func _contact(player, delta: float) -> void:
 	if _state == "windup" or _state == "dash" or _state == "stomp_windup":
 		return
-	var dmg: float = stats.get("damage", 0.0)
+	var dmg := _dmg
 	if dmg <= 0.0:
 		return
 	_attack_t -= delta
 	var touch: float = radius + player.RADIUS + TOUCH_BUFFER
 	if _attack_t <= 0.0 and global_position.distance_to(player.global_position) <= touch:
 		player.take_damage(dmg)
-		_attack_t = stats.get("attack_cooldown_sec", 1.0)
+		_attack_t = _atk_cd * (1.0 - _pack_bite * sb.rat_pack())
 		_kick = (player.global_position - global_position).normalized() * 6.0
 
 
@@ -548,11 +580,11 @@ func _check_sidestep(player, delta: float) -> void:
 # --------------------------------------------------------------------- draw --
 
 func _draw() -> void:
-	var sh := PackedVector2Array()
-	for i in 14:
-		var a := TAU * i / 14.0
-		sh.append(Vector2(cos(a) * radius * 1.3 + 3.0, sin(a) * radius * 0.95 + 5.0))
-	draw_colored_polygon(sh, Color(0, 0, 0, 0.28))
+	var low: bool = species == "rat" and sb.crowd_size > 90
+	if low:
+		draw_circle(Vector2(3.0, 5.0), radius * 1.1, Color(0, 0, 0, 0.26))
+	else:
+		draw_colored_polygon(Art.shadow(radius), Color(0, 0, 0, 0.28))
 
 	# telegraphs: warn before the dangerous thing happens
 	if telegraph > 0.0:
@@ -580,10 +612,13 @@ func _draw() -> void:
 		extra = clampf(_latch_time / 6.0, 0.0, 1.0)
 	elif species == "scrapper":
 		extra = deg_to_rad(plate_arc_deg)
+	elif species == "rat":
+		extra = sb.rat_pack()
 	var bob := sin(_life_t * 9.0 + _walk) * 0.015 if _vel.length() > 5.0 else 0.0
-	Art.draw_enemy(self, species, variant == "boss", radius, _face, _walk, tint, _flash * 1.2 + bob + squat, armor > 0.0, _kick + Vector2(0, -_lift), extra)
-	draw_set_transform(Vector2(0, -_lift), 0.0, Vector2.ONE)
-	Art.draw_status(self, radius, _life_t, poison_t > 0.0, chill_t > 0.0, stun_t > 0.0, shards)
+	Art.draw_enemy(self, species, variant == "boss", radius, _face, _walk, tint, _flash * 1.2 + bob + squat, armor > 0.0, _kick + Vector2(0, -_lift), extra, low)
+	if poison_t > 0.0 or chill_t > 0.0 or stun_t > 0.0 or shards > 0:
+		draw_set_transform(Vector2(0, -_lift), 0.0, Vector2.ONE)
+		Art.draw_status(self, radius, _life_t, poison_t > 0.0, chill_t > 0.0, stun_t > 0.0, shards)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 	if hp < max_hp:
@@ -617,3 +652,27 @@ func _lead_point(player) -> Vector2:
 		future = player.global_position + player.move_velocity * t * lead
 		t = global_position.distance_to(future) / dash_speed
 	return future.clamp(Vector2.ZERO, sb.ARENA)
+
+
+## Level of detail: with a big crowd, redraw each monster every 2nd or 3rd frame
+## (they are small and the animation still reads), staggered so it is not visible.
+func _redraw_lod() -> void:
+	var n: int = sb.crowd_size
+	var every := 1 if n < 80 else (2 if n < 200 else 3)
+	if every == 1 or (Engine.get_physics_frames() + get_instance_id()) % every == 0:
+		queue_redraw()
+
+
+## The brain, but in a big rat crowd it only thinks every 2nd or 3rd physics frame
+## (staggered per monster) and the movement reuses its last answer. Other species
+## always think every frame: their wind-ups need exact timing.
+func _think(player, delta: float) -> Vector2:
+	if move_kind != "swarm":
+		return _brain(player, delta)
+	_brain_dt += delta
+	var n: int = sb.crowd_size
+	var every := 1 if n < 100 else (2 if n < 250 else 3)
+	if every == 1 or (Engine.get_physics_frames() + get_instance_id()) % every == 0:
+		_desired = _brain(player, _brain_dt)
+		_brain_dt = 0.0
+	return _desired

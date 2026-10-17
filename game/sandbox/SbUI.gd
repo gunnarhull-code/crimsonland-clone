@@ -102,6 +102,7 @@ func _stats_text() -> String:
 	if sb.stack("adaptive_round") > 0:
 		var sh: Dictionary = sb.species_hits
 		lines.append("Adaptive Round: +%.1f%% vs %s    extra damage dealt %d    hits  rat %d  spider %d  alien %d" % [sb.adaptive_bonus() * 100.0, sb.leading_species() if sb.leading_species() != "" else "nothing yet", int(sb.adaptive_extra), sh.get("rat", 0), sh.get("spider", 0), sh.get("alien", 0)])
+	lines.append("Rats alive %d    pack bonus +%d%% speed" % [sb.species_count.get("rat", 0), roundi(sb.rat_pack() * 20.0)])
 	lines.append("DPS (last 5 s) %.0f    Enemies %d    Bullets %d    Drones %d" % [sb.recent_dps(), sb.enemies.get_child_count(), sb.bullets.get_child_count(), sb.drones.get_child_count()])
 	return "\n".join(lines)
 

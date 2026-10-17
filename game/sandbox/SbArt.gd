@@ -16,11 +16,24 @@ static func ichor(species: String) -> Color:
 	return ICHOR.get(species, Color(0.7, 0.1, 0.1))
 
 
+static var _units := {}   # unit circles by segment count, so ellipses cost no sin/cos per frame
+
+
+static func _unit(seg: int) -> PackedVector2Array:
+	if not _units.has(seg):
+		var u := PackedVector2Array()
+		for i in seg:
+			u.append(Vector2(cos(TAU * i / seg), sin(TAU * i / seg)))
+		_units[seg] = u
+	return _units[seg]
+
+
 static func _ellipse(ci: CanvasItem, c: Vector2, rx: float, ry: float, col: Color, seg: int = 16) -> void:
+	var u := _unit(seg)
 	var pts := PackedVector2Array()
+	pts.resize(seg)
 	for i in seg:
-		var a := TAU * i / seg
-		pts.append(c + Vector2(cos(a) * rx, sin(a) * ry))
+		pts[i] = Vector2(c.x + u[i].x * rx, c.y + u[i].y * ry)
 	ci.draw_colored_polygon(pts, col)
 
 
@@ -34,12 +47,15 @@ static func _t(col: Color, tint: Color) -> Color:
 ## cycle, tint multiplies every colour (hit flash, poison, chill), pop > 0 puffs
 ## the body up briefly when hit.
 static func draw_enemy(ci: CanvasItem, species: String, boss: bool, r: float, angle: float,
-		phase: float, tint: Color, pop: float, armored: bool, offset: Vector2 = Vector2.ZERO, extra: float = 0.0) -> void:
+		phase: float, tint: Color, pop: float, armored: bool, offset: Vector2 = Vector2.ZERO, extra: float = 0.0, low: bool = false) -> void:
 	var s := 1.0 + pop
 	ci.draw_set_transform(offset, angle, Vector2(s, s))
 	match species:
 		"rat":
-			_rat(ci, r, phase, tint, boss)
+			if low and not boss:
+				_rat_low(ci, r, phase, tint, extra)
+			else:
+				_rat(ci, r, phase, tint, boss, extra)
 		"spider":
 			_spider(ci, r, phase, tint, boss)
 		"tick":
@@ -51,7 +67,7 @@ static func draw_enemy(ci: CanvasItem, species: String, boss: bool, r: float, an
 	ci.draw_set_transform(offset, 0.0, Vector2.ONE)
 
 
-static func _rat(ci: CanvasItem, r: float, phase: float, tint: Color, boss: bool) -> void:
+static func _rat(ci: CanvasItem, r: float, phase: float, tint: Color, boss: bool, pack: float = 0.0) -> void:
 	var fur := _t(Color(0.50, 0.42, 0.36), tint)
 	var dark := _t(Color(0.30, 0.24, 0.20), tint)
 	var pink := _t(Color(0.88, 0.60, 0.64), tint)
@@ -76,7 +92,7 @@ static func _rat(ci: CanvasItem, r: float, phase: float, tint: Color, boss: bool
 		ci.draw_circle(Vector2(r * 0.55, side * r * 0.52), r * 0.19, pink)
 	# eyes and whiskers
 	for side in [-1.0, 1.0]:
-		ci.draw_circle(Vector2(r * 1.05, side * r * 0.26), r * 0.11, Color(0.95, 0.15, 0.15))
+		ci.draw_circle(Vector2(r * 1.05, side * r * 0.26), r * (0.11 + 0.07 * pack), Color(0.95, 0.15 + 0.35 * pack, 0.15))
 		ci.draw_circle(Vector2(r * 1.08, side * r * 0.23), r * 0.04, Color.WHITE)
 		ci.draw_line(Vector2(r * 1.38, side * r * 0.10), Vector2(r * 1.8, side * r * 0.42), Color(0.9, 0.9, 0.9, 0.7), 1.0)
 	if boss:
@@ -269,3 +285,25 @@ static func _scrapper(ci: CanvasItem, r: float, phase: float, tint: Color, plate
 	if plate_rad > 0.0:
 		ci.draw_arc(Vector2.ZERO, r * 1.08, -plate_rad * 0.5, plate_rad * 0.5, 20, steel, r * 0.34)
 		ci.draw_arc(Vector2.ZERO, r * 1.22, -plate_rad * 0.5, plate_rad * 0.5, 20, _t(Color(0.78, 0.8, 0.84), tint), maxf(1.5, r * 0.08))
+
+
+## Cheap rat for big crowds: tail, body, head, two eyes (about 8 draw calls instead of 40).
+static func _rat_low(ci: CanvasItem, r: float, phase: float, tint: Color, pack: float) -> void:
+	var fur := _t(Color(0.50, 0.42, 0.36), tint)
+	var sway := sin(phase * 0.8) * r * 0.3
+	ci.draw_polyline(PackedVector2Array([Vector2(-r, 0), Vector2(-r * 1.6, sway * 0.5), Vector2(-r * 2.3, sway)]), _t(Color(0.88, 0.60, 0.64), tint), maxf(1.5, r * 0.14))
+	_ellipse(ci, Vector2(-r * 0.15, 0), r * 1.05, r * 0.78, fur, 10)
+	_ellipse(ci, Vector2(r * 0.85, 0), r * 0.62, r * 0.48, fur, 8)
+	var eye := Color(0.95, 0.15 + 0.35 * pack, 0.15)
+	ci.draw_circle(Vector2(r * 1.05, r * 0.26), r * (0.12 + 0.07 * pack), eye)
+	ci.draw_circle(Vector2(r * 1.05, -r * 0.26), r * (0.12 + 0.07 * pack), eye)
+
+
+## Soft ground shadow polygon for a monster of this radius (cached unit circle).
+static func shadow(radius: float) -> PackedVector2Array:
+	var u := _unit(14)
+	var pts := PackedVector2Array()
+	pts.resize(14)
+	for i in 14:
+		pts[i] = Vector2(u[i].x * radius * 1.3 + 3.0, u[i].y * radius * 0.95 + 5.0)
+	return pts

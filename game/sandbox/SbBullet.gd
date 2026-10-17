@@ -98,7 +98,7 @@ func _physics_process(delta: float) -> void:
 		_crack.append(to)
 
 	var now := {}
-	for e in sb.enemies.get_children():
+	for e in sb.enemies_near(from, to, radius + 45.0):
 		if e.dead:
 			continue
 		var closest := Geometry2D.get_closest_point_to_segment(e.global_position, from, to)

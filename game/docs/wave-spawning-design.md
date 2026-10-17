@@ -72,3 +72,7 @@ Read from `SbWaves.gd`:
 - `SbWaves.gd` now runs the timeline. A level ends when every event has started, every sequence has closed and every monster is dead. Boss levels (5, 10) are unchanged. Levels without a timeline fall back to the old counts.
 - Cheats: pick any sequence and run it, and "Skip +10 s" jumps the timeline.
 - Not built yet: Maggot enemy, themed pit nests that can be destroyed, ambush-from-behind sequences, sequences that react to the player's build, boss sequences, escalation tuning, the Matriarch webs.
+
+## Performance notes (2026-10-17)
+
+Hundreds of rats forced some optimisation, all in the sandbox scripts: a spatial grid for bullet-vs-monster checks, cached lookups, big rat crowds think and move every 2nd or 3rd frame (staggered), and crowd rats are drawn with a light version (about 8 shapes instead of 40). Measured headless with 325 rats and 266 bullets: about 9 ms of script and drawing per frame. Real rendering adds more, so this is worth checking on the owner's PC.

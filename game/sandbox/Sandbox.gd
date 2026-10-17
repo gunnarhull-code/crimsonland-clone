@@ -85,6 +85,12 @@ var juice_on := true             # particles, splatter, hit sparks
 var shake_on := true             # screen shake
 var _trauma := 0.0
 var shake_scale := 1.0             # 0..2, the cheat slider
+var species_count := {}            # live monsters per species, refreshed 5x a second
+var _count_t := 0.0
+var _rat_pack := 0.0
+var _grid := {}                      # spatial hash of enemies (cell -> list), rebuilt each physics frame
+const GRID := 96.0
+var crowd_size := 0                  # total live monsters, refreshed 5x a second
 var _shake_t := 0.0
 var _damage_log: Array = []     # [time_sec, amount]
 
@@ -430,6 +436,14 @@ func explode(pos: Vector2, radius: float, damage: float, color: Color = Color(1.
 ## Smooth, low-frequency camera sway (not per-frame random jitter, which is what gives headaches).
 ## Strength is trauma squared, so small events are barely felt and big ones are wild.
 func _process(delta: float) -> void:
+	_count_t -= delta
+	if _count_t <= 0.0:
+		_count_t = 0.2
+		species_count.clear()
+		crowd_size = enemies.get_child_count()
+		for e in enemies.get_children():
+			species_count[e.species] = species_count.get(e.species, 0) + 1
+		_refresh_rat_pack()
 	_trauma = maxf(0.0, _trauma - delta * 2.2)
 	_shake_t += delta
 	var s := _trauma * _trauma * 16.0 * shake_scale
@@ -499,3 +513,45 @@ func vfx_explosion(pos: Vector2, radius: float, color: Color, damage: float = 20
 func cheat_shrink_all() -> void:
 	for e in enemies.get_children():
 		e.apply_shrink(Up.p("shrink", "scale"), 6.0, Up.p("shrink", "damage_taken"))
+
+
+## 0..1: how big the rat pack is between `pack_start` and `pack_full` rats
+## (monsters.csv). The bigger the pack, the faster and fiercer each rat.
+func rat_pack() -> float:
+	return _rat_pack
+
+
+func _refresh_rat_pack() -> void:
+	var p: Dictionary = EnemyS.Monsters.get_stats("rat", "base").get("p", {})
+	var start: float = p.get("pack_start", 10.0)
+	var full: float = p.get("pack_full", 120.0)
+	_rat_pack = clampf((species_count.get("rat", 0) - start) / maxf(full - start, 1.0), 0.0, 1.0)
+
+
+# ------------------------------------------------------------ spatial grid --
+# Bullets used to test every enemy; with hundreds of bullets and monsters that is
+# tens of thousands of checks a frame. The grid (rebuilt first thing each frame)
+# lets a bullet look only at monsters in the cells its path crosses.
+
+func _physics_process(_delta: float) -> void:
+	_grid.clear()
+	for e in enemies.get_children():
+		var p: Vector2 = e.global_position
+		var key := Vector2i(int(floorf(p.x / GRID)), int(floorf(p.y / GRID)))
+		if _grid.has(key):
+			_grid[key].append(e)
+		else:
+			_grid[key] = [e]
+
+
+## Monsters whose cell touches the box around the segment a-b grown by `margin`.
+func enemies_near(a: Vector2, b: Vector2, margin: float) -> Array:
+	var lo := Vector2(minf(a.x, b.x), minf(a.y, b.y)) - Vector2(margin, margin)
+	var hi := Vector2(maxf(a.x, b.x), maxf(a.y, b.y)) + Vector2(margin, margin)
+	var out: Array = []
+	for cx in range(int(floorf(lo.x / GRID)), int(floorf(hi.x / GRID)) + 1):
+		for cy in range(int(floorf(lo.y / GRID)), int(floorf(hi.y / GRID)) + 1):
+			var cell = _grid.get(Vector2i(cx, cy))
+			if cell != null:
+				out.append_array(cell)
+	return out

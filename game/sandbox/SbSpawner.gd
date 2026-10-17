@@ -62,6 +62,7 @@ func _plan(s: Dictionary) -> void:
 	var entrance: String = f["entrance"]
 	match f["pattern"]:
 		"burst":
+			spread = maxf(spread, sqrt(float(count)) * 14.0)
 			var gate := _anchor(f, entrance)
 			points = [gate]
 			for i in count:
