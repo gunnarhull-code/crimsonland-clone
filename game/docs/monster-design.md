@@ -89,3 +89,11 @@ The boss spider leaves spiderweb traps where it launches.
 - **Slower bullets as an upgrade debuff.** Any upgrade can carry a `bullet_speed` number in `upgrades.csv` (already supported; nothing uses it yet). Candidates: Grow, Pierce, Shrapnel.
 - **Shrink (built as an upgrade):** shrunk enemies are smaller (harder to hit) but take 50% more damage. A pickup version (a ground item that shrinks nearby enemies) is a later idea.
 - **Pick your own stages** (see above).
+
+## Idea: Maggot (new enemy, Vermin; owner idea, draft)
+
+A hole opens in the earth and reveals maggots. Proposed: small and soft, slow individually, but they come in numbers and keep pouring while the hole is open. Possible behaviors to decide: wriggling swarm movement with no flanking; low damage per bite but they overwhelm if you stand still; the hole could be a destructible nest that stops the stream when destroyed (the code already had a Nest in the old game as a precedent). Counters: area builds (Shrapnel, Blast Ring, Volatile Core chains). Open: stream or one burst; destructible nest or timed; can they be burrowed-up too?
+
+## Escalation rule (owner)
+
+Later levels stack several themed spawning sequences at once. The point is to raise difficulty and give the player a reason to dodge, so dodgeable, telegraphed threats overlap more as levels go on (see `wave-spawning-design.md`).

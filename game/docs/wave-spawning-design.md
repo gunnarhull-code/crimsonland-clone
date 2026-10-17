@@ -49,3 +49,18 @@ Read from `SbWaves.gd`:
 | Alien Brute | a row of 3-5 marching in from one edge, one every ~2 s |
 | Tick | a fast scatter from several gates at once, arriving low and quick |
 | Scrapper | a slow wall: 2-3 side by side advancing together, tick packs behind them |
+
+## Owner decisions, round 2 (2026-10-16)
+
+- **Entrances: a mix, with themes.** Some sequences arrive dramatically (a glowing rift at the edge); some **burrow up out of the dirt**; some start with **a hole opening in the earth that reveals maggots** (a new enemy, see `monster-design.md`). The entrance is part of the sequence's theme, so it is a column in `formations.csv` (`entrance`: rift | burrow | pit | edge).
+- **Warning: varies by sequence.** Big or ambush sequences get a longer telegraph; drips get almost none. A `warning_sec` column per formation.
+- **Escalation: stack more themed sequences at once**, with the focus on **amping up difficulty and giving the player a reason to dodge**. Design rule: each level adds more overlapping, telegraphed, dodgeable threats (lunges, stomps, latches, webs, bursts), so the dodge cooldown becomes a resource the player has to manage, not a panic button.
+- **Signature sequences per species:** the draft table above is the starting point (rat burst, spider drip, alien row, tick scatter, scrapper wall). To be tuned in play.
+
+## Implementation plan (not started; waiting for the owner to say build)
+
+1. `formations.csv` and a `SbDirector` that runs a level's timeline: events placed at times, each naming a formation, entrance and gate position.
+2. Entrances: rift (edge glow), burrow (dirt mound heaves, monster emerges), pit (hole opens, pour out of it, hole closes after a while); each with its own telegraph and sound.
+3. Rebuild `levels.csv` as per-level timelines using those formations (level 1 one theme, level 9 several overlapping).
+4. Cheat menu: trigger any formation with any entrance on demand, scrub the level timeline.
+5. Maggot enemy once its design is agreed.
